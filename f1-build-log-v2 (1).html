@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>F1 Dashboard — Build Log v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --red: #E8002D;
+    --black: #0A0A0A;
+    --surface: #111111;
+    --surface2: #1A1A1A;
+    --surface3: #222222;
+    --border: #2A2A2A;
+    --text: #F0F0F0;
+    --text-muted: #777;
+    --text-dim: #444;
+    --yellow: #FFD700;
+    --green: #00C853;
+    --blue: #2979FF;
+    --purple: #AA00FF;
+    --teal: #00BCD4;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --display: 'Bebas Neue', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ── HEADER ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 3rem 4rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: 'V2';
+    font-family: var(--display);
+    font-size: 28rem;
+    color: #ffffff03;
+    position: absolute;
+    top: -5rem;
+    right: -1rem;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+  }
+  .header-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--green);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  header h1 {
+    font-family: var(--display);
+    font-size: 4.5rem;
+    line-height: 0.95;
+    letter-spacing: 0.02em;
+  }
+  header h1 span { color: var(--red); }
+  .header-sub {
+    margin-top: 1.25rem;
+    color: var(--text-muted);
+    font-size: 14px;
+    max-width: 580px;
+  }
+  .meta-row {
+    display: flex;
+    gap: 2.5rem;
+    margin-top: 1.75rem;
+    flex-wrap: wrap;
+  }
+  .meta-item { display: flex; flex-direction: column; gap: 3px; }
+  .meta-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .meta-value { font-family: var(--mono); font-size: 13px; color: var(--text-muted); }
+  .meta-value.green  { color: var(--green); }
+  .meta-value.yellow { color: var(--yellow); }
+  .meta-value.red    { color: var(--red); }
+  .meta-value.blue   { color: var(--blue); }
+
+  /* ── LAYOUT ── */
+  main { max-width: 1100px; margin: 0 auto; padding: 3rem 4rem 6rem; }
+  section { margin-bottom: 4rem; }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  h2 {
+    font-family: var(--display);
+    font-size: 2.4rem;
+    letter-spacing: 0.03em;
+    margin-bottom: 0.5rem;
+    line-height: 1;
+  }
+  p.intro { color: var(--text-muted); font-size: 14px; max-width: 680px; margin-bottom: 2rem; }
+
+  /* ── STATUS CARDS ── */
+  .status-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 3rem;
+  }
+  .status-card { background: var(--surface); padding: 1.5rem; display: flex; flex-direction: column; gap: 8px; }
+  .status-card:hover { background: var(--surface2); }
+  .status-num { font-family: var(--display); font-size: 3rem; line-height: 1; }
+  .status-num.green  { color: var(--green); }
+  .status-num.yellow { color: var(--yellow); }
+  .status-num.blue   { color: var(--blue); }
+  .status-num.red    { color: var(--red); }
+  .status-label { font-family: var(--mono); font-size: 10px; color: var(--text-dim); letter-spacing: 0.15em; text-transform: uppercase; }
+  .status-detail { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+
+  /* ── TIMELINE ── */
+  .timeline { display: flex; flex-direction: column; }
+  .timeline-item {
+    display: grid;
+    grid-template-columns: 140px 1px 1fr;
+    gap: 0 2rem;
+    min-height: 80px;
+  }
+  .tl-time {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: right;
+    padding-top: 4px;
+    padding-bottom: 1.5rem;
+    line-height: 1.4;
+  }
+  .tl-step {
+    display: block;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .tl-line { display: flex; flex-direction: column; align-items: center; }
+  .tl-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+    border: 2px solid;
+  }
+  .tl-dot.done    { background: var(--green);  border-color: var(--green);  box-shadow: 0 0 8px var(--green); }
+  .tl-dot.issue   { background: var(--yellow); border-color: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+  .tl-dot.next    { background: var(--red);    border-color: var(--red);    box-shadow: 0 0 8px var(--red); }
+  .tl-dot.pending { background: transparent;   border-color: var(--text-dim); }
+  .tl-connector { width: 1px; flex: 1; background: var(--border); margin-top: 4px; }
+  .timeline-item:last-child .tl-connector { display: none; }
+  .tl-body { padding-bottom: 2rem; }
+  .tl-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
+  .tl-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 8px; }
+  .tl-badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 10px;
+    border-radius: 100px;
+    border: 1px solid;
+    letter-spacing: 0.05em;
+  }
+  .badge-done    { color: var(--green);  border-color: #00C85340; background: #00C85310; }
+  .badge-issue   { color: var(--yellow); border-color: #FFD70040; background: #FFD70010; }
+  .badge-next    { color: var(--red);    border-color: #E8002D40; background: #E8002D10; }
+  .badge-pending { color: var(--text-dim); border-color: var(--border); }
+
+  /* ── CODE BLOCK ── */
+  .code-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 10px;
+    margin-bottom: 4px;
+  }
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .code-filename { font-family: var(--mono); font-size: 10px; color: var(--text-muted); }
+  .code-lang { font-family: var(--mono); font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em; }
+  .code-body {
+    padding: 1rem 1.25rem;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.9;
+    color: var(--text-muted);
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .kw  { color: #BB86FC; }
+  .fn  { color: #82AAFF; }
+  .st  { color: #C3E88D; }
+  .cm  { color: #3a3a3a; }
+  .key { color: var(--text); font-weight: 500; }
+  .hi  { color: var(--yellow); }
+  .ok  { color: var(--green); }
+
+  /* ── LESSONS TABLE ── */
+  .lessons-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .lessons-table th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .lessons-table td {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .lessons-table tr:last-child td { border-bottom: none; }
+  .lessons-table tr:hover td { background: var(--surface2); }
+  .l-topic { color: var(--text); font-weight: 500; white-space: nowrap; font-family: var(--mono); font-size: 12px; }
+  .l-type {
+    font-family: var(--mono);
+    font-size: 10px;
+    white-space: nowrap;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+  .type-error   { color: var(--yellow); border-color: #FFD70040; background: #FFD70010; }
+  .type-concept { color: var(--blue);   border-color: #2979FF40; background: #2979FF10; }
+  .type-network { color: var(--purple); border-color: #AA00FF40; background: #AA00FF10; }
+  .type-django  { color: var(--green);  border-color: #00C85340; background: #00C85310; }
+
+  /* ── FILE TREE ── */
+  .folder-tree {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 2;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+  }
+  .folder-tree .dir  { color: var(--blue); }
+  .folder-tree .file { color: var(--text-muted); }
+  .folder-tree .note { color: var(--text-dim); }
+  .folder-tree .root { color: var(--red); font-weight: 500; }
+  .folder-tree .done-file { color: var(--green); }
+  .folder-tree .pending-file { color: var(--text-dim); }
+
+  /* ── NEXT STEPS ── */
+  .next-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .next-item {
+    background: var(--surface);
+    padding: 1.1rem 1.5rem;
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    gap: 1rem;
+    align-items: center;
+  }
+  .next-item:hover { background: var(--surface2); }
+  .next-item.immediate { border-left: 2px solid var(--red); }
+  .next-num { font-family: var(--display); font-size: 2rem; color: var(--text-dim); line-height: 1; }
+  .next-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+  .next-detail { font-size: 12px; color: var(--text-muted); }
+  .next-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 100px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+  .tag-now    { color: var(--red);    border-color: #E8002D40; background: #E8002D10; }
+  .tag-p1     { color: var(--green);  border-color: #00C85340; background: #00C85310; }
+  .tag-p2     { color: var(--blue);   border-color: #2979FF40; background: #2979FF10; }
+  .tag-p3     { color: var(--yellow); border-color: #FFD70040; background: #FFD70010; }
+  .tag-p4     { color: var(--purple); border-color: #AA00FF40; background: #AA00FF10; }
+
+  /* ── ENV SUMMARY ── */
+  .env-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .env-card { background: var(--surface); padding: 1.5rem; }
+  .env-card:hover { background: var(--surface2); }
+  .env-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--red);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+  .env-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 0.4rem; }
+  .env-desc  { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+  /* ── GUIDE BLOCKS ── */
+  .guide-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--blue);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .guide-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin-bottom: 0.45rem;
+  }
+  .guide-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+  .guide-subhead {
+    font-family: var(--display);
+    font-size: 1.8rem;
+    letter-spacing: 0.03em;
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+    line-height: 1;
+  }
+  .flow-diagram {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem 4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  footer span { color: var(--green); }
+
+  @media (max-width: 768px) {
+    header, main, footer { padding-left: 1.5rem; padding-right: 1.5rem; }
+    header h1 { font-size: 3rem; }
+    .status-grid { grid-template-columns: 1fr 1fr; }
+    .env-grid { grid-template-columns: 1fr; }
+    .timeline-item { grid-template-columns: 80px 1px 1fr; gap: 0 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-tag">✓ Phase 1 Complete · ✓ Phase 2 Core Complete · Phase 3 Prep Active · Build Log v2</div>
+  <h1>F1 DASHBOARD<br/><span>BUILD LOG</span></h1>
+  <p class="header-sub">Full record of completed backend and frontend integration work, resolved blockers, and next execution steps — now updated through schedule, standings, and race drill-down delivery.</p>
+  <div class="meta-row">
+    <div class="meta-item">
+      <span class="meta-label">Project</span>
+      <span class="meta-value">F1 Stats Dashboard</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Phase</span>
+      <span class="meta-value blue">Phase 2 Complete · Entering Phase 3 Prep</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Database</span>
+      <span class="meta-value green">Supabase Connected ✓</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Admin</span>
+      <span class="meta-value green">Superuser Created ✓</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Next</span>
+      <span class="meta-value yellow">Heavy Analysis Endpoint + Telemetry Track</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- STATUS -->
+  <section>
+    <div class="section-label">00 — Status Snapshot</div>
+    <h2>WHERE WE ARE</h2>
+    <p class="intro">Django is stable on Supabase, backend API is aligned, and the Next.js integration track is implemented end-to-end for calendar, standings, and race drill-down.</p>
+
+    <div class="status-grid">
+      <div class="status-card">
+        <div class="status-num green">23</div>
+        <div class="status-label">Steps Completed</div>
+        <div class="status-detail">Backend foundation, /api contract alignment, FastF1 cache optimization, Next.js API gateway routes, typed service layer, and phase 2/3 UI milestones</div>
+      </div>
+      <div class="status-card">
+        <div class="status-num yellow">8</div>
+        <div class="status-label">Errors Resolved</div>
+        <div class="status-detail">3 settings.py errors, 5 Supabase connection errors — all diagnosed and fixed</div>
+      </div>
+      <div class="status-card">
+        <div class="status-num blue">2</div>
+        <div class="status-label">Deferred Page Tasks</div>
+        <div class="status-detail">Optional Django server-rendered schedule/results pages remain parked; current product path stays on API + Next.js UI</div>
+      </div>
+      <div class="status-card">
+        <div class="status-num red">2</div>
+        <div class="status-label">Phases Ahead</div>
+        <div class="status-detail">Telemetry/advanced analytics and Production/Deployment remain ahead</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FULL TIMELINE -->
+  <section>
+    <div class="section-label">01 — Complete Timeline</div>
+    <h2>EVERYTHING DONE</h2>
+    <p class="intro">Every step taken from first conversation to working Django admin, including every error and its fix.</p>
+
+    <div class="timeline">
+
+      <div class="timeline-item">
+        <div class="tl-time"><span class="tl-step">Step 01</span>Planning</div>
+        <div class="tl-line"><div class="tl-dot done"></div><div class="tl-connector"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Reviewed original project roadmap</div>
+          <div class="tl-desc">Analyzed uploaded F1 Dashboard roadmap. Identified 4 phases, full stack (FastF1, pandas, Django, Next.js, PostgreSQL, Redis, Celery, Recharts/D3, Tailwind), and the learning path from Node/Express background.</div>
+          <span class="tl-badge badge-done">Done</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-time"><span class="tl-step">Step 02</span>DB Decision</div>
+        <div class="tl-line"><div class="tl-dot done"></div><div class="tl-connector"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Switched to Supabase from Phase 1</div>
+          <div class="tl-desc">Original roadmap: SQLite → PostgreSQL migration at Phase 3. Decision: Supabase (managed Postgres) from day one. Django ORM unchanged — Supabase is just Postgres. Redis + Celery still required for Phase 3–4.</div>
+          <span class="tl-badge badge-done">Done</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-time"><span class="tl-step">Step 03</span>Environment</div>
+        <div class="tl-line"><div class="tl-dot done"></div><div class="tl-connector"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Confirmed: Windows · Python 3.13 · Supabase ready</div>
+          <div class="tl-desc">OS confirmed as Windows, Python version confirmed as 3.13 (meets 3.10+ requirement), Supabase project created with credentials available.</div>
+          <span class="tl-badge badge-done">Done</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-time"><span class="tl-step">Step 04</span>Folders</div>
+        <div class="tl-line"><div class="tl-dot done"></div><div class="tl-connector"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Created project structure — all Python inside backend/</div>
+          <div class="tl-desc">Created f1-project/ root and backend/ subfolder. All Python (venv, Django, packages) lives in backend/ — clean separation from the future Next.js frontend.</div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-filename">terminal</span><span class="code-lang">CMD</span></div>
+            <div class="code-body">mkdir f1-project && cd f1-project
+mkdir backend && cd backend
+python -m venv venv
+venv\Scripts\activate</div>
+          </div>
+          <span class="tl-badge badge-done">Done</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-time"><span class="tl-step">Step 05</span>Dependencies</div>
+        <div class="tl-line"><div class="tl-dot done"></div><div class="tl-connector"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Installed all Python dependencies inside venv</div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-filename">terminal</span><span class="code-lang">CMD</span></div>
+            <div class="code-body">pip install django djangorestframework fastf1 pandas psycopg2-binary python-decouple</div>
+          </div>
+          <span class="tl-badge badge-done">Done</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-time"><span class="tl-step">Step 06</span>Django init</div>
+        <div class="tl-line"><div class="tl-dot done"></div><div class="tl-connector"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Created Django project and api app</div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-filename">terminal</span><span class="code-lang">CMD</span></div>
+            <div class="code-body">django-admin startproject f1_project .   <span class="cm"># . avoids nested folder</span>
+python manage.py startapp api</div>
+          </div>
+          <span class="tl-badge badge-done">Done</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-time"><span class="tl-step">Step 07</span>Architecture</div>
+        <div class="tl-line"><div class="tl-dot done"></div><div class="tl-connector"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Established Django folder conventions</div>
+          <div class="tl-desc">Django splits Express "controllers" into: views.py (request/response), serializers.py (data shape), services/ (all business logic). Rule: views stay thin — all FastF1 and pandas logic lives in api/services/.</div>
+          <span class="tl-badge badge-done">Done</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-time"><span class="tl-step">Step 08</span>settings.py</div>
+        <div class="tl-line"><div class="tl-dot done"></div><div class="tl-connector"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Configured settings.py — decouple, Supabase, INSTALLED_APPS</div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-filename">f1_project/settings.py</span><span class="code-lang">Python</span></div>
+            <div class="code-body"><span class="kw">from</span> decouple <span class="kw">import</span> config
+
+<span class="key">SECRET_KEY</span> = <span class="fn">config</span>(<span class="st">'SECRET_KEY'</span>)
+<span class="key">DEBUG</span> = <span class="fn">config</span>(<span class="st">'DEBUG'</span>, cast=<span class="kw">bool</span>)
+
+<span class="key">DATABASES</span> = {
+    <span class="st">'default'</span>: {
+        <span class="st">'ENGINE'</span>: <span class="st">'django.db.backends.postgresql'</span>,
+        <span class="st">'NAME'</span>: <span class="fn">config</span>(<span class="st">'SUPABASE_DB_NAME'</span>),
+        <span class="st">'USER'</span>: <span class="fn">config</span>(<span class="st">'SUPABASE_DB_USER'</span>),
+        <span class="st">'PASSWORD'</span>: <span class="fn">config</span>(<span class="st">'SUPABASE_DB_PASSWORD'</span>),
+        <span class="st">'HOST'</span>: <span class="fn">config</span>(<span class="st">'SUPABASE_DB_HOST'</span>),
+        <span class="st">'PORT'</span>: <span class="fn">config</span>(<span class="st">'SUPABASE_DB_PORT'</span>),
+    }
+}
+
+<span class="key">INSTALLED_APPS</span> = [
+    <span class="cm"># django defaults...</span>
+    <span class="st">'rest_framework'</span>,
+    <span class="st">'api'</span>,
+]</div>
+          </div>
+          <span class="tl-badge badge-done">Done</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-time"><span class="tl-step">Step 09</span>Errors ×3</div>
+        <div class="tl-line"><div class="tl-dot issue"></div><div class="tl-connector"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Resolved 3 settings.py mistakes</div>
+          <div class="tl-desc">
+            <strong style="color:var(--text)">① config() value vs name</strong> — config('django-insecure-...') should be config('SECRET_KEY'). The argument is the variable name to look up, not the value itself.<br/><br/>
+            <strong style="color:var(--text)">② cast=True vs cast=bool</strong> — True is a value, bool is a type. config('DEBUG', cast=bool) correctly converts the string "True" from .env to Python True.<br/><br/>
+            <strong style="color:var(--text)">③ venv not activated</strong> — Running manage.py without (venv) active causes ModuleNotFoundError. Always check for (venv) prefix in terminal before running any Django command.
+          </div>
+          <span class="tl-badge badge-issue">All Resolved</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-time"><span class="tl-step">Step 10</span>DB Errors ×5</div>
+        <div class="tl-line"><div class="tl-dot issue"></div><div class="tl-connector"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Diagnosed and resolved 5 Supabase connection errors</div>
+          <div class="tl-desc">
+            <strong style="color:var(--text)">① Missing host prefix</strong> — Used oiwhabvudpoamhdgwkcx instead of db.oiwhabvudpoamhdgwkcx.supabase.co.<br/><br/>
+            <strong style="color:var(--text)">② Port 5432 blocked</strong> — Nigerian ISP blocks direct Postgres connections. Confirmed via nslookup (DNS resolves to IPv6 only — no IPv4).<br/><br/>
+            <strong style="color:var(--text)">③ Wrong pooler user</strong> — Transaction pooler requires postgres.projectref format, not just postgres.<br/><br/>
+            <strong style="color:var(--text)">④ Wrong .env user value</strong> — User was set to postgres.lzmhuemhnykxzoijqloh.supabase.co (with domain appended). Should be postgres.lzmhuemhnykxzoijqloh only.<br/><br/>
+            <strong style="color:var(--text)">⑤ Wrong pooler host</strong> — Was using aws-0-eu-west-1 (transaction pooler). Session pooler uses aws-1-eu-west-1. Session pooler is correct for IPv4 networks.
+          </div>
+          <span class="tl-badge badge-issue">All Resolved</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-time"><span class="tl-step">Step 11</span>Migration ✓</div>
+        <div class="tl-line"><div class="tl-dot done"></div><div class="tl-connector"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">First migration successful — Supabase connected</div>
+          <div class="tl-desc">Final working .env configuration using Supabase Session pooler on port 5432. All Django built-in tables (auth, admin, sessions, contenttypes) created in Supabase.</div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-filename">.env — final working config</span><span class="code-lang">Env</span></div>
+            <div class="code-body">SECRET_KEY=django-insecure-...
+DEBUG=True
+SUPABASE_DB_NAME=postgres
+<span class="ok">SUPABASE_DB_USER=postgres.lzmhuemhnykxzoijqloh</span>
+SUPABASE_DB_PASSWORD=your-password
+<span class="ok">SUPABASE_DB_HOST=aws-1-eu-west-1.pooler.supabase.com</span>
+<span class="ok">SUPABASE_DB_PORT=5432</span></div>
+          </div>
+          <span class="tl-badge badge-done">Done ✓</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-time"><span class="tl-step">Step 12</span>Superuser ✓</div>
+        <div class="tl-line"><div class="tl-dot done"></div><div class="tl-connector"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Created superuser — Django admin panel accessible</div>
+          <div class="tl-desc">Superuser created via createsuperuser command. Django admin panel available at http://127.0.0.1:8000/admin and backed by Supabase. Password can be reset anytime via changepassword command.</div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-filename">terminal</span><span class="code-lang">CMD</span></div>
+            <div class="code-body">python manage.py createsuperuser
+python manage.py changepassword your-username   <span class="cm"># to reset</span>
+<span class="cm"># list all users:</span>
+python manage.py shell -c <span class="st">"from django.contrib.auth.models import User; print(list(User.objects.values_list('username', flat=True)))"</span></div>
+          </div>
+          <span class="tl-badge badge-done">Done ✓</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-time"><span class="tl-step">Step 13</span>Phase 2 API</div>
+        <div class="tl-line"><div class="tl-dot done"></div><div class="tl-connector"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Aligned backend routes to /api and validated test suite</div>
+          <div class="tl-desc">Updated project URL mount from root to /api, migrated endpoint tests to /api/*, and confirmed unit tests pass (9/9). CORS remains unnecessary for now because Next.js will call Django through server-side API routing.</div>
+          <span class="tl-badge badge-done">Done ✓</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-time"><span class="tl-step">Step 14</span>Performance</div>
+        <div class="tl-line"><div class="tl-dot done"></div><div class="tl-connector"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Optimized FastF1 request handling for local Phase 2 development</div>
+          <div class="tl-desc">Enabled shared FastF1 cache (backend/f1_cache), added cache bootstrap utility, and reduced session load scope by disabling telemetry/weather/messages where not required. This cuts repeated request cost and keeps API payload retrieval lean for the frontend integration track.</div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-filename">api/services/fastf1_runtime.py</span><span class="code-lang">Python</span></div>
+            <div class="code-body">from pathlib import Path
+import fastf1
+
+cache_dir = Path(...)/"f1_cache"
+cache_dir.mkdir(parents=True, exist_ok=True)
+fastf1.Cache.enable_cache(str(cache_dir))</div>
+          </div>
+          <span class="tl-badge badge-done">Done ✓</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-time"><span class="tl-step">Step 15</span>Contract Check</div>
+        <div class="tl-line"><div class="tl-dot done"></div><div class="tl-connector"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Validated backend parameter contract before frontend wiring</div>
+          <div class="tl-desc">Confirmed Django endpoint style uses path parameters (for example /api/races/&lt;year&gt;/&lt;round&gt;/results/) rather than query params. Frontend services were built to match this contract exactly.</div>
+          <span class="tl-badge badge-done">Done ✓</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-time"><span class="tl-step">Step 16</span>BFF Layer</div>
+        <div class="tl-line"><div class="tl-dot done"></div><div class="tl-connector"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Built Next.js API gateway + typed frontend services</div>
+          <div class="tl-desc">Added internal App Router API handlers for races, race detail, results, qualifying, practice sessions, and standings. Implemented Api_services clients and shared types; removed conflicting broad rewrite so internal handlers own /api namespace.</div>
+          <span class="tl-badge badge-done">Done ✓</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-time"><span class="tl-step">Step 17</span>Calendar UX</div>
+        <div class="tl-line"><div class="tl-dot done"></div><div class="tl-connector"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Completed schedule + standings presentation upgrades</div>
+          <div class="tl-desc">Added standings panels with independent show more/less toggles, typed year entry with minimum 1950 clamp logic, and compact season stats strip on the races page.</div>
+          <span class="tl-badge badge-done">Done ✓</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-time"><span class="tl-step">Step 18</span>Drill-Down</div>
+        <div class="tl-line"><div class="tl-dot done"></div><div class="tl-connector"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Delivered race drill-down route with tabbed data views</div>
+          <div class="tl-desc">Implemented /races/[year]/[round] page with Overview, Results, Qualifying, and Practice tabs. Practice session switching and table rendering are wired, and RaceCard navigation now links into this detail route.</div>
+          <span class="tl-badge badge-done">Done ✓</span>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="tl-time"><span class="tl-step">Now</span>Phase 3 Prep</div>
+        <div class="tl-line"><div class="tl-dot next"></div><div class="tl-connector"></div></div>
+        <div class="tl-body">
+          <div class="tl-title">Shift to heavy analysis endpoint + telemetry foundation</div>
+          <div class="tl-desc">Core Phase 2 frontend integration is complete. Next execution focus is opt-in heavy payload analysis APIs, telemetry-oriented services, and production-hardening tasks while deferred server-rendered Django pages stay optional.</div>
+          <span class="tl-badge badge-next">In Progress</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SUPABASE ROOT CAUSE -->
+  <section>
+    <div class="section-label">02 — Root Cause Analysis</div>
+    <h2>THE SUPABASE PROBLEM</h2>
+    <p class="intro">Why connecting to Supabase from Nigeria required the Session pooler — and what each connection type means.</p>
+
+    <div class="env-grid">
+      <div class="env-card">
+        <div class="env-label">Direct Connection</div>
+        <div class="env-title">db.ref.supabase.co : 5432</div>
+        <div class="env-desc">Resolves to IPv6 only on Nigerian networks. psycopg2 on Windows cannot connect over IPv6. DNS resolves fine but connection times out or fails. Not usable without IPv4.</div>
+      </div>
+      <div class="env-card">
+        <div class="env-label">Transaction Pooler</div>
+        <div class="env-title">aws-0-eu-west-1.pooler.supabase.com : 6543</div>
+        <div class="env-desc">Stateless pooler for serverless/short-lived connections. Requires postgres.ref username format. Not ideal for Django which uses persistent connections. Was causing Tenant or user not found errors.</div>
+      </div>
+      <div class="env-card">
+        <div class="env-label">Session Pooler ✓ Solution</div>
+        <div class="env-title">aws-1-eu-west-1.pooler.supabase.com : 5432</div>
+        <div class="env-desc">Supabase's recommended option for IPv4 networks. Uses port 5432 (same as direct). Resolves to IPv4. Requires postgres.ref username. This is what finally worked.</div>
+      </div>
+      <div class="env-card">
+        <div class="env-label">Key Lesson</div>
+        <div class="env-title">aws-0 vs aws-1 matters</div>
+        <div class="env-desc">Transaction pooler is aws-0-region. Session pooler is aws-1-region. Same region (eu-west-1), different load balancer. One character difference, completely different behavior.</div>
+      </div>
+      <div class="env-card">
+        <div class="env-label">Performance Analysis</div>
+        <div class="env-title">FastF1 cold loads are expensive</div>
+        <div class="env-desc">Qualifying/race/practice endpoints can be slow when sessions load raw data repeatedly. Cache enablement plus selective session.load flags are now part of the default backend strategy.</div>
+      </div>
+      <div class="env-card">
+        <div class="env-label">Bracket Analysis</div>
+        <div class="env-title">Heavy payload endpoint (planned)</div>
+        <div class="env-desc">Default endpoints remain lean for UI speed. A dedicated opt-in analysis endpoint will be added for heavier payloads (for deep lap-by-lap and advanced analysis use cases).</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CURRENT FILE STATE -->
+  <section>
+    <div class="section-label">03 — Project State</div>
+    <h2>CURRENT FILE TREE</h2>
+    <p class="intro">What exists on disk right now. Green = done. Dim = created but not yet built out.</p>
+
+    <div class="folder-tree">
+<span class="root">f1-project/</span>
+  ├── <span class="dir">backend/</span>                           <span class="note"># Django DRF + FastF1 services</span>
+  │   ├── <span class="done-file">f1_project/settings.py</span>      <span class="note">✓ Supabase + app config</span>
+  │   ├── <span class="done-file">api/urls.py</span>                 <span class="note">✓ /api route registry</span>
+  │   ├── <span class="done-file">api/views.py</span>                <span class="note">✓ races, standings, results, qualifying, practice</span>
+  │   ├── <span class="done-file">api/services/schedule.py</span>    <span class="note">✓ season schedule</span>
+  │   ├── <span class="done-file">api/services/results.py</span>     <span class="note">✓ race/qualifying/practice data services</span>
+  │   ├── <span class="done-file">api/services/fastf1_runtime.py</span> <span class="note">✓ shared cache bootstrap</span>
+  │   ├── <span class="pending-file">api/services/laps.py</span>     <span class="note">Phase 3 analytics</span>
+  │   └── <span class="pending-file">api/services/telemetry.py</span> <span class="note">Phase 3 analytics</span>
+  └── <span class="dir">f1-project-frontend/</span>               <span class="note"># Next.js App Router gateway + UI</span>
+    ├── <span class="done-file">app/api/_lib/backend.ts</span>      <span class="note">✓ backend proxy + error normalization</span>
+    ├── <span class="done-file">app/api/races/[year]/route.ts</span> <span class="note">✓ season schedule route handler</span>
+    ├── <span class="done-file">app/api/races/[year]/[round]/route.ts</span> <span class="note">✓ race detail handler</span>
+    ├── <span class="done-file">app/api/races/[year]/[round]/results/route.ts</span> <span class="note">✓ results handler</span>
+    ├── <span class="done-file">app/api/races/[year]/[round]/qualifying/route.ts</span> <span class="note">✓ qualifying handler</span>
+    ├── <span class="done-file">app/api/races/[year]/[round]/practice/[session]/route.ts</span> <span class="note">✓ practice handler</span>
+    ├── <span class="done-file">app/api/drivers/[year]/route.ts</span> <span class="note">✓ driver standings handler</span>
+    ├── <span class="done-file">app/api/constructors/[year]/route.ts</span> <span class="note">✓ constructor standings handler</span>
+    ├── <span class="done-file">Api_services/races.ts</span>        <span class="note">✓ typed race data client</span>
+    ├── <span class="done-file">Api_services/standings.ts</span>    <span class="note">✓ typed standings client</span>
+    ├── <span class="done-file">types/races.ts</span>               <span class="note">✓ race/results/qualifying/practice contracts</span>
+    ├── <span class="done-file">types/standings.ts</span>           <span class="note">✓ standings contracts</span>
+    ├── <span class="done-file">types/api.ts</span>                 <span class="note">✓ shared API types</span>
+    ├── <span class="done-file">app/races/page.tsx</span>           <span class="note">✓ calendar + standings + season stats strip</span>
+    ├── <span class="done-file">app/races/[year]/[round]/page.tsx</span> <span class="note">✓ overview/results/qualifying/practice tabs</span>
+    ├── <span class="done-file">_Components/YearSelector.tsx</span> <span class="note">✓ typed input with min year clamp (1950)</span>
+    ├── <span class="done-file">_Components/StandingsPanel.tsx</span> <span class="note">✓ independent show more/less toggles</span>
+    ├── <span class="done-file">_Components/RaceCard.tsx</span>     <span class="note">✓ links into race drill-down route</span>
+    └── <span class="done-file">next.config.ts</span>               <span class="note">✓ removed broad /api rewrite conflict</span>
+    </div>
+  </section>
+
+  <!-- LESSONS -->
+  <section>
+    <div class="section-label">04 — Lessons Learned</div>
+    <h2>WHAT WE KNOW NOW</h2>
+    <p class="intro">Every mistake made and concept learned — useful reference for the rest of the build.</p>
+
+    <table class="lessons-table">
+      <thead>
+        <tr><th>Topic</th><th>Lesson</th><th>Type</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="l-topic">config()</td>
+          <td>Takes a variable name ('SECRET_KEY'), not the value itself. config('django-insecure-...') is wrong — it looks for a key with that name in .env.</td>
+          <td><span class="l-type type-error">Error</span></td>
+        </tr>
+        <tr>
+          <td class="l-topic">cast=bool</td>
+          <td>config('DEBUG', cast=bool) converts string "True" to Python True. cast=True is wrong — True is a value, not a type.</td>
+          <td><span class="l-type type-error">Error</span></td>
+        </tr>
+        <tr>
+          <td class="l-topic">venv activation</td>
+          <td>Always activate venv before running manage.py. Check for (venv) prefix in terminal. Without it, Django isn't importable.</td>
+          <td><span class="l-type type-django">Django</span></td>
+        </tr>
+        <tr>
+          <td class="l-topic">startproject .</td>
+          <td>The dot in django-admin startproject f1_project . creates the project in the current directory. Without it, Django makes a nested subfolder.</td>
+          <td><span class="l-type type-django">Django</span></td>
+        </tr>
+        <tr>
+          <td class="l-topic">Thin views</td>
+          <td>Views call services and return responses. All FastF1 and pandas logic lives in api/services/. Never put business logic directly in views.py.</td>
+          <td><span class="l-type type-concept">Concept</span></td>
+        </tr>
+        <tr>
+          <td class="l-topic">IPv6 vs IPv4</td>
+          <td>Nigerian ISPs resolve Supabase direct connection hosts to IPv6 only. psycopg2 on Windows can't use IPv6. Session pooler resolves to IPv4 — use that.</td>
+          <td><span class="l-type type-network">Network</span></td>
+        </tr>
+        <tr>
+          <td class="l-topic">Pooler username</td>
+          <td>Transaction and session poolers require postgres.projectref as the username, not just postgres. Direct connection uses just postgres.</td>
+          <td><span class="l-type type-network">Network</span></td>
+        </tr>
+        <tr>
+          <td class="l-topic">aws-0 vs aws-1</td>
+          <td>Transaction pooler host starts with aws-0. Session pooler host starts with aws-1. Same region, completely different endpoint and behavior.</td>
+          <td><span class="l-type type-network">Network</span></td>
+        </tr>
+        <tr>
+          <td class="l-topic">changepassword</td>
+          <td>python manage.py changepassword username resets a superuser password. python manage.py shell -c "..." lists all users if username is forgotten.</td>
+          <td><span class="l-type type-django">Django</span></td>
+        </tr>
+        <tr>
+          <td class="l-topic">venv prompt trap</td>
+          <td>(venv) in terminal prompt is not enough. Verify active interpreter with python -c "import sys; print(sys.executable)". Wrong interpreter can show ModuleNotFoundError even when Django exists in another venv.</td>
+          <td><span class="l-type type-error">Error</span></td>
+        </tr>
+        <tr>
+          <td class="l-topic">FastF1 cache</td>
+          <td>Enable cache once via fastf1.Cache.enable_cache(...). The cache directory must exist first (mkdir(..., exist_ok=True)) or FastF1 raises NotADirectoryError.</td>
+          <td><span class="l-type type-django">Django</span></td>
+        </tr>
+        <tr>
+          <td class="l-topic">session.load flags</td>
+          <td>Use minimal data loading for non-telemetry endpoints: disable telemetry/weather/messages when not needed to reduce request time and bandwidth.</td>
+          <td><span class="l-type type-concept">Concept</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- NEXT STEPS -->
+  <section>
+    <div class="section-label">05 — What's Next</div>
+    <h2>FULL ROADMAP AHEAD</h2>
+    <p class="intro">Everything remaining now that core Phase 2 API + frontend integration is complete.</p>
+
+    <div class="next-list">
+      <div class="next-item immediate">
+        <div class="next-num">01</div>
+        <div>
+          <div class="next-title">Implement opt-in heavy analysis endpoint</div>
+          <div class="next-detail">Add a dedicated backend route for larger lap-level payloads so default schedule/results endpoints remain fast and lightweight.</div>
+        </div>
+        <span class="next-tag tag-now">Right Now</span>
+      </div>
+      <div class="next-item immediate">
+        <div class="next-num">02</div>
+        <div>
+          <div class="next-title">Add telemetry and lap-analysis service modules</div>
+          <div class="next-detail">Build api/services/laps.py and telemetry.py for Phase 3 visualizations and richer race analytics workflows.</div>
+        </div>
+        <span class="next-tag tag-now">Right Now</span>
+      </div>
+      <div class="next-item">
+        <div class="next-num">03</div>
+        <div>
+          <div class="next-title">Add loading skeletons and transition polish</div>
+          <div class="next-detail">Improve perceived performance on races and drill-down pages with progressive loading states and smoother state transitions.</div>
+        </div>
+        <span class="next-tag tag-p2">Enhancement</span>
+      </div>
+      <div class="next-item">
+        <div class="next-num">04</div>
+        <div>
+          <div class="next-title">Run end-to-end verification across all routes</div>
+          <div class="next-detail">Validate races, detail, results, qualifying, practice, and standings flows together with backend online/offline error checks.</div>
+        </div>
+        <span class="next-tag tag-p2">Validation</span>
+      </div>
+      <div class="next-item">
+        <div class="next-num">05</div>
+        <div>
+          <div class="next-title">AWS RDS migration checkpoint (optional, post-Phase 2)</div>
+          <div class="next-detail">Execute planned Supabase to RDS migration exercise only after analysis endpoints are stable to avoid mid-feature infrastructure churn.</div>
+        </div>
+        <span class="next-tag tag-p1">Infra</span>
+      </div>
+      <div class="next-item">
+        <div class="next-num">06</div>
+        <div>
+          <div class="next-title">Telemetry, tyre strategy, and sector analysis UI</div>
+          <div class="next-detail">Expose advanced FastF1-derived datasets in charts and comparative race analysis components.</div>
+        </div>
+        <span class="next-tag tag-p3">Phase 3</span>
+      </div>
+      <div class="next-item">
+        <div class="next-num">07</div>
+        <div>
+          <div class="next-title">Auth, live updates, Docker, CI/CD, deploy</div>
+          <div class="next-detail">Add JWT auth, live session updates, containerization, and production deployment workflows.</div>
+        </div>
+        <span class="next-tag tag-p4">Phase 4</span>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- AWS RDS MIGRATION -->
+  <section>
+    <div class="section-label">06 — Future Infrastructure</div>
+    <h2>AWS RDS MIGRATION</h2>
+    <p class="intro">Supabase is staying for now. This migration is planned as a standalone exercise between Phase 2 and Phase 3 — primary motivation is AWS experience, not a technical requirement.</p>
+
+    <div class="status-grid" style="grid-template-columns: repeat(3,1fr); margin-bottom:2rem;">
+      <div class="status-card">
+        <div class="status-num yellow">P2→P3</div>
+        <div class="status-label">Planned Timing</div>
+        <div class="status-detail">After Phase 2 endpoints are stable. Before Phase 3 begins. Clean checkpoint with no feature work in flight.</div>
+      </div>
+      <div class="status-card">
+        <div class="status-num blue">~2</div>
+        <div class="status-label">Days Estimated</div>
+        <div class="status-detail">RDS setup + security group config + connectivity test + .env swap + endpoint verification.</div>
+      </div>
+      <div class="status-card">
+        <div class="status-num green">0</div>
+        <div class="status-label">Code Changes</div>
+        <div class="status-detail">settings.py stays identical. Only .env values change — host, port, user, password. Same psycopg2 driver.</div>
+      </div>
+    </div>
+
+    <div class="next-list">
+      <div class="next-item immediate">
+        <div class="next-num">01</div>
+        <div>
+          <div class="next-title">Create RDS instance in AWS console</div>
+          <div class="next-detail">PostgreSQL engine. Choose instance type (db.t3.micro is fine for this stage). Note the endpoint, port, and credentials.</div>
+        </div>
+        <span class="next-tag tag-now">Migration</span>
+      </div>
+      <div class="next-item immediate">
+        <div class="next-num">02</div>
+        <div>
+          <div class="next-title">Configure VPC and security group</div>
+          <div class="next-detail">Most critical step. Set inbound rule on port 5432 to allow your IP. Public accessibility setting determines whether you can connect from local machine — same IPv4 concern as Supabase.</div>
+        </div>
+        <span class="next-tag tag-now">Migration</span>
+      </div>
+      <div class="next-item">
+        <div class="next-num">03</div>
+        <div>
+          <div class="next-title">Swap .env values</div>
+          <div class="next-detail">Replace SUPABASE_DB_* keys with RDS endpoint, default port 5432, and credentials. settings.py untouched.</div>
+        </div>
+        <span class="next-tag tag-p1">Migration</span>
+      </div>
+      <div class="next-item">
+        <div class="next-num">04</div>
+        <div>
+          <div class="next-title">Run migrations against RDS</div>
+          <div class="next-detail">python manage.py migrate — recreates all Django built-in tables on the new database. Same command as Supabase setup.</div>
+        </div>
+        <span class="next-tag tag-p1">Migration</span>
+      </div>
+      <div class="next-item">
+        <div class="next-num">05</div>
+        <div>
+          <div class="next-title">Verify all Phase 2 endpoints</div>
+          <div class="next-detail">Hit every API route and confirm JSON responses match what they returned on Supabase. Data should be identical — same Django, same FastF1, different database backend.</div>
+        </div>
+        <span class="next-tag tag-p2">Migration</span>
+      </div>
+    </div>
+
+    <div class="env-grid" style="margin-top:2rem;">
+      <div class="env-card">
+        <div class="env-label">Why Not Now</div>
+        <div class="env-title">Don't switch mid-phase</div>
+        <div class="env-desc">Phase 2 core is complete and stable. Keep infrastructure changes isolated from active Phase 3 feature implementation so debugging remains clean and attributable.</div>
+      </div>
+      <div class="env-card">
+        <div class="env-label">Why At All</div>
+        <div class="env-title">Experience, not necessity</div>
+        <div class="env-desc">Supabase is working fine. The migration is purely for AWS exposure — VPC config, security groups, IAM basics, RDS console. These concepts appear in nearly every backend role at scale and are more transferable than Supabase-specific knowledge.</div>
+      </div>
+      <div class="env-card">
+        <div class="env-label">Key Risk</div>
+        <div class="env-title">IPv4 connectivity from Nigeria</div>
+        <div class="env-desc">Same issue as Supabase. RDS public accessibility must be enabled and the security group inbound rule must allow port 5432 from your IP. Verify this first before spending time on anything else.</div>
+      </div>
+      <div class="env-card">
+        <div class="env-label">CV Value</div>
+        <div class="env-title">Concrete, describable outcome</div>
+        <div class="env-desc">"Migrated PostgreSQL backend from Supabase to AWS RDS — configured VPC, subnet groups, and security groups. Zero application code changes required." That's a clean bullet point.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTING WORKFLOW -->
+  <section>
+    <div class="section-label">07 - Testing Workflow</div>
+    <h2>TEST COMMAND REFERENCE</h2>
+    <p class="intro">The test suite is split into unit and integration packages. Unit tests run fast with mocks. Integration tests hit live APIs and are skipped unless explicitly enabled with an environment flag.</p>
+
+    <div class="status-grid" style="grid-template-columns: repeat(3,1fr); margin-bottom:2rem;">
+      <div class="status-card">
+        <div class="status-num green">Unit</div>
+        <div class="status-label">Default in CI</div>
+        <div class="status-detail">Mocked endpoint tests only. Fast and deterministic.</div>
+      </div>
+      <div class="status-card">
+        <div class="status-num yellow">Integration</div>
+        <div class="status-label">Opt-In</div>
+        <div class="status-detail">Live FastF1 and standings API checks. Enable with RUN_INTEGRATION_TESTS=1.</div>
+      </div>
+      <div class="status-card">
+        <div class="status-num blue">Both</div>
+        <div class="status-label">Pre-Release</div>
+        <div class="status-detail">Runs everything. Integration remains skipped unless flag is enabled.</div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-filename">Windows CMD</span><span class="code-lang">Commands</span></div>
+      <div class="code-body">.\venv\Scripts\python manage.py test api.tests.unit --keepdb
+.\venv\Scripts\python manage.py test api.tests.integration --keepdb
+set RUN_INTEGRATION_TESTS=1 && .\venv\Scripts\python manage.py test api.tests.integration --keepdb
+.\venv\Scripts\python manage.py test api.tests --keepdb
+set RUN_INTEGRATION_TESTS=1 && .\venv\Scripts\python manage.py test api.tests --keepdb</div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-filename">PowerShell</span><span class="code-lang">Commands</span></div>
+      <div class="code-body">.\venv\Scripts\python manage.py test api.tests.unit --keepdb
+.\venv\Scripts\python manage.py test api.tests.integration --keepdb
+$env:RUN_INTEGRATION_TESTS='1'; .\venv\Scripts\python manage.py test api.tests.integration --keepdb
+.\venv\Scripts\python manage.py test api.tests --keepdb
+$env:RUN_INTEGRATION_TESTS='1'; .\venv\Scripts\python manage.py test api.tests --keepdb</div>
+    </div>
+  </section>
+
+  <!-- PHASE 1 FULL GUIDE -->
+  <section>
+    <div class="section-label">08 - Frontend Integration Guide</div>
+    <h2>FRONTEND INTEGRATION CONTEXT (UNSHORTENED)</h2>
+    <p class="intro">Full frontend integration context and completion notes. The MVP plan below has now been implemented through schedule, standings, and drill-down tabs with typed API routes and services.</p>
+
+    <div class="guide-box">
+      <div class="guide-title">Guide Scope</div>
+      <div class="guide-text">Initial target was a narrow Season Schedule MVP. Current status: scope has been extended and completed for standings and race detail drill-down (overview/results/qualifying/practice).</div>
+    </div>
+
+    <div class="guide-subhead">TRACK A - Next.js Setup and Environment</div>
+    <div class="guide-box">
+      <div class="guide-title">Goal</div>
+      <div class="guide-text">Initialize a Next.js app as a sibling folder to backend/, configure environment variables, and define a clean API client layer for Django communication.</div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-filename">Target Structure (after setup)</span><span class="code-lang">Tree</span></div>
+      <div class="code-body">f1-project/
+├── backend/          (Phase 2 - Django API)
+│   ├── manage.py
+│   ├── db.sqlite3
+│   ├── requirements.txt
+│   └── api/
+│       ├── services/
+│       ├── serializers.py
+│       └── views.py
+│
+└── frontend/         (Frontend Integration - Next.js)
+    ├── app/
+    │   ├── layout.tsx
+    │   ├── page.tsx
+    │   └── races/
+    │       └── page.tsx
+    ├── lib/
+    │   └── api/
+    │       ├── client.ts
+    │       └── services.ts
+    ├── components/
+    │   ├── RaceCard.tsx
+    │   ├── ScheduleContainer.tsx
+    │   └── YearSelector.tsx
+    ├── .env.local
+    ├── next.config.js
+    ├── package.json
+    ├── tsconfig.json
+    └── tailwind.config.ts</div>
+    </div>
+
+    <div class="next-list">
+      <div class="next-item">
+        <div class="next-num">1</div>
+        <div>
+          <div class="next-title">Create frontend project with App Router</div>
+          <div class="next-detail">Use create-next-app with TypeScript, ESLint, and Tailwind enabled.</div>
+        </div>
+        <span class="next-tag tag-p2">Setup</span>
+      </div>
+      <div class="next-item">
+        <div class="next-num">2</div>
+        <div>
+          <div class="next-title">Define .env.local for frontend</div>
+          <div class="next-detail">Set NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api so client calls can reach Django.</div>
+        </div>
+        <span class="next-tag tag-p2">Env</span>
+      </div>
+      <div class="next-item">
+        <div class="next-num">3</div>
+        <div>
+          <div class="next-title">Create API client and service layer</div>
+          <div class="next-detail">client.ts owns axios config/interceptors; services.ts owns endpoint functions like getSeasonSchedule(year).</div>
+        </div>
+        <span class="next-tag tag-p2">Architecture</span>
+      </div>
+      <div class="next-item">
+        <div class="next-num">4</div>
+        <div>
+          <div class="next-title">Define response types</div>
+          <div class="next-detail">Use TypeScript Race and ScheduleResponse types for autocomplete, safety, and self-documentation.</div>
+        </div>
+        <span class="next-tag tag-p2">Types</span>
+      </div>
+      <div class="next-item">
+        <div class="next-num">5</div>
+        <div>
+          <div class="next-title">Tailwind base and brand theme</div>
+          <div class="next-detail">Configure utility styles and F1 color tokens in tailwind config and globals.</div>
+        </div>
+        <span class="next-tag tag-p2">UI</span>
+      </div>
+    </div>
+
+    <div class="guide-subhead">TRACK B - API Client and Error Handling Layer</div>
+    <div class="guide-box">
+      <div class="guide-title">Goal</div>
+      <div class="guide-text">Build a reusable HTTP client with consistent behavior for success, timeout, network failures, and backend error responses.</div>
+    </div>
+
+    <div class="status-grid" style="grid-template-columns: repeat(2,1fr);">
+      <div class="status-card">
+        <div class="status-num blue">Client</div>
+        <div class="status-label">lib/api/client.ts</div>
+        <div class="status-detail">Centralize base URL, JSON headers, timeout, and interceptors for logging and normalization.</div>
+      </div>
+      <div class="status-card">
+        <div class="status-num green">Services</div>
+        <div class="status-label">lib/api/services.ts</div>
+        <div class="status-detail">Expose focused functions like getSeasonSchedule(year) with typed return data and clear thrown errors.</div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-filename">Error Strategy (reference)</span><span class="code-lang">Notes</span></div>
+      <div class="code-body">Network failure (backend down): show "Cannot reach backend"
+4xx (invalid request/year): show friendly message from API
+5xx (server error): show "Server error, try again later"
+Timeout (&gt;10s): show "Request timed out" with retry action
+
+Recommended flow:
+Component calls getSeasonSchedule(2024)
+-> service calls GET /races/2024/
+-> interceptor handles low-level errors
+-> component receives typed data OR displays user-facing error</div>
+    </div>
+
+    <div class="guide-subhead">TRACK C - Schedule Page Structure and Components</div>
+    <div class="guide-box">
+      <div class="guide-title">Goal</div>
+      <div class="guide-text">Build app/races/page.tsx and split responsibilities across reusable components with clear server/client boundaries.</div>
+    </div>
+
+    <div class="next-list">
+      <div class="next-item">
+        <div class="next-num">A</div>
+        <div>
+          <div class="next-title">app/races/page.tsx (Server component orchestrator)</div>
+          <div class="next-detail">Read year query param, fetch schedule, pass props to YearSelector and ScheduleContainer, handle fallback states.</div>
+        </div>
+        <span class="next-tag tag-p2">Server</span>
+      </div>
+      <div class="next-item">
+        <div class="next-num">B</div>
+        <div>
+          <div class="next-title">ScheduleContainer.tsx</div>
+          <div class="next-detail">Render heading and card grid for the selected year. Own empty-state rendering.</div>
+        </div>
+        <span class="next-tag tag-p2">UI</span>
+      </div>
+      <div class="next-item">
+        <div class="next-num">C</div>
+        <div>
+          <div class="next-title">RaceCard.tsx</div>
+          <div class="next-detail">Display round, race name, date, location, and country in an interactive card layout.</div>
+        </div>
+        <span class="next-tag tag-p2">UI</span>
+      </div>
+      <div class="next-item">
+        <div class="next-num">D</div>
+        <div>
+          <div class="next-title">YearSelector.tsx</div>
+          <div class="next-detail">Allow users to switch season year and trigger re-fetch using updated query params.</div>
+        </div>
+        <span class="next-tag tag-p2">Client</span>
+      </div>
+    </div>
+
+    <div class="flow-diagram">User opens http://localhost:3000/races?year=2024
+  ↓
+app/races/page.tsx (Server)
+  ├─ read query param year=2024
+  ├─ call getSeasonSchedule(2024)
+  ├─ receive typed races[]
+  └─ render
+      ├─ YearSelector(currentYear=2024)
+      └─ ScheduleContainer(races, year)
+           └─ map races -> RaceCard</div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-filename">Layout Hierarchy</span><span class="code-lang">Reference</span></div>
+      <div class="code-body">app/layout.tsx
+  - Header and navigation shell
+  - main content area for all routes
+  - footer (optional early stage)
+
+app/races/page.tsx
+  - YearSelector
+  - ScheduleContainer
+    - RaceCard x N (typically 20+ races)</div>
+    </div>
+
+    <div class="guide-subhead">TRACK D - Local Run and MVP Testing</div>
+    <div class="guide-box">
+      <div class="guide-title">Goal</div>
+      <div class="guide-text">Run frontend and backend together, verify schedule renders correctly, and confirm error states behave as expected.</div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-filename">Manual Test Checklist</span><span class="code-lang">MVP</span></div>
+      <div class="code-body">1) Install dependencies in frontend (npm install)
+2) Start Next.js dev server (npm run dev)
+3) Open /races?year=2024 and verify race cards render
+4) Switch year to 2023 and confirm new request + updated cards
+5) Stop backend and confirm frontend shows backend-unreachable message
+6) Restart backend and verify page recovers on refresh
+7) Inspect browser network and console for clean request/response flow</div>
+    </div>
+
+    <div class="status-grid" style="grid-template-columns: repeat(2,1fr); margin-bottom: 1rem;">
+      <div class="status-card">
+        <div class="status-num green">Done</div>
+        <div class="status-label">Frontend MVP Deliverables</div>
+        <div class="status-detail">Project structure, internal API route handlers, typed service layer, schedule page, standings panels, year clamp input, and race detail drill-down tabs.</div>
+      </div>
+      <div class="status-card">
+        <div class="status-num blue">Next</div>
+        <div class="status-label">After Integration</div>
+        <div class="status-detail">Heavy analysis endpoints, telemetry/strategy views, loading polish, and production deployment pipeline.</div>
+      </div>
+    </div>
+
+    <div class="guide-box">
+      <div class="guide-title">Full Context Preserved</div>
+      <div class="guide-text">This section intentionally keeps the complete, non-shortened frontend integration context in the same file as the build log so you can track progress and implementation decisions without switching documents.</div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <span>✓ MIGRATION SUCCESSFUL · ADMIN LIVE</span> — F1 DASHBOARD BUILD LOG V2
+  <span>PHASE 2 COMPLETE · PHASE 3 PREP ACTIVE</span>
+</footer>
+
+</body>
+</html>
