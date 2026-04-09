@@ -1,32 +1,34 @@
-import type { ApiErrorResponse } from "@/types/api";
+import { BACKEND_API_URL } from "@/Lib/api/config";
 
-const DEFAULT_BACKEND_API_URL = "http://localhost:8000";
-
-function normalizeUrl(value: string) {
-  return value.replace(/\/$/, "");
-}
-
-const BACKEND_API_URL = normalizeUrl(
-  process.env.BACKEND_API_URL ?? DEFAULT_BACKEND_API_URL,
-);
-
-export function toBackendApiUrl(pathname: string) {
+function buildBackendUrl(pathname: string, request?: Request): string {
   const normalizedPath = pathname.startsWith("/") ? pathname : `/${pathname}`;
-  return `${BACKEND_API_URL}/api${normalizedPath}`;
-}
+  const base = `${BACKEND_API_URL}/api${normalizedPath}`;
 
-function extractErrorMessage(data: ApiErrorResponse, status: number): string {
-  if (data.errors) {
-    const firstField = Object.values(data.errors)[0];
-    if (firstField?.length) return firstField[0];
+  if (!request) {
+    return base;
   }
-  if (Array.isArray(data.message)) return data.message[0];
-  return data.error ?? data.message ?? `Backend request failed (${status})`;
+
+  const incomingUrl = new URL(request.url);
+  const query = incomingUrl.searchParams.toString();
+
+  return query ? `${base}?${query}` : base;
 }
 
-export async function proxyBackendGet(pathname: string) {
+function toErrorDetail(status: number): string {
+  if (status === 404) {
+    return "Resource not found.";
+  }
+
+  if (status >= 500) {
+    return "Backend server error.";
+  }
+
+  return `Backend request failed (${status}).`;
+}
+
+export async function proxyBackendGet(pathname: string, request?: Request): Promise<Response> {
   try {
-    const response = await fetch(toBackendApiUrl(pathname), {
+    const response = await fetch(buildBackendUrl(pathname, request), {
       method: "GET",
       headers: {
         Accept: "application/json",
@@ -34,23 +36,51 @@ export async function proxyBackendGet(pathname: string) {
       cache: "no-store",
     });
 
+    if (response.status === 204) {
+      return new Response(null, { status: 204 });
+    }
+
     const contentType = response.headers.get("content-type") ?? "";
     const isJson = contentType.includes("application/json");
-    const data = (isJson ? await response.json() : {}) as ApiErrorResponse;
+
+    if (isJson) {
+      const payload = await response.json();
+
+      if (!response.ok) {
+        const detail =
+          typeof payload?.detail === "string"
+            ? payload.detail
+            : typeof payload?.error === "string"
+              ? payload.error
+              : toErrorDetail(response.status);
+
+        return Response.json({ detail }, { status: response.status });
+      }
+
+      return Response.json(payload, { status: response.status });
+    }
 
     if (!response.ok) {
       return Response.json(
-        { error: extractErrorMessage(data, response.status) },
+        {
+          detail: toErrorDetail(response.status),
+        },
         { status: response.status },
       );
     }
 
-    return Response.json(data, {
+    const textPayload = await response.text();
+    return new Response(textPayload, {
       status: response.status,
+      headers: {
+        "content-type": contentType || "text/plain",
+      },
     });
   } catch {
     return Response.json(
-      { error: "Cannot reach backend server. Ensure Django is running." },
+      {
+        detail: "Cannot reach backend server. Ensure Django is running.",
+      },
       { status: 502 },
     );
   }

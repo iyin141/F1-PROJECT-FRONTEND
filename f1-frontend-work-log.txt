@@ -1,0 +1,36 @@
+F1 Frontend Work Log
+Updated: 2026-04-09
+
+Completed work in this restart:
+- Reset the frontend API layer by deleting the old app/api route handlers.
+- Removed Api_services implementation files from the previous frontend pass.
+- Removed the old feature UI files in _Components.
+- Removed the starter app pages under app/page.tsx and app/races/*.
+- Rebuilt app/layout.tsx to use Bebas Neue, DM Sans, DM Mono, and ThemeProvider.
+- Replaced app/globals.css with F1 token-based dark and light theme variables.
+- Added Lib/site.ts for app constants.
+- Added Lib/theme.ts for theme mode storage and resolution helpers.
+- Added _Stores/ThemeProvider.tsx for app-level theme state.
+- Added types/theme.ts for theme types.
+- Added types/layout.ts for app shell and navigation types.
+- Installed MVP stack libraries: d3, framer-motion, gsap, Radix primitives (tabs/select/tooltip/dialog/switch), clsx, tailwind-merge.
+- Added types/api.ts shared API base types.
+- Added types/mvp-api.ts with typed contracts for MVP endpoint responses.
+- Created feature modules for season-hub, race-detail, and race-analysis, each with components, hooks, lib, store, and types folders.
+- Verified the edited TypeScript files have no reported errors.
+- Confirmed the app scaffold is now empty of pages and reusable UI components.
+
+Build log updates made today:
+- Added an API list section to the build log based on the v2 backend export.
+- Added a build log section that records the completed frontend restart work.
+- Expanded the B1 foundation description to include the newly added foundation files.
+- Added explicit B1 completion updates in the HTML build log section.
+- Re-appended the API list and build-log sections after the latest architecture rewrite.
+- Synced build-log notes with the new Race Replay tab update on the Race Detail page.
+
+Current state:
+- B1 complete.
+- MVP architecture now includes Race Replay in v1 scope.
+- No UI pages yet (intended for this phase).
+- No reusable UI components yet (intended for this phase).
+- API scaffold remains empty and ready for B2 route implementation.
