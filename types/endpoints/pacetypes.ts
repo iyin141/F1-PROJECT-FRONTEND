@@ -1,23 +1,24 @@
-import type {
-  AnalysisSessionName,
-  NumericString,
-  ResponseFilters,
-  ResponseMeta,
-} from "@/types/api";
+import type { AnalysisSessionName, NumericString, ResponseMeta } from "@/types/api";
 
 // Endpoint 10: GET /api/analysis/races/<year>/<round>/pace/
 export type PaceAnalysisRow = {
-  driver: string;
+  driver_code: string;
+  stint: number;
+  lap_count: number;
   avg_pace: NumericString;
-  best_lap: NumericString;
-  lap_consistency: number;
-  fuel_depleted_at_lap: number | null;
+  min_pace?: NumericString | null;
+  max_pace?: NumericString | null;
+  compound?: string | null;
 };
 
 export type PaceAnalysisResponse = {
-  meta: ResponseMeta & { session: AnalysisSessionName };
-  filters: ResponseFilters & {
+  meta: ResponseMeta & {
+    year: number;
+    round: number;
     session: AnalysisSessionName;
+    row_count?: number;
+  };
+  filters_applied: {
     driver?: string | null;
     limit?: number;
   };

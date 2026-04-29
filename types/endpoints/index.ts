@@ -21,3 +21,4 @@ export * from "@/types/endpoints/incidentstypes";
 export * from "@/types/endpoints/positionstypes";
 export * from "@/types/endpoints/drstypes";
 export * from "@/types/endpoints/trackstatustypes";
+export * from "@/types/endpoints/coveragetypes";

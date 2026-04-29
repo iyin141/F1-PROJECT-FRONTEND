@@ -1,5 +1,5 @@
 F1 Frontend Work Log
-Updated: 2026-04-09
+Updated: 2026-04-11
 
 Completed work in this restart:
 - Reset the frontend API layer by deleting the old app/api route handlers.
@@ -27,10 +27,18 @@ Build log updates made today:
 - Added explicit B1 completion updates in the HTML build log section.
 - Re-appended the API list and build-log sections after the latest architecture rewrite.
 - Synced build-log notes with the new Race Replay tab update on the Race Detail page.
+- Implemented the full B2 API layer with Next.js route handlers under app/api for core, analysis, unified, and coverage endpoint groups.
+- Added typed frontend service modules in Api_services (client, season-hub, race-detail, race-analysis, unified, coverage) and exported them through a shared index.
+- Synced endpoint and payload coverage with the latest backend document, including coverage persistence endpoints and missing response contracts.
+- Performed strict schema alignment across endpoint contract files to match backend response shapes (readiness, year, meta, and filters_applied patterns).
+- Fixed telemetry overlay query naming to align with backend expectations (driver_a/driver_b).
+- Resolved build blocker in app shell font config by adding supported next/font weight declarations.
+- Resolved Turbopack dev instability by restoring the root app page, setting the Turbopack root in next.config.ts, and clearing stale .next cache output.
+- Fixed strict-pass type regressions (duplicate export and duplicate property), then re-ran production build successfully.
 
 Current state:
 - B1 complete.
+- B2 complete.
 - MVP architecture now includes Race Replay in v1 scope.
-- No UI pages yet (intended for this phase).
-- No reusable UI components yet (intended for this phase).
-- API scaffold remains empty and ready for B2 route implementation.
+- Root page is restored for stable dev/runtime routing.
+- API scaffold is fully implemented and type-checked.

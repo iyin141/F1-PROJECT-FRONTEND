@@ -35,7 +35,7 @@ export function getPracticeResults(
 export function getRaceWeather(
   year: number,
   round: number,
-  session: AnalysisSessionName = "Race",
+  session: AnalysisSessionName = "R",
 ): Promise<UnifiedWeatherResponse> {
   return getJson<UnifiedWeatherResponse>(
     withQuery(`/api/unified/races/${year}/${round}/weather/`, { session }),
@@ -45,7 +45,7 @@ export function getRaceWeather(
 export function getRaceIncidents(
   year: number,
   round: number,
-  session: AnalysisSessionName = "Race",
+  session: AnalysisSessionName = "R",
 ): Promise<UnifiedIncidentsResponse> {
   return getJson<UnifiedIncidentsResponse>(
     withQuery(`/api/unified/races/${year}/${round}/incidents/`, { session }),

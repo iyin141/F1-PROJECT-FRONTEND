@@ -1,17 +1,31 @@
-import type { F1DriverRef } from "@/types/api";
+import type { ReadinessChecklist } from "@/types/api";
 
 // Endpoint 3: GET /api/races/<year>/<round>/results/
+export type QualifyingResultRow = {
+  position: number;
+  driver_name: string;
+  constructor: string;
+  grid: number;
+  time: string | null;
+};
+
 export type RaceResultRow = {
   position: number;
-  driver: F1DriverRef;
+  driver_name: string;
   constructor: string;
+  grid: number;
+  laps: number;
+  status: string;
+  time: string | null;
   points: number;
-  winner: boolean;
 };
 
 export type RaceResultsResponse = {
-  season: number;
+  year: number;
   round: number;
-  raceName: string;
-  results: RaceResultRow[];
+  results: {
+    qualifying: QualifyingResultRow[];
+    race: RaceResultRow[];
+  };
+  readiness: ReadinessChecklist;
 };

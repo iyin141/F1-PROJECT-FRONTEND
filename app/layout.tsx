@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, DM_Mono, DM_Sans } from "next/font/google";
 
-import { ThemeProvider } from "@/_Stores/ThemeProvider";
+import { QueryProvider } from "@/_Stores/QueryProvider";
 
 import "./globals.css";
 
@@ -40,7 +40,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full bg-background text-foreground">
-        <ThemeProvider>{children}</ThemeProvider>
+        <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
   );

@@ -5,16 +5,13 @@ export type UnifiedPositionRow = {
   lap: number;
   driver: string;
   position: number;
-  gap_to_leader: number;
-  gap_to_next: number;
+  time_of_day?: string;
+  gap_to_leader?: string | number;
+  gap_to_next?: string | number;
 };
 
 export type UnifiedPositionsResponse = {
-  meta: ResponseMeta & { session: AnalysisSessionName };
-  filters: ResponseFilters & {
-    session: AnalysisSessionName;
-    driver?: string | null;
-    limit?: number;
-  };
+  meta: ResponseMeta & { session: AnalysisSessionName; row_count?: number };
+  filters_applied?: ResponseFilters;
   data: UnifiedPositionRow[];
 };

@@ -1124,11 +1124,59 @@
         </div>
         <span class="build-tag btag-purple">Done</span>
       </div>
+      <div class="build-item b-red">
+        <div class="build-num">10</div>
+        <div>
+          <div class="build-title">Implemented full B2 API route layer</div>
+          <div class="build-desc">Added Next.js app/api route handlers for the full MVP endpoint families across core, analysis, unified, and coverage groups so all frontend data paths are available through the BFF layer.</div>
+        </div>
+        <span class="build-tag btag-red">Done</span>
+      </div>
+      <div class="build-item b-blue">
+        <div class="build-num">11</div>
+        <div>
+          <div class="build-title">Added typed service modules for all endpoint groups</div>
+          <div class="build-desc">Built Api_services client and feature service modules (season hub, race detail, race analysis, unified, coverage) with typed request helpers and barrel exports for consistent frontend consumption.</div>
+        </div>
+        <span class="build-tag btag-blue">Done</span>
+      </div>
+      <div class="build-item b-purple">
+        <div class="build-num">12</div>
+        <div>
+          <div class="build-title">Synced contracts with updated backend documentation</div>
+          <div class="build-desc">Expanded endpoint/type coverage to include newly documented datasets and persistence routes, then aligned payload conventions across files, including readiness, meta, year, and filters_applied structures.</div>
+        </div>
+        <span class="build-tag btag-purple">Done</span>
+      </div>
+      <div class="build-item b-red">
+        <div class="build-num">13</div>
+        <div>
+          <div class="build-title">Fixed telemetry overlay request parameter mismatch</div>
+          <div class="build-desc">Updated overlay query handling to use backend-compatible driver_a and driver_b naming, ensuring dual-driver telemetry requests resolve correctly.</div>
+        </div>
+        <span class="build-tag btag-red">Done</span>
+      </div>
+      <div class="build-item b-blue">
+        <div class="build-num">14</div>
+        <div>
+          <div class="build-title">Stabilized build and dev runtime configuration</div>
+          <div class="build-desc">Resolved next/font configuration failure by setting valid font weights, restored the root page endpoint, set Turbopack root configuration, and cleared stale .next output after panic loops.</div>
+        </div>
+        <span class="build-tag btag-blue">Done</span>
+      </div>
+      <div class="build-item b-purple">
+        <div class="build-num">15</div>
+        <div>
+          <div class="build-title">Completed strict type pass and verified build success</div>
+          <div class="build-desc">Ran strict schema alignment for endpoint contracts, fixed follow-up type regressions (duplicate export and duplicate property), and confirmed production build completes successfully.</div>
+        </div>
+        <span class="build-tag btag-purple">Done</span>
+      </div>
     </div>
 
     <div class="guide-box green" style="margin-top: 1.25rem;">
-      <div class="guide-title green">B1 Check</div>
-      <div class="guide-text">B1 is complete: foundation shell is in place, locked dependencies are installed, and typed contracts for the MVP endpoint set are present. Page/UI content remains intentionally absent, which is correct for this phase.</div>
+      <div class="guide-title green">B1 + B2 Check</div>
+      <div class="guide-text">B1 and B2 are complete: foundation shell is in place, locked dependencies are installed, full BFF route coverage is implemented, typed service modules are wired, endpoint contracts are synced to backend documentation, and the production build is passing.</div>
     </div>
   </section>
 

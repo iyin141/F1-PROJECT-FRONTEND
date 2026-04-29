@@ -1,18 +1,17 @@
-import type { F1DriverRef, NumericString } from "@/types/api";
+import type { ReadinessChecklist } from "@/types/api";
 
 // Endpoint 4: GET /api/races/<year>/<round>/qualifying/
-export type QualifyingResultRow = {
+export type QualifyingOnlyResultRow = {
   position: number;
-  driver: F1DriverRef;
-  q1_time: NumericString | null;
-  q2_time: NumericString | null;
-  q3_time: NumericString | null;
-  grid_position: number;
+  driver_name: string;
+  constructor: string;
+  grid: number;
+  time: string | null;
 };
 
 export type QualifyingResultsResponse = {
-  season: number;
+  year: number;
   round: number;
-  raceName: string;
-  results: QualifyingResultRow[];
+  results: QualifyingOnlyResultRow[];
+  readiness: ReadinessChecklist;
 };

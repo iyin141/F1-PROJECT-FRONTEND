@@ -8,15 +8,13 @@ export type UnifiedIncidentRow = {
   time: string;
   driver: string | null;
   message: string;
-  category: string;
-  severity: IncidentSeverity;
+  type?: string;
+  category?: string;
+  severity?: IncidentSeverity;
 };
 
 export type UnifiedIncidentsResponse = {
-  meta: ResponseMeta & { session: AnalysisSessionName };
-  filters: ResponseFilters & {
-    session: AnalysisSessionName;
-    limit?: number;
-  };
+  meta: ResponseMeta & { session: AnalysisSessionName; row_count?: number };
+  filters?: ResponseFilters;
   data: UnifiedIncidentRow[];
 };

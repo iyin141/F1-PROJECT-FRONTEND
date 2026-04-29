@@ -2,7 +2,7 @@ import type { AnalysisSessionName, ResponseFilters, ResponseMeta } from "@/types
 
 // Endpoint 17: GET /api/unified/races/<year>/<round>/weather/
 export type UnifiedWeatherRow = {
-  lap: number;
+  time?: string;
   air_temp: number;
   track_temp: number;
   humidity: number;
@@ -14,12 +14,9 @@ export type UnifiedWeatherRow = {
 
 export type UnifiedWeatherResponse = {
   meta: ResponseMeta & {
+    row_count?: number;
     session: AnalysisSessionName;
-    timestamp?: string;
   };
-  filters: ResponseFilters & {
-    session: AnalysisSessionName;
-    limit?: number;
-  };
+  filters?: ResponseFilters;
   data: UnifiedWeatherRow[];
 };

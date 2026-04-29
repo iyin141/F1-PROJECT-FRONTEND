@@ -10,23 +10,34 @@ export type UnifiedIncludeType =
   | "track_status";
 
 export type UnifiedCacheStats = {
-  hits: number;
-  misses: number;
-  hit_rate: number;
+  cached_sessions?: number;
+  hits?: number;
+  misses?: number;
+  hit_rate?: number;
+  hit_rate_percent?: number;
 };
 
 // Endpoint 16: GET /api/unified/races/<year>/<round>/full-session/
 export type FullSessionResponse = {
   meta: ResponseMeta & {
+    year: number;
+    round: number;
     session: AnalysisSessionName;
-    cache_hit: boolean;
+    requested_types?: UnifiedIncludeType[];
     cache_stats: UnifiedCacheStats;
   };
-  filters: ResponseFilters & {
-    included_types: UnifiedIncludeType[];
-    session: AnalysisSessionName;
-    driver?: string | null;
-    limit?: number;
-  };
-  data: Record<UnifiedIncludeType, unknown[] | undefined>;
+  filters?: ResponseFilters;
+  data: Partial<
+    Record<
+      UnifiedIncludeType,
+      {
+        meta?: {
+          row_count?: number;
+        };
+        data?: unknown[];
+        error?: string;
+        status?: "failed" | "partial" | "ok";
+      }
+    >
+  >;
 };

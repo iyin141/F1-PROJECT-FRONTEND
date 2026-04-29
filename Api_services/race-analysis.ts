@@ -17,12 +17,6 @@ type BaseAnalysisQuery = {
   limit?: number;
 };
 
-type RaceOnlyQuery = {
-  session: "Race";
-  driver?: string;
-  limit?: number;
-};
-
 export function getLapsAnalysis(
   year: number,
   round: number,
@@ -36,7 +30,7 @@ export function getLapsAnalysis(
 export function getStintsAnalysis(
   year: number,
   round: number,
-  query: RaceOnlyQuery,
+  query: BaseAnalysisQuery,
 ): Promise<StintsAnalysisResponse> {
   return getJson<StintsAnalysisResponse>(
     withQuery(`/api/analysis/races/${year}/${round}/stints/`, query),
@@ -56,7 +50,7 @@ export function getPaceAnalysis(
 export function getTyreStrategyAnalysis(
   year: number,
   round: number,
-  query: Pick<RaceOnlyQuery, "session" | "driver">,
+  query: BaseAnalysisQuery,
 ): Promise<TyreStrategyResponse> {
   return getJson<TyreStrategyResponse>(
     withQuery(`/api/analysis/races/${year}/${round}/tyre-strategy/`, query),
@@ -66,12 +60,7 @@ export function getTyreStrategyAnalysis(
 export function getSectorAnalysis(
   year: number,
   round: number,
-  query: {
-    session: "Race" | "Qualifying";
-    driver?: string;
-    sector_start?: 1 | 2 | 3;
-    sector_end?: 1 | 2 | 3;
-  },
+  query: BaseAnalysisQuery,
 ): Promise<SectorAnalysisResponse> {
   return getJson<SectorAnalysisResponse>(
     withQuery(`/api/analysis/races/${year}/${round}/sector-analysis/`, query),
@@ -99,9 +88,9 @@ export function getTelemetryOverlay(
   round: number,
   query: {
     session: AnalysisSessionName;
-    driver1: string;
-    driver2: string;
-    lap: number;
+    driver_a: string;
+    driver_b: string;
+    lap?: number;
     limit_points?: number;
     stride?: number;
   },
@@ -117,7 +106,9 @@ export function getTelemetrySummary(
   query: {
     session: AnalysisSessionName;
     driver: string;
-    lap?: number;
+    lap: number;
+    lap_range?: number;
+    limit_points?: number;
   },
 ): Promise<TelemetrySummaryResponse> {
   return getJson<TelemetrySummaryResponse>(

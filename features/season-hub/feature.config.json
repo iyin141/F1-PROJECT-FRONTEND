@@ -1,0 +1,7 @@
+{
+  "name": "season-hub",
+  "route": "/races/[year]",
+  "description": "Season hub UI: calendar, standings, filters",
+  "owner": "frontend@yourteam",
+  "status": "scaffolded"
+}

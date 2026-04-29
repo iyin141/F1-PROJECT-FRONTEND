@@ -1,15 +1,16 @@
-import type { F1DriverRef } from "@/types/api";
+import type { ReadinessChecklist } from "@/types/api";
 
 // Endpoint 6: GET /api/drivers/<year>/
 export type DriverStandingRow = {
   position: number;
   points: number;
   wins: number;
-  driver: F1DriverRef;
+  driver_name: string;
   constructor: string;
 };
 
 export type DriverStandingsResponse = {
-  season: number;
+  year: number;
   standings: DriverStandingRow[];
+  readiness: ReadinessChecklist;
 };

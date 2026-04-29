@@ -4,17 +4,16 @@ import type { AnalysisSessionName, ResponseFilters, ResponseMeta } from "@/types
 export type UnifiedDrsRow = {
   lap: number;
   driver: string;
-  drs_available: boolean;
-  drs_engaged: boolean;
-  drs_detection_lap: number | null;
+  time?: string;
+  drs_zone?: number;
+  status?: string;
+  drs_available?: boolean;
+  drs_engaged?: boolean;
+  drs_detection_lap?: number | null;
 };
 
 export type UnifiedDrsResponse = {
-  meta: ResponseMeta & { session: AnalysisSessionName };
-  filters: ResponseFilters & {
-    session: AnalysisSessionName;
-    driver?: string | null;
-    limit?: number;
-  };
+  meta: ResponseMeta & { session: AnalysisSessionName; row_count?: number };
+  filters?: ResponseFilters;
   data: UnifiedDrsRow[];
 };
