@@ -1,4 +1,4 @@
-import { getJson, withQuery } from "@/Api_services/client";
+import { getJson, withQuery, clampYear } from "@/Api_services/client";
 import type { AnalysisSessionName } from "@/types/api";
 import type {
   LapsAnalysisResponse,
@@ -23,7 +23,7 @@ export function getLapsAnalysis(
   query: BaseAnalysisQuery,
 ): Promise<LapsAnalysisResponse> {
   return getJson<LapsAnalysisResponse>(
-    withQuery(`/api/analysis/races/${year}/${round}/laps/`, query),
+    withQuery(`/api/analysis/races/${clampYear(year)}/${round}/laps/`, query),
   );
 }
 
@@ -33,7 +33,7 @@ export function getStintsAnalysis(
   query: BaseAnalysisQuery,
 ): Promise<StintsAnalysisResponse> {
   return getJson<StintsAnalysisResponse>(
-    withQuery(`/api/analysis/races/${year}/${round}/stints/`, query),
+    withQuery(`/api/analysis/races/${clampYear(year)}/${round}/stints/`, query),
   );
 }
 
@@ -43,7 +43,7 @@ export function getPaceAnalysis(
   query: BaseAnalysisQuery,
 ): Promise<PaceAnalysisResponse> {
   return getJson<PaceAnalysisResponse>(
-    withQuery(`/api/analysis/races/${year}/${round}/pace/`, query),
+    withQuery(`/api/analysis/races/${clampYear(year)}/${round}/pace/`, query),
   );
 }
 
@@ -53,7 +53,7 @@ export function getTyreStrategyAnalysis(
   query: BaseAnalysisQuery,
 ): Promise<TyreStrategyResponse> {
   return getJson<TyreStrategyResponse>(
-    withQuery(`/api/analysis/races/${year}/${round}/tyre-strategy/`, query),
+    withQuery(`/api/analysis/races/${clampYear(year)}/${round}/tyre-strategy/`, query),
   );
 }
 
@@ -63,7 +63,7 @@ export function getSectorAnalysis(
   query: BaseAnalysisQuery,
 ): Promise<SectorAnalysisResponse> {
   return getJson<SectorAnalysisResponse>(
-    withQuery(`/api/analysis/races/${year}/${round}/sector-analysis/`, query),
+    withQuery(`/api/analysis/races/${clampYear(year)}/${round}/sector-analysis/`, query),
   );
 }
 
@@ -79,7 +79,7 @@ export function getTelemetry(
   },
 ): Promise<TelemetryResponse> {
   return getJson<TelemetryResponse>(
-    withQuery(`/api/analysis/races/${year}/${round}/telemetry/`, query),
+    withQuery(`/api/analysis/races/${clampYear(year)}/${round}/telemetry/`, query),
   );
 }
 
@@ -96,7 +96,7 @@ export function getTelemetryOverlay(
   },
 ): Promise<TelemetryOverlayResponse> {
   return getJson<TelemetryOverlayResponse>(
-    withQuery(`/api/analysis/races/${year}/${round}/telemetry/overlay/`, query),
+    withQuery(`/api/analysis/races/${clampYear(year)}/${round}/telemetry/overlay/`, query),
   );
 }
 
@@ -112,6 +112,6 @@ export function getTelemetrySummary(
   },
 ): Promise<TelemetrySummaryResponse> {
   return getJson<TelemetrySummaryResponse>(
-    withQuery(`/api/analysis/races/${year}/${round}/telemetry/summary/`, query),
+    withQuery(`/api/analysis/races/${clampYear(year)}/${round}/telemetry/summary/`, query),
   );
 }

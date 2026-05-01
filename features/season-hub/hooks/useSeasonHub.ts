@@ -1,4 +1,5 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { useQuery, useQueries } from "@tanstack/react-query";
 
 import {
   getSeasonSchedule,
@@ -13,6 +14,33 @@ export function useSeasonSchedule(year: number) {
     queryFn: () => getSeasonSchedule(year),
     ...cacheConfig.activeSeason,
   });
+}
+
+export function useSeasonScheduleFallback(baseYear: number) {
+  const years = useMemo(
+    () => [baseYear, baseYear - 1, baseYear + 1, baseYear - 2],
+    [baseYear],
+  );
+
+  const results = useQueries({
+    queries: years.map((year) => ({
+      queryKey: queryKeys.races.all(year),
+      queryFn: () => getSeasonSchedule(year),
+      ...cacheConfig.activeSeason,
+    })),
+  });
+
+  const selectedIndex = results.findIndex((q) => (q.data?.races?.length ?? 0) > 0);
+  const selected = selectedIndex >= 0 ? results[selectedIndex]?.data : undefined;
+
+  return {
+    years,
+    queries: results,
+    data: selected,
+    selectedYear: selected?.year,
+    isLoading: results.some((q) => q.isPending),
+    isError: results.some((q) => q.isError),
+  };
 }
 
 export function useDriverStandings(year: number) {
@@ -32,54 +60,8 @@ export function useConstructorStandings(year: number) {
 }
 
 // ---------------------------------------------------------------------------
-// Theme hook
-// Reads/writes the theme stored in the TanStack cache.
-// staleTime: Infinity — never refetches. setQueryData is the only way to mutate.
+// Theme hook — re-exported from canonical location
 // ---------------------------------------------------------------------------
 
-import type { ThemeMode, ResolvedTheme } from "@/types/theme";
-import { DEFAULT_THEME, THEME_STORAGE_KEY, isThemeMode, resolveTheme } from "@/Lib/theme";
-
-function getSystemTheme(): ResolvedTheme {
-  if (typeof window === "undefined") return "dark";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
-export function useTheme() {
-  const queryClient = useQueryClient();
-
-  const { data: themeMode = DEFAULT_THEME } = useQuery<ThemeMode>({
-    queryKey: queryKeys.theme.root(),
-    queryFn: () => {
-      const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-      return isThemeMode(stored) ? stored : DEFAULT_THEME;
-    },
-    staleTime: Infinity,
-    gcTime: Infinity,
-  });
-
-  const resolvedTheme = resolveTheme(themeMode, getSystemTheme());
-
-  function setTheme(next: ThemeMode) {
-    window.localStorage.setItem(THEME_STORAGE_KEY, next);
-    queryClient.setQueryData(queryKeys.theme.root(), next);
-    const resolved = resolveTheme(next, getSystemTheme());
-    document.documentElement.dataset.theme = resolved;
-    document.documentElement.style.colorScheme = resolved;
-  }
-
-  function toggleTheme() {
-    if (themeMode === "system") {
-      setTheme(getSystemTheme() === "dark" ? "light" : "dark");
-    } else {
-      setTheme(themeMode === "dark" ? "light" : "dark");
-    }
-  }
-
-  return {
-    theme: themeMode,
-    resolvedTheme,
-    setTheme,
-    toggleTheme,
-  };
-}
+/** @deprecated Import useTheme from "@/Lib/hooks/useTheme" instead. */
+export { useTheme } from "@/Lib/hooks/useTheme";

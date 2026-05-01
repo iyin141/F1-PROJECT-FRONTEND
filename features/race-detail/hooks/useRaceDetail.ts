@@ -16,26 +16,29 @@ import {
 import { cacheConfig, queryKeys } from "@/Lib/queryKeys";
 import type { PracticeSessionName } from "@/types/api";
 
-export function useRaceDetail(year: number, round: number) {
+export function useRaceDetail(year: number, round: number, enabled = true) {
   return useQuery({
     queryKey: queryKeys.races.detail(year, round),
     queryFn: () => getRaceDetail(year, round),
+    enabled,
     ...cacheConfig.historical,
   });
 }
 
-export function useRaceResults(year: number, round: number) {
+export function useRaceResults(year: number, round: number, enabled = true) {
   return useQuery({
     queryKey: queryKeys.races.results(year, round),
     queryFn: () => getRaceResults(year, round),
+    enabled,
     ...cacheConfig.historical,
   });
 }
 
-export function useQualifyingResults(year: number, round: number) {
+export function useQualifyingResults(year: number, round: number, enabled = true) {
   return useQuery({
     queryKey: queryKeys.races.qualifying(year, round),
     queryFn: () => getQualifyingResults(year, round),
+    enabled,
     ...cacheConfig.historical,
   });
 }
@@ -44,26 +47,30 @@ export function usePracticeResults(
   year: number,
   round: number,
   session: PracticeSessionName,
+  enabled = true,
 ) {
   return useQuery({
     queryKey: queryKeys.races.practice(year, round, session),
     queryFn: () => getPracticeResults(year, round, session),
+    enabled,
     ...cacheConfig.historical,
   });
 }
 
-export function useRaceWeather(year: number, round: number) {
+export function useRaceWeather(year: number, round: number, enabled = true) {
   return useQuery({
     queryKey: queryKeys.unified.weather(year, round),
     queryFn: () => getRaceWeather(year, round, "R"),
+    enabled,
     ...cacheConfig.historical,
   });
 }
 
-export function useRaceIncidents(year: number, round: number) {
+export function useRaceIncidents(year: number, round: number, enabled = true) {
   return useQuery({
     queryKey: queryKeys.unified.incidents(year, round),
     queryFn: () => getRaceIncidents(year, round, "R"),
+    enabled,
     ...cacheConfig.historical,
   });
 }

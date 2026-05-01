@@ -1,4 +1,4 @@
-import { getJson, withQuery } from "@/Api_services/client";
+import { getJson, withQuery, clampYear } from "@/Api_services/client";
 import type { AnalysisSessionName } from "@/types/api";
 import type {
   FullSessionResponse,
@@ -26,7 +26,7 @@ export function getFullSession(
   },
 ): Promise<FullSessionResponse> {
   return getJson<FullSessionResponse>(
-    withQuery(`/api/unified/races/${year}/${round}/full-session/`, {
+    withQuery(`/api/unified/races/${clampYear(year)}/${round}/full-session/`, {
       include: toIncludeValue(query.include),
       session: query.session,
       driver: query.driver,
@@ -44,7 +44,7 @@ export function getUnifiedWeather(
   },
 ): Promise<UnifiedWeatherResponse> {
   return getJson<UnifiedWeatherResponse>(
-    withQuery(`/api/unified/races/${year}/${round}/weather/`, query),
+    withQuery(`/api/unified/races/${clampYear(year)}/${round}/weather/`, query),
   );
 }
 
@@ -58,7 +58,7 @@ export function getUnifiedPitStops(
   },
 ): Promise<UnifiedPitStopsResponse> {
   return getJson<UnifiedPitStopsResponse>(
-    withQuery(`/api/unified/races/${year}/${round}/pit-stops/`, query),
+    withQuery(`/api/unified/races/${clampYear(year)}/${round}/pit-stops/`, query),
   );
 }
 
@@ -71,7 +71,7 @@ export function getUnifiedIncidents(
   },
 ): Promise<UnifiedIncidentsResponse> {
   return getJson<UnifiedIncidentsResponse>(
-    withQuery(`/api/unified/races/${year}/${round}/incidents/`, query),
+    withQuery(`/api/unified/races/${clampYear(year)}/${round}/incidents/`, query),
   );
 }
 
@@ -85,7 +85,7 @@ export function getUnifiedPositions(
   },
 ): Promise<UnifiedPositionsResponse> {
   return getJson<UnifiedPositionsResponse>(
-    withQuery(`/api/unified/races/${year}/${round}/positions/`, query),
+    withQuery(`/api/unified/races/${clampYear(year)}/${round}/positions/`, query),
   );
 }
 
@@ -99,7 +99,7 @@ export function getUnifiedDrs(
   },
 ): Promise<UnifiedDrsResponse> {
   return getJson<UnifiedDrsResponse>(
-    withQuery(`/api/unified/races/${year}/${round}/drs/`, query),
+    withQuery(`/api/unified/races/${clampYear(year)}/${round}/drs/`, query),
   );
 }
 
@@ -112,6 +112,6 @@ export function getUnifiedTrackStatus(
   },
 ): Promise<UnifiedTrackStatusResponse> {
   return getJson<UnifiedTrackStatusResponse>(
-    withQuery(`/api/unified/races/${year}/${round}/track-status/`, query),
+    withQuery(`/api/unified/races/${clampYear(year)}/${round}/track-status/`, query),
   );
 }

@@ -93,6 +93,22 @@ export function useDriverStints(
   });
 }
 
+export function useAllLaps(year: number, round: number) {
+  return useQuery({
+    queryKey: queryKeys.analysis.laps(year, round, undefined),
+    queryFn: () => getLapsAnalysis(year, round, { session: "R" }),
+    ...cacheConfig.historical,
+  });
+}
+
+export function useAllStints(year: number, round: number) {
+  return useQuery({
+    queryKey: queryKeys.analysis.stints(year, round, undefined),
+    queryFn: () => getStintsAnalysis(year, round, { session: "R" }),
+    ...cacheConfig.historical,
+  });
+}
+
 export function useDriverSectors(
   year: number,
   round: number,

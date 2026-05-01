@@ -1,5 +1,10 @@
 import type { ApiErrorResponse } from "@/types/api";
 
+/** Prevents requests for future years that the backend cannot serve. */
+export function clampYear(year: number): number {
+  return Math.min(year, new Date().getFullYear());
+}
+
 function extractErrorMessage(payload: unknown, status: number): string {
   if (payload && typeof payload === "object") {
     const typedPayload = payload as Partial<ApiErrorResponse> & {

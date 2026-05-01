@@ -1,119 +1,244 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap");
+
 @import "tailwindcss";
 
-:root {
-  color-scheme: dark;
-  --background: #050608;
-  --foreground: #f5f7fb;
-  --surface: #0d1117;
-  --surface-elevated: #131a26;
-  --surface-muted: #090d14;
-  --border: rgba(255, 255, 255, 0.1);
-  --border-strong: rgba(255, 255, 255, 0.16);
-  --muted: #95a0b5;
-  --accent: #e10600;
-  --accent-soft: rgba(225, 6, 0, 0.18);
-  --accent-glow: rgba(225, 6, 0, 0.28);
-  --ring: rgba(225, 6, 0, 0.46);
-}
+/* F1 CONTROL ROOM — Design Tokens
+  All colors HSL. Light and dark themes share the same semantic tokens. */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-surface: var(--surface);
-  --color-surface-elevated: var(--surface-elevated);
-  --color-surface-muted: var(--surface-muted);
-  --color-border: var(--border);
-  --color-border-strong: var(--border-strong);
-  --color-muted: var(--muted);
-  --color-accent: var(--accent);
-  --color-accent-soft: var(--accent-soft);
-  --color-accent-glow: var(--accent-glow);
-  --color-ring: var(--ring);
-  --font-sans: var(--font-body-font);
-  --font-mono: var(--font-code-font);
-  --font-display: var(--font-display-font);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    color-scheme: dark;
+    /* Surfaces */
+    --bg: 0 0% 98%; /* #FAFAFA */
+    --panel: 0 0% 100%; /* #FFFFFF */
+    --panel-elev: 0 0% 96%; /* #F5F5F5 */
+    --border-subtle: 0 0% 87%; /* #DEDEDE */
+    --border: 0 0% 78%; /* #C7C7C7 */
+
+    /* Text */
+    --text: 0 0% 8%; /* #141414 */
+    --text-dim: 0 0% 32%; /* #525252 */
+    --muted: 0 0% 46%; /* #757575 */
+    --muted-2: 0 0% 58%; /* #949494 */
+
+    /* Brand / signal */
+    --red: 351 100% 45%; /* #E8002D */
+    --red-dim: 351 100% 45%;
+    --green: 142 71% 45%;
+    --amber: 38 92% 50%;
+    --blue: 211 100% 50%;
+
+    /* Compatibility color aliases */
+    --black: #0a0a0a;
+    --surface: #ffffff;
+    --surface2: #f4f4f4;
+    --surface3: #ebebeb;
+    --dim: #9a9a9a;
+    --yellow: #ffd700;
+    --purple: #aa00ff;
+    --track-stroke: #9a9a9a;
+    --ghost-car: rgba(0, 0, 0, 0.035);
+    --nav-bg: rgba(255, 255, 255, 0.88);
+    --nav-border: rgba(0, 0, 0, 0.09);
+    --nav-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    --card-flag-overlay-rgb: 255, 255, 255;
+    --soft: #ff3333;
+    --medium: #ffd700;
+    --hard: #cccccc;
+    --inter: #39b54a;
+    --wet: #0067ff;
+    --safety-car: #ffb800;
+    --vsc: #ff6b00;
+    --dnf: #444444;
+
+    /* Tyre compounds */
+    --tyre-soft: 0 84% 55%;
+    --tyre-medium: 48 96% 53%;
+    --tyre-hard: 0 0% 92%;
+    --tyre-inter: 142 71% 45%;
+    --tyre-wet: 211 100% 50%;
+
+    /* Position tints */
+    --pos-p1: 48 96% 53%; /* gold */
+    --pos-p2: 0 0% 75%; /* silver */
+    --pos-p3: 28 67% 47%; /* bronze */
+    --pos-points: 0 0% 40%;
+    --pos-rest: 0 0% 55%;
+
+    /* Shadcn semantic mappings */
+    --background: var(--bg);
+    --foreground: var(--text);
+    --card: var(--panel);
+    --card-foreground: var(--text);
+    --popover: var(--panel-elev);
+    --popover-foreground: var(--text);
+    --primary: var(--red);
+    --primary-foreground: 0 0% 100%;
+    --secondary: var(--panel-elev);
+    --secondary-foreground: var(--text);
+    --muted-foreground: var(--text-dim);
+    --accent: var(--panel-elev);
+    --accent-foreground: var(--text);
+    --destructive: var(--red);
+    --destructive-foreground: 0 0% 100%;
+    --input: var(--border);
+    --ring: var(--red);
+    --radius: 0.25rem;
+
+    /* Sidebar */
+    --sidebar-background: var(--panel);
+    --sidebar-foreground: var(--text);
+    --sidebar-primary: var(--red);
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: var(--panel-elev);
+    --sidebar-accent-foreground: var(--text);
+    --sidebar-border: var(--border-subtle);
+    --sidebar-ring: var(--red);
+
+    /* Team palette (HSL of common F1 team colors) */
+    --team-red-bull: 220 100% 19%;
+    --team-ferrari: 358 100% 50%;
+    --team-mercedes: 168 88% 39%;
+    --team-mclaren: 26 100% 50%;
+    --team-aston-martin: 165 100% 22%;
+    --team-alpine: 210 100% 50%;
+    --team-williams: 217 100% 36%;
+    --team-rb: 222 80% 33%;
+    --team-haas: 0 0% 90%;
+    --team-sauber: 122 100% 39%;
+
+    /* Typography */
+    --font-display: "Inter", system-ui, -apple-system, sans-serif;
+    --font-mono: "DM Mono", "JetBrains Mono", monospace;
+  }
+
+  .dark {
+    /* Surfaces */
+    --bg: 0 0% 4%; /* #0A0A0A */
+    --panel: 0 0% 7%; /* #121212 */
+    --panel-elev: 0 0% 10%; /* #1A1A1A */
+    --border-subtle: 0 0% 16%; /* #2A2A2A */
+    --border: 0 0% 20%; /* #333 */
+
+    /* Text */
+    --text: 0 0% 96%; /* #F5F5F5 */
+    --text-dim: 0 0% 67%; /* #AAA */
+    --muted: 0 0% 40%; /* #666 */
+    --muted-2: 0 0% 33%; /* #555 */
+
+    /* Compatibility color aliases */
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --surface3: #222222;
+    --dim: #444444;
+    --track-stroke: #333333;
+    --ghost-car: rgba(255, 255, 255, 0.024);
+    --nav-bg: rgba(10, 10, 10, 0.8);
+    --nav-border: rgba(255, 255, 255, 0.1);
+    --nav-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+    --card-flag-overlay-rgb: 17, 17, 17;
+
+    /* Position tints */
+    --pos-points: 0 0% 67%;
+    --pos-rest: 0 0% 33%;
   }
 }
 
-:root[data-theme="light"] {
-  color-scheme: light;
-  --background: #f3f5f9;
-  --foreground: #10151d;
-  --surface: #ffffff;
-  --surface-elevated: #f6f8fc;
-  --surface-muted: #eef1f7;
-  --border: rgba(16, 21, 29, 0.1);
-  --border-strong: rgba(16, 21, 29, 0.16);
-  --muted: #5d687c;
-  --accent: #d40000;
-  --accent-soft: rgba(212, 0, 0, 0.12);
-  --accent-glow: rgba(212, 0, 0, 0.2);
-  --ring: rgba(212, 0, 0, 0.34);
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-display);
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  ::selection {
+    background: hsl(var(--red) / 0.4);
+  }
+
+  /* Dense scrollbars */
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--bg));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 0;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted));
+  }
 }
 
-html {
-  min-height: 100%;
-  background: var(--background);
-}
+@layer utilities {
+  .page-shell {
+    margin-inline: auto;
+    padding-inline: clamp(1rem, 3vw, 2rem);
+    padding-block: clamp(1rem, 3vw, 2rem);
+  }
 
-body {
-  min-height: 100%;
-  background:
-    radial-gradient(circle at 15% 15%, rgba(225, 6, 0, 0.16), transparent 28%),
-    radial-gradient(
-      circle at 85% 5%,
-      rgba(255, 255, 255, 0.05),
-      transparent 24%
-    ),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 30%),
-    var(--background);
-  color: var(--foreground);
-  font-family: var(--font-body-font), sans-serif;
-}
+  .panel-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 
-body::before {
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  content: "";
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 72px 72px;
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.65), transparent 85%);
-  opacity: 0.35;
-}
+  .panel-scroll::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
 
-* {
-  box-sizing: border-box;
-  border-color: var(--border);
-}
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 
-::selection {
-  background: var(--accent);
-  color: #fff;
-}
+  .scrollbar-none::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
+  .data-grid {
+  }
 
-img,
-svg {
-  display: block;
-  max-width: 100%;
-}
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+  .font-display {
+    font-family: var(--font-display);
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
+  /* Shimmer skeleton */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--panel-elev)) 0%,
+      hsl(var(--border)) 50%,
+      hsl(var(--panel-elev)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  /* Mono caps label style — used everywhere */
+  .label-mono {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(var(--muted));
+  }
 }
