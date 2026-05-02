@@ -2,6 +2,25 @@
 
 @import "tailwindcss";
 
+@theme inline {
+  --color-bg: hsl(var(--bg));
+  --color-panel: hsl(var(--panel));
+  --color-panel-elev: hsl(var(--panel-elev));
+  --color-border-subtle: hsl(var(--border-subtle));
+  --color-border: hsl(var(--border));
+  --color-text: hsl(var(--text));
+  --color-text-dim: hsl(var(--text-dim));
+  --color-muted: hsl(var(--muted));
+  --color-muted-2: hsl(var(--muted-2));
+  --color-red: hsl(var(--red));
+  --color-red-dim: hsl(var(--red-dim));
+  --color-green: hsl(var(--green));
+  --color-amber: hsl(var(--amber));
+  --color-blue: hsl(var(--blue));
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
+}
+
 /* F1 CONTROL ROOM — Design Tokens
   All colors HSL. Light and dark themes share the same semantic tokens. */
 
@@ -111,7 +130,7 @@
     --font-mono: "DM Mono", "JetBrains Mono", monospace;
   }
 
-  .dark {
+  :root.dark {
     /* Surfaces */
     --bg: 0 0% 4%; /* #0A0A0A */
     --panel: 0 0% 7%; /* #121212 */
