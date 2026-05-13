@@ -41,16 +41,16 @@ Notable convention from agent guidance:
 The main application follows a layered pattern:
 
 1. Route/UI layer: [app/](app/) + [features/](features/)
-2. Data hooks layer: feature hooks under [features/**/hooks/](features/)
-3. Service layer: [Api_services/](Api_services/)
+2. Data hooks layer: feature hooks under [features/\*\*/hooks/](features/)
+3. Service layer: [actions/](actions/)
 4. API route proxy layer: [app/api/](app/api/)
 5. Backend: Django service behind local base URL
 
 Critical request flow:
 
-1. UI component/hook calls service function from [Api_services/](Api_services/).
-2. Service function fetches frontend route (for example /api/races/2024/...).
-3. Next.js route handler in [app/api/](app/api/) forwards to backend via [app/api/_lib/backend.ts](app/api/_lib/backend.ts).
+1. UI component/hook calls service function from [actions/](actions/).
+2. Service function (or server action) calls backend endpoints directly (via `Lib/server-client`).
+3. Next.js route handler in [app/api/](app/api/) forwards to backend via [app/api/\_lib/backend.ts](app/api/_lib/backend.ts).
 4. Proxy normalizes payload/errors and returns frontend-safe response.
 
 ## 4) Shell, Providers, and App-Wide State
@@ -58,7 +58,7 @@ Critical request flow:
 Core shell:
 
 - [app/layout.tsx](app/layout.tsx): loads fonts, applies global classes, wraps app in Query provider.
-- [_Stores/QueryProvider.tsx](_Stores/QueryProvider.tsx): creates QueryClient, mounts ReactQueryDevtools in development, seeds theme query cache.
+- [\_Stores/QueryProvider.tsx](_Stores/QueryProvider.tsx): creates QueryClient, mounts ReactQueryDevtools in development, seeds theme query cache.
 
 Theme mechanics:
 
@@ -75,7 +75,7 @@ UI foundation:
 
 Proxy utility:
 
-- [app/api/_lib/backend.ts](app/api/_lib/backend.ts)
+- [app/api/\_lib/backend.ts](app/api/_lib/backend.ts)
 
 Responsibilities:
 
@@ -98,11 +98,11 @@ All handlers are dynamic and mostly thin wrappers around proxyBackendGet.
 
 Index export:
 
-- [Api_services/index.ts](Api_services/index.ts)
+- [actions/index.ts](actions/index.ts)
 
 Core utility:
 
-- [Api_services/client.ts](Api_services/client.ts)
+- [Lib/server-client.ts](Lib/server-client.ts)
 
 Service design notes:
 
@@ -112,11 +112,11 @@ Service design notes:
 
 Domain service modules:
 
-- Season hub: [Api_services/season-hub.ts](Api_services/season-hub.ts)
-- Race detail: [Api_services/race-detail.ts](Api_services/race-detail.ts)
-- Race analysis: [Api_services/race-analysis.ts](Api_services/race-analysis.ts)
-- Unified session data: [Api_services/unified.ts](Api_services/unified.ts)
-- Persistence coverage: [Api_services/coverage.ts](Api_services/coverage.ts)
+- Season hub: [actions/season-hub.ts](actions/season-hub.ts)
+- Race detail: [actions/race-detail.ts](actions/race-detail.ts)
+- Race analysis: [actions/race-analysis.ts](actions/race-analysis.ts)
+- Unified session data: [actions/unified.ts](actions/unified.ts)
+- Persistence coverage: [actions/coverage.ts](actions/coverage.ts)
 
 ## 7) Query Strategy and Cache Taxonomy
 
@@ -285,7 +285,7 @@ Priority order for stabilization:
 If you are adding a new feature:
 
 1. Create/extend module in [features/](features/).
-2. Add data calls in [Api_services/](Api_services/).
+2. Add data calls in [actions/](actions/).
 3. Add/extend endpoint response types in [types/endpoints/](types/endpoints/).
 4. Register query keys/cache usage in [Lib/queryKeys.ts](Lib/queryKeys.ts).
 5. Wire route entry in [app/](app/) and keep page-level orchestration thin.
@@ -293,7 +293,7 @@ If you are adding a new feature:
 If you are adding backend endpoint support:
 
 1. Add route handler under [app/api/](app/api/) (proxyBackendGet pattern).
-2. Add typed service function in the appropriate [Api_services/](Api_services/) module.
+2. Add typed service function in the appropriate [actions/](actions/) module.
 3. Add/update endpoint types in [types/endpoints/](types/endpoints/).
 4. Add hook wrapper in owning feature module.
 
@@ -319,3 +319,176 @@ Related documents:
 - [FOLDER_STRUCTURE_JOURNAL.md](FOLDER_STRUCTURE_JOURNAL.md)
 - [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
 - [features/README.md](features/README.md)
+
+## 19) Comprehensive Reference — End-to-End Flow, Runtime, and Dependencies
+
+Purpose: a compact, actionable reference for developers to understand the entire app lifecycle (local dev → build → runtime), where data flows end-to-end, the key code locations to change when adding features, and the full dependency manifest used by the project.
+
+**Quick facts**
+
+- Framework: `Next.js` app router (version ^16.2.4). Turbopack is configured in `next.config.ts`.
+- React: `19.2.4` (concurrent features enabled by Next.js app router).
+- TypeScript: `^5` (strict mode enabled in `tsconfig.json`).
+- Styling: `Tailwind CSS v4` with tokens in `app/globals.css` and `styles/f1-loading.css` for animation helpers.
+
+**Local run / build**
+
+Prerequisites: Node.js (18+ recommended), `npm` (or yarn / pnpm). From the repo root:
+
+```
+npm ci
+npm run dev      # development server
+npm run build    # production build (type-checks, compiles)
+npm start        # run production server after build
+npm run lint     # run eslint
+```
+
+If you change route files or delete `app/api` handlers, remove the `.next` directory before rebuilding to avoid stale generated types: `rm -rf .next` then `npm run build`.
+
+**Environment configuration**
+
+- `NEXT_PUBLIC_API_BASE_URL` — public base URL used by frontend helpers when building proxied fetches (default: `http://localhost:8000/api`). Controlled in `Lib/api/config.ts`.
+- `BACKEND_API_URL` — backend host used when calling backend directly (default: `http://localhost:8000`).
+- `NODE_ENV` — standard Node environment guard for dev/production logic.
+
+No other runtime secrets are embedded in the repository; if you add private keys or tokens, use environment variables injected by your CI/CD provider or local `.env` files excluded from VCS.
+
+**End-to-end request flow (typical page load + data fetch)**
+
+1. Browser navigates to a route in the `app/` tree (for example `/home/2026`).
+2. Next.js server renders the route. Many pages use server components with Suspense streaming; see `app/home/[year]/page.tsx` for an example of streaming composition.
+3. Page shells (server or client) render UI and mount client components where needed. Example client shell: `features/home/HomePageClient.tsx`. Full shell: `features/home/HomePage.tsx`.
+4. UI components request data via feature hooks (under `features/*/hooks/`). Hooks use `@tanstack/react-query` and call typed service functions in `actions/*`.
+5. `actions/*` modules are thin server-action-like wrappers that call `Lib/server-client.ts::serverGetJson()` to fetch JSON. The actions represent the feature-level data contract surface.
+6. `Lib/server-client.ts` builds the final URL from `Lib/api/config.ts` and performs `fetch()` with `cache: 'no-store'` for server-side reads. It returns typed JSON or `{}` on empty/error responses. (This file now includes request/response logging for debugging.)
+7. Depending on configuration, `serverGetJson` targets either the backend directly (`BACKEND_API_URL`) or a Next.js proxy under `app/api/*` which forwards to the backend and normalizes responses.
+8. Backend (Django) responds with JSON; responses are adapted by `Lib/adapters.ts` into UI-friendly shapes and returned through hooks into components.
+9. Components render using React Query caching strategy (see `Lib/queryKeys.ts`) and present data. Loading fallbacks use `components/animations/SectionLoadingAnimations.tsx`.
+
+**Key code locations (quick map)**
+
+- App router / pages: `app/` — route entrypoints, streaming layout composition, route handlers.
+- Feature UI + hooks: `features/<feature>/` — components, hooks, subfeatures. Example features: `season-hub`, `race-detail`, `race-analysis`, `driver-record`.
+- Actions (service layer): `actions/` — `actions/season-hub.ts`, `actions/race-detail.ts`, `actions/race-analysis.ts`, `actions/unified.ts`, `actions/driver-record.ts`, plus `actions/index.ts` barrel.
+- Request primitive: `Lib/server-client.ts` — the centralized request helper and logging insertion point.
+- Adapters & utilities: `Lib/adapters.ts`, `Lib/queryKeys.ts`, `Lib/prefetch.ts`, `Lib/site.ts`, `Lib/theme.ts`.
+- Shared UI: `components/` — `Panel.tsx`, `F1LoadingState.tsx`, `ui/YearNavigator.tsx`, animation fallbacks in `components/animations/SectionLoadingAnimations.tsx`.
+- Types: `types/` and `types/endpoints/` — typed endpoint contracts and UI types.
+- Static assets: `public/` and `public/circuits`.
+
+**Suspense & loading fallbacks**
+
+- App-level streaming is used in many pages; Suspense fallbacks are wired to shared animation components under `components/animations/SectionLoadingAnimations.tsx` and lightweight loading state components like `components/ui/F1LoadingState.tsx`.
+- Loading fallbacks are used in `app/*/loading.tsx` and as inline `Suspense` `fallback` props for sections.
+
+**Dependencies (from `package.json`)**
+
+Core runtime:
+
+- `next` ^16.2.4 — App Router, Server Components, Turbopack support. Primary framework.
+- `react` 19.2.4 / `react-dom` 19.2.4 — UI library.
+
+Data + app state:
+
+- `@tanstack/react-query` ^5.100.6 — data fetching and cache.
+- `@tanstack/react-query-devtools` ^5.100.6 — devtools for caching.
+- `@tanstack/query-async-storage-persister`, `@tanstack/react-query-persist-client` ^5.100.x — optional persistence helpers.
+- `@supabase/supabase-js` ^2.103.3 — optional persistence/analytics (used where persisting to async storage is needed).
+
+UI primitives & animation:
+
+- `@radix-ui/*` (dialog, select, slider, switch, tabs, tooltip) — accessible primitives used across UI.
+- `lucide-react` ^1.14.0 — icon set used for controls (chevrons, etc.).
+- `framer-motion` ^12.38.0, `gsap` ^3.15.0 — motion/animation libraries used in heavy interactions (replay, telemetry).
+- `d3` ^7.9.0 — data visualization utilities used by analysis/telemetry.
+
+Utilities & styling:
+
+- `clsx` ^2.1.1, `tailwind-merge` ^3.5.0 — classnames and tailwind helpers.
+- `tailwindcss` ^4, `@tailwindcss/postcss` ^4 — styling stack.
+
+Storage & helpers:
+
+- `idb-keyval` ^6.2.2 — small wrapper for IndexedDB (used by offline/persist features).
+
+Dev / build tooling (devDependencies):
+
+- `typescript` ^5 — static typing.
+- `eslint` ^9 and `eslint-config-next` 16.2.2 — linting rules and config.
+- `@types/*` packages for `d3`, `node`, `react`, `react-dom`.
+
+Notes:
+
+- Many packages are current major versions; validate compatibility when upgrading Next.js or React major versions.
+- Turbopack is enabled in `next.config.ts`; if you encounter devserver Turbopack issues during upgrades, consider switching to webpack temporarily or checking Next.js migration docs included in `node_modules/next/dist/docs/`.
+
+**Build & CI recommendations**
+
+- Recommended CI steps:
+  1.  `npm ci`
+  2.  `npm run lint`
+  3.  `npm run build`
+  4.  Run any smoke tests / E2E tests (not included by default)
+
+- If deploying to Vercel, the default `next build` and `next start` model applies; ensure `NEXT_PUBLIC_API_BASE_URL` and `BACKEND_API_URL` are set in environment variables.
+
+**Testing & QA**
+
+- The repo currently has no test runner script or test directory. Consider adding:
+  - `vitest` or `jest` for unit tests
+  - `cypress` or `playwright` for E2E tests
+
+Example local verification checklist:
+
+1. `npm ci && npm run build` — validates TypeScript and route/type generation.
+2. Run dev server and navigate to `/home/2026`, `/race/2026/1`, `/drivers` and key pages to perform manual smoke checks.
+3. Inspect browser console for the new animation logs (`[animation] mount ...`) and request logs (`[serverGetJson] request ...`) to validate loading and backend calls.
+
+**Operational notes & known issues**
+
+- Migration notes: this workspace migrated from a previous `Api_services/` layer to `actions/` and removed several `app/api` proxy handlers. When route handlers are deleted, stale `.next` types may cause transient type errors — remove `.next` and rebuild to regenerate types.
+- If you delete or rename route handlers in `app/api`, run a full build after wiping `.next` to avoid stale route type artifacts.
+- The home page previously showed missing slider controls due to a split ownership between `HomePageClient` and `HomePageShell`. This was fixed by mounting `HomePageShell` for `/home/[year]` and updating navigation to use `/home/{year}`.
+
+**How to add a new feature endpoint**
+
+1. Add endpoint contract types in `types/endpoints/` if the backend returns new shapes.
+2. Add a thin action in `actions/` that calls `serverGetJson()` with the new path and typed return value.
+3. Add a hook wrapper under the owning feature `features/<feature>/hooks/` that uses `@tanstack/react-query` with keys from `Lib/queryKeys.ts`.
+4. Add a UI component under `features/<feature>/components/` and wire it into the route under `app/`.
+5. Add or update `app/*/loading.tsx` with an appropriate fallback animation if the route uses streaming.
+
+**Where to find things quickly**
+
+- App routes & pages: `app/`
+- Feature UI & hooks: `features/`
+- Service actions: `actions/`
+- Request primitive: `Lib/server-client.ts`
+- Type contracts: `types/endpoints/`
+- Shared components/animations: `components/`
+- Build & lint scripts: `package.json`
+
+---
+
+If you'd like, I can now:
+
+- (A) Commit these journal updates and create a PR draft; or
+- (B) Run `npm run build` here to validate the changes end-to-end (you can allow me to run the build in this environment); or
+- (C) Add a CI config (GitHub Actions) that runs lint + build + smoke tests.
+
+## 18) 2026-05-12 Findings: Home Shell, Sliders, and Logs
+
+Implemented fixes and instrumentation after triaging missing home controls and loading visibility:
+
+1. Home route ownership was consolidated to the full client shell by mounting [features/home/HomePage.tsx](features/home/HomePage.tsx) from [app/home/[year]/page.tsx](app/home/[year]/page.tsx).
+2. Year routing mismatch was corrected by introducing `initialYear` in `HomePageShell` and pushing year navigation to `/home/{year}` paths instead of `/home?...` query-only URLs.
+3. Shared loading animation instrumentation was added in [components/animations/SectionLoadingAnimations.tsx](components/animations/SectionLoadingAnimations.tsx), with render/mount/unmount console logs via `LoadingShell`.
+4. Centralized API call instrumentation was added in [Lib/server-client.ts](Lib/server-client.ts), logging request start, response status, duration, and request errors for every `serverGetJson` call.
+
+Observed root cause for missing race slider:
+
+1. `ArrowSlider` usage existed in `HomePageShell` only, while the active route previously rendered `HomePageClient`, so race/year slider controls were not part of the mounted tree.
+
+Residual risk:
+
+1. This journal still contains historical references to legacy `app/api` proxy guidance in older sections; treat Section 18 as the latest source of truth for this specific fix batch.

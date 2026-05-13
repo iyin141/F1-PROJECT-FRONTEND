@@ -1,4 +1,4 @@
-import type { AnalysisSessionName, PracticeSessionName } from "@/types/api";
+import type { AnalysisSessionName } from "@/types/api";
 
 // ---------------------------------------------------------------------------
 // Cache config presets
@@ -9,7 +9,7 @@ export const cacheConfig = {
   /** Completed race data — never changes once available. */
   historical: {
     staleTime: Infinity,
-    gcTime: 30 * 60 * 1000,
+    gcTime: 30 * 60 * 1000, // 30 minutes
   },
 
   /** Live season data — refreshes after each race weekend. */
@@ -18,108 +18,120 @@ export const cacheConfig = {
     gcTime: 10 * 60 * 1000,
   },
 
-  /** Replay / positions — large payload, opt-in only, never changes. */
-  heavyOptIn: {
-    staleTime: Infinity,
-    gcTime: 30 * 60 * 1000,
-  },
-
-  /** Backend populates over time — check periodically. */
-  coverage: {
-    staleTime: 10 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
-  },
-
-  /** Past seasons for a driver — never changes. */
-  driverHistorical: {
-    staleTime: Infinity,
-    gcTime: 30 * 60 * 1000,
-  },
-
-  /** Current season for a driver — refreshes after each race. */
-  driverActive: {
-    staleTime: 5 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
-  },
-
-  /** Telemetry data — heavy, opt-in, never changes once loaded. */
-  driverTelemetry: {
-    staleTime: Infinity,
-    gcTime: 30 * 60 * 1000,
-  },
-
-  /** Client-side computed / derived values. */
-  driverDerived: {
+  /** Completed race payloads — large but stable once the race is finished. */
+  completedRace: {
     staleTime: Infinity,
     gcTime: 20 * 60 * 1000,
   },
+
+  /** Short-lived per-session data (positions, weather, etc.). */
+  raceSession: {
+    staleTime: 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  },
+
+  /** Replay / positions — large payload, opt-in only. */
+  heavyOptIn: {
+    staleTime: Infinity,
+    gcTime: 5 * 60 * 1000,
+  },
+
 } as const;
 
+export function resolveCacheConfig(year: number, raceStatus?: string) {
+  const currentYear = new Date().getFullYear();
+  if (year < currentYear) return cacheConfig.historical;
+  if (raceStatus === "completed") return cacheConfig.completedRace;
+  return cacheConfig.activeSeason;
+}
+
 // ---------------------------------------------------------------------------
-// Query key factory
+// Discriminator union types — mirror DB session column values
+// ---------------------------------------------------------------------------
+
+/** Maps to DriverLapAnalysis.session column values used by analysis endpoints. */
+export type LapAnalysisType = "laps" | "pace" | "stints" | "tyre" | "sectors";
+
+/** Maps to SessionData.session column values used by unified endpoints. */
+export type SessionDataType =
+  | "positions"
+  | "incidents"
+  | "pit-stops"
+  | "weather"
+  | "track-status"
+  | "drs";
+
+function sessionDataByType(year: number, round: number, type: SessionDataType) {
+  return ["sessionData", year, round, type] as const;
+}
+
+// ---------------------------------------------------------------------------
+// Query key factory — namespaces mirror DB table primary key patterns
 // All query keys come from here — no raw arrays in hook files.
 // ---------------------------------------------------------------------------
 
 export const queryKeys = {
-  // ── Races ──────────────────────────────────────────────────────────────
-  races: {
-    all: (year: number) =>
-      ["races", year] as const,
+  // ── SeasonSchedule (pk: year) ──────────────────────────────────────────
+  schedule: {
+    season: (year: number) =>
+      ["schedule", year] as const,
+  },
 
+  // ── RaceResultData (pk: year, round, session) ──────────────────────────
+  // Also covers QualifyingResultData and PracticeResultData by session value
+  raceResults: {
+    /** Race event metadata (round header, circuit info). */
     detail: (year: number, round: number) =>
-      ["races", year, round] as const,
+      ["raceResults", year, round] as const,
 
-    results: (year: number, round: number) =>
-      ["races", year, round, "results"] as const,
+    /** Any session keyed by its string identifier (R, S, SS, FP1, FP2, FP3). */
+    session: (year: number, round: number, session: string) =>
+      ["raceResults", year, round, session] as const,
 
+    /** Qualifying — QualifyingResultData table (pk: year, round). */
     qualifying: (year: number, round: number) =>
-      ["races", year, round, "qualifying"] as const,
-
-    practice: (year: number, round: number, session: PracticeSessionName) =>
-      ["races", year, round, "practice", session] as const,
+      ["raceResults", year, round, "Q"] as const,
   },
 
-  // ── Standings ──────────────────────────────────────────────────────────
-  standings: {
-    all: (year: number) =>
-      ["standings", year] as const,
+  // ── DriverStandings (pk: year?, driver_code?) ──────────────────────────
+  // Three DB usage patterns unified under one namespace:
+  //   grid(year)        → year=Y,  driver=NULL  (full grid standings)
+  //   career(code)      → year=NULL, driver=VER (all seasons for a driver)
+  //   season(code,year) → year=Y,  driver=VER   (one driver in one season)
+  driverStandings: {
+    grid: (year: number) =>
+      ["driverStandings", year] as const,
 
-    drivers: (year: number) =>
-      ["standings", year, "drivers"] as const,
+    career: (code: string) =>
+      ["driverStandings", "career", code] as const,
 
-    constructors: (year: number) =>
-      ["standings", year, "constructors"] as const,
+    season: (code: string, year: number) =>
+      ["driverStandings", year, code] as const,
   },
 
-  // ── Analysis ───────────────────────────────────────────────────────────
-  analysis: {
-    all: (year: number, round: number) =>
-      ["analysis", year, round] as const,
+  // ── ConstructorStandings (pk: year) ────────────────────────────────────
+  constructorStandings: {
+    year: (year: number) =>
+      ["constructorStandings", year] as const,
+  },
 
-    laps: (year: number, round: number, driver?: string) =>
-      ["analysis", year, round, "laps", driver] as const,
+  // ── DriverLapAnalysis (pk: year, round, session, driver?) ──────────────
+  lapAnalysis: {
+    byType: (year: number, round: number, type: LapAnalysisType, driver?: string) =>
+      ["lapAnalysis", year, round, type, driver] as const,
+  },
 
-    pace: (year: number, round: number, driver?: string) =>
-      ["analysis", year, round, "pace", driver] as const,
-
-    stints: (year: number, round: number, driver?: string) =>
-      ["analysis", year, round, "stints", driver] as const,
-
-    tyre: (year: number, round: number, driver?: string) =>
-      ["analysis", year, round, "tyre", driver] as const,
-
-    sectors: (year: number, round: number, driver?: string) =>
-      ["analysis", year, round, "sectors", driver] as const,
-
-    telemetry: (
+  // ── DriverTelemetry (pk: year, round, session, driver?, lap?) ──────────
+  telemetry: {
+    single: (
       year: number,
       round: number,
       driver: string,
       lap: number,
       session: AnalysisSessionName,
-    ) => ["analysis", year, round, "telemetry", session, driver, lap] as const,
+    ) => ["telemetry", year, round, session, driver, lap] as const,
 
-    telemetryOverlay: (
+    overlay: (
       year: number,
       round: number,
       driverA: string,
@@ -127,103 +139,38 @@ export const queryKeys = {
       lap?: number,
     ) =>
       [
-        "analysis",
+        "telemetry",
         year,
         round,
-        "telemetry",
         "overlay",
         [driverA, driverB].sort().join("+"),
         lap,
       ] as const,
 
-    telemetrySummary: (year: number, round: number, driver: string, lap: number) =>
-      ["analysis", year, round, "telemetry", "summary", driver, lap] as const,
+    summary: (year: number, round: number, driver: string, lap: number) =>
+      ["telemetry", year, round, "summary", driver, lap] as const,
   },
 
-  // ── Unified ────────────────────────────────────────────────────────────
-  unified: {
-    all: (year: number, round: number) =>
-      ["unified", year, round] as const,
-
-    positions: (year: number, round: number, driver?: string) =>
-      ["unified", year, round, "positions", driver] as const,
-
-    incidents: (year: number, round: number) =>
-      ["unified", year, round, "incidents"] as const,
-
-    pitStops: (year: number, round: number) =>
-      ["unified", year, round, "pit-stops"] as const,
-
-    weather: (year: number, round: number) =>
-      ["unified", year, round, "weather"] as const,
-
-    trackStatus: (year: number, round: number) =>
-      ["unified", year, round, "track-status"] as const,
-
-    drs: (year: number, round: number) =>
-      ["unified", year, round, "drs"] as const,
+  // ── SessionData (pk: year, round, session) ─────────────────────────────
+  // Covers positions, incidents, pit-stops, weather, track-status, drs
+  sessionData: {
+    byType: (year: number, round: number, type: SessionDataType) =>
+      sessionDataByType(year, round, type),
   },
 
-  // ── Coverage ───────────────────────────────────────────────────────────
-  coverage: {
-    season: (year: number) =>
-      ["coverage", year] as const,
+  // Replay aliases — delegate to the sessionData key shape so multiple
+  // replay consumers share the same underlying cache entry.
+  replayPositions: (year: number, round: number) =>
+    sessionDataByType(year, round, "positions"),
+  replayIncidents: (year: number, round: number) =>
+    sessionDataByType(year, round, "incidents"),
+  replayPitStops: (year: number, round: number) =>
+    sessionDataByType(year, round, "pit-stops"),
 
-    round: (year: number, round: number) =>
-      ["coverage", year, round] as const,
-  },
-
-  // ── Driver ─────────────────────────────────────────────────────────────
-  driver: {
-    all: (driverCode: string) =>
-      ["driver", driverCode] as const,
-
-    career: (driverCode: string) =>
-      ["driver", driverCode, "career"] as const,
-
-    yearList: (driverCode: string) =>
-      ["driver", driverCode, "years"] as const,
-
-    seasonStanding: (driverCode: string, year: number) =>
-      ["driver", driverCode, year, "standing"] as const,
-
-    seasonResults: (driverCode: string, year: number) =>
-      ["driver", driverCode, year, "season-results"] as const,
-
-    roundResult: (driverCode: string, year: number, round: number) =>
-      ["driver", driverCode, year, round, "result"] as const,
-
-    roundQualifying: (driverCode: string, year: number, round: number) =>
-      ["driver", driverCode, year, round, "qualifying"] as const,
-
-    raceLaps: (driverCode: string, year: number, round: number) =>
-      ["driver", driverCode, year, round, "laps"] as const,
-
-    raceStints: (driverCode: string, year: number, round: number) =>
-      ["driver", driverCode, year, round, "stints"] as const,
-
-    racePace: (driverCode: string, year: number, round: number) =>
-      ["driver", driverCode, year, round, "pace"] as const,
-
-    raceSectors: (driverCode: string, year: number, round: number) =>
-      ["driver", driverCode, year, round, "sectors"] as const,
-
-    telemetry: (
-      driverCode: string,
-      year: number,
-      round: number,
-      lap: number,
-      session: AnalysisSessionName,
-    ) => ["driver", driverCode, year, round, "telemetry", session, lap] as const,
-
-    telemetrySummary: (driverCode: string, year: number, round: number, lap: number) =>
-      ["driver", driverCode, year, round, "telemetry", "summary", lap] as const,
-
-    consistencyBySeason: (driverCode: string, year: number) =>
-      ["driver", driverCode, year, "consistency"] as const,
-
-    careerStats: (driverCode: string) =>
-      ["driver", driverCode, "stats"] as const,
+  // ── FullSessionData (pk: year, round) ──────────────────────────────────
+  fullSession: {
+    byRace: (year: number, round: number) =>
+      ["fullSession", year, round] as const,
   },
 
   // ── Theme ──────────────────────────────────────────────────────────────

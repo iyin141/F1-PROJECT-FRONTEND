@@ -1,13 +1,14 @@
+
 'use client';
 
 import Link from "next/link";
 import { Panel } from "@/components/Panel";
-import { Skeleton } from "@/components/Skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { DriverCode, teamColor } from "@/components/DriverCode";
 import { GenericTable, type ColumnDef } from "@/components/ui/GenericTable";
 import { formatDate, countdownTo } from "@/Lib/format";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import type { ConstructorStanding, DriverStanding, Race, SessionSchedule } from "@/types/ui";
 
 const scheduleColumns: ColumnDef<SessionSchedule>[] = [
@@ -67,7 +68,7 @@ const constructorColumns: ColumnDef<ConstructorStanding>[] = [
       <span className="inline-flex min-w-0 items-center gap-2 font-mono text-xs tracking-wider">
         <span
           aria-hidden
-          className="inline-block h-[14px] w-[3px] rounded-sm"
+          className="inline-block h-3.5 w-0.75 rounded-sm"
           style={{ background: teamColor(standing.team.id) }}
         />
         <span className="truncate text-text" title={standing.team.name}>
@@ -127,18 +128,19 @@ export const RightColumnPanels = ({
   constructorsLoading,
 }: RightColumnPanelsProps) => {
   const [championshipView, setChampionshipView] = useState<"drivers" | "constructors">("drivers");
+  const [showAll, setShowAll] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const nextRaceIso = useMemo(() => nextRace?.date ?? "", [nextRace?.date]);
 
   return (
     <div className="space-y-6">
       <Panel label="NEXT RACE" title={nextRace?.name ?? "OFF SEASON"}>
-        {nextRaceLoading ? (
-          <Skeleton className="h-28" />
-        ) : !nextRace ? (
+        {!nextRace ? (
           <EmptyState message="OFF SEASON" description="Awaiting next season opener." />
         ) : (
           <>
             <div className="scrollbar-none overflow-x-auto">
-              <Countdown iso={nextRace.date} />
+              <Countdown iso={nextRaceIso} />
             </div>
             <div className="mt-4 border-t border-border-subtle pt-4">
               <div className="mb-2 label-mono">SESSION SCHEDULE</div>
@@ -156,17 +158,26 @@ export const RightColumnPanels = ({
 
       <Panel
         label="CHAMPIONSHIP"
-        title={championshipView === "drivers" ? "Drivers · Top 5" : "Constructors · Top 5"}
+        title={championshipView === "drivers" ? "Drivers" : "Constructors"}
         action={
-          <Link
-            href={`/season/${year}`}
-            className="font-mono text-[10px] uppercase tracking-[0.18em] text-text-dim transition-colors hover:text-text text-nowrap"
-          >
-            See All
-          </Link>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => startTransition(() => setShowAll(!showAll))}
+              className="font-mono text-[10px] uppercase tracking-[0.18em] text-text-dim transition-colors hover:text-text text-nowrap"
+            >
+              {showAll ? "Show Top 5" : "Show All"}
+            </button>
+            <Link
+              href={`/season/${year}`}
+              className="font-mono text-[10px] uppercase tracking-[0.18em] text-text-dim transition-colors hover:text-text text-nowrap hidden sm:inline-block"
+            >
+              Full Page
+            </Link>
+          </div>
         }
       >
-        <div className="mb-3 flex border-b border-border-subtle">
+        <div className={`mb-3 flex border-b border-border-subtle ${isPending ? "pointer-events-none opacity-70" : ""}`}>
           {([
             ["drivers", "Drivers"],
             ["constructors", "Constructors"],
@@ -174,7 +185,7 @@ export const RightColumnPanels = ({
             <button
               key={value}
               type="button"
-              onClick={() => setChampionshipView(value)}
+              onClick={() => startTransition(() => setChampionshipView(value))}
               className="-mb-px border-b-2 px-3 py-2 font-mono text-[10px] uppercase tracking-wider transition-colors"
               style={{
                 borderBottomColor:
@@ -188,29 +199,36 @@ export const RightColumnPanels = ({
           ))}
         </div>
 
-        {championshipView === "drivers" ? (
-          standingsLoading ? (
-            <div className="space-y-2">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-6" />)}</div>
-          ) : (
-            <GenericTable<DriverStanding>
-              className="font-mono text-xs"
-              columns={standingsColumns}
-              data={standings?.slice(0, 5) ?? []}
-              getRowKey={standing => standing.driver.id}
-              striped
-            />
-          )
-        ) : constructorsLoading ? (
-          <div className="space-y-2">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-6" />)}</div>
-        ) : (
-          <GenericTable<ConstructorStanding>
-            className="font-mono text-xs"
-            columns={constructorColumns}
-            data={constructors?.slice(0, 5) ?? []}
-            getRowKey={standing => standing.team.id}
-            striped
-          />
-        )}
+        <motion.div layout className="relative">
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.div
+              key={championshipView + (showAll ? "-all" : "-top5")}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="w-full"
+            >
+              {championshipView === "drivers" ? (
+                  <GenericTable<DriverStanding>
+                    className="font-mono text-xs"
+                    columns={standingsColumns}
+                    data={showAll ? (standings ?? []) : (standings?.slice(0, 5) ?? [])}
+                    getRowKey={standing => standing.driver.id}
+                    striped
+                  />
+              ) : (
+                <GenericTable<ConstructorStanding>
+                  className="font-mono text-xs"
+                  columns={constructorColumns}
+                  data={showAll ? (constructors ?? []) : (constructors?.slice(0, 5) ?? [])}
+                  getRowKey={standing => standing.team.id}
+                  striped
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </motion.div>
       </Panel>
     </div>
   );

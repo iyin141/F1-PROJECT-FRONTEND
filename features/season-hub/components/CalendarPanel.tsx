@@ -6,9 +6,7 @@ import { ChevronRight } from "lucide-react";
 import { DriverCode } from "@/components/DriverCode";
 import { EmptyState } from "@/components/EmptyState";
 import { Panel } from "@/components/Panel";
-import { Skeleton } from "@/components/Skeleton";
 import { GenericTable, type ColumnDef } from "@/components/ui/GenericTable";
-import { generateRaceResults } from "@/Lib/data/generators";
 import { formatDate } from "@/Lib/format";
 import type { Driver, Race } from "@/types/ui";
 
@@ -103,9 +101,11 @@ const SpotlightCard = ({
   race: Race | undefined;
   winner?: Driver;
 }) => {
+  const router = useRouter();
+
   if (!race) {
     return (
-      <div className="rounded-[2px] border border-border-subtle bg-panel-elev px-4 py-3">
+      <div className="rounded-xs border border-border-subtle bg-panel-elev px-4 py-3">
         <div className="label-mono">{label}</div>
         <div className="mt-2 font-display text-sm font-semibold text-text">TBC</div>
       </div>
@@ -133,7 +133,8 @@ const SpotlightCard = ({
   return (
     <Link
       href={`/race/${race.year}/${race.round}`}
-      className="block rounded-[2px] border border-border-subtle bg-panel-elev px-4 py-3 transition-colors hover:border-border"
+      onMouseEnter={() => router.prefetch(`/race/${race.year}/${race.round}`)}
+      className="block rounded-xs border border-border-subtle bg-panel-elev px-4 py-3 transition-colors hover:border-border"
     >
       {content}
     </Link>
@@ -155,20 +156,17 @@ export const CalendarPanel = ({ year, calendar, loading, view }: CalendarPanelPr
   const lastCompletedRace = [...(calendar ?? [])].reverse().find(r => r.status === "completed");
   const lastCompletedRound = calendar?.filter(r => r.status === "completed").pop()?.round;
   const spotlightRace = liveRace ?? lastCompletedRace;
-  const spotlightWinner = spotlightRace && spotlightRace.status === "completed"
-    ? generateRaceResults(spotlightRace.year, spotlightRace.round)[0]?.driver
-    : undefined;
+  const spotlightWinner = undefined;
   const rows: CalendarRow[] = (calendar ?? []).map(race => {
     const completed = race.status === "completed";
-    const podium = completed ? generateRaceResults(race.year, race.round).slice(0, 3) : [];
 
     return {
       race,
       completed,
       live: race.status === "live",
       isLatest: race.round === lastCompletedRound,
-      winner: podium[0]?.driver,
-      podium: podium.map(p => p.driver),
+      winner: undefined,
+      podium: [],
       showLinks: !isPre2018,
       showAnalysis: completed && !isPre2018,
     };
@@ -176,9 +174,7 @@ export const CalendarPanel = ({ year, calendar, loading, view }: CalendarPanelPr
 
   return (
     <Panel label={view === "list" ? "RACE CALENDAR · LIST" : "RACE CALENDAR · GRID"} title={`${calendar?.length ?? 0} rounds`}>
-      {loading ? (
-        <div className="space-y-2">{[...Array(10)].map((_, i) => <Skeleton key={i} className="h-12" />)}</div>
-      ) : !calendar?.length ? (
+      {!calendar?.length ? (
         <EmptyState message={`NO RACE DATA FOR ${year}`} description="No fixtures available for this season." />
       ) : (
         <div className="space-y-4">
@@ -188,12 +184,15 @@ export const CalendarPanel = ({ year, calendar, loading, view }: CalendarPanelPr
               race={spotlightRace}
               winner={spotlightWinner}
             />
-            <SpotlightCard label="NEXT RACE" race={nextRace} />
+            <SpotlightCard
+              label="NEXT RACE"
+              race={nextRace}
+            />
           </div>
 
           <div className="panel-scroll w-full">
             <GenericTable<CalendarRow>
-              className="data-grid w-full min-w-[40rem] font-mono text-xs md:min-w-[46rem]"
+              className="data-grid w-full min-w-160 font-mono text-xs md:min-w-184"
               columns={columns}
               data={rows}
               getRowKey={row => `${row.race.year}-${row.race.round}`}

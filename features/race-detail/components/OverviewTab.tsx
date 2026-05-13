@@ -1,30 +1,58 @@
 'use client';
 
+import { useMemo } from "react";
 import { Panel } from "@/components/Panel";
-import { Skeleton } from "@/components/Skeleton";
+import { EmptyState } from "@/components/EmptyState";
 import { DriverCode } from "@/components/DriverCode";
 import { formatDate } from "@/Lib/format";
 import type { ReactNode } from "react";
 import { NotAvailable } from "@/features/race-detail/components/NotAvailable";
 import type { RaceTabProps } from "@/features/race-detail/components/tab-types";
-import type { ChampionshipImpact } from "@/types/ui";
-import { useRaceDetail, useRaceWeather, useRaceIncidents } from "@/features/race-detail/hooks/useRaceDetail";
-import { adaptRaceDetail, adaptWeather, adaptIncidents } from "@/Lib/adapters";
+import type { ChampionshipImpact, Driver } from "@/types/ui";
+import { useRaceDetail, useRaceWeather, useRaceIncidents, useRaceResults } from "@/features/race-detail/hooks/useRaceDetail";
+import { useDriverStandings } from "@/features/season-hub/hooks/useSeasonHub";
 
 export const OverviewTab = ({ year, round, upcoming }: RaceTabProps) => {
   const { data: raceData, isLoading: raceLoading } = useRaceDetail(year, round);
   const { data: weatherData, isLoading: weatherLoading } = useRaceWeather(year, round);
   const { data: incidentsData, isLoading: incidentsLoading } = useRaceIncidents(year, round);
+  const { data: resultsData, isLoading: resultsLoading } = useRaceResults(year, round, !upcoming);
+  const { data: standingsData, isLoading: standingsLoading } = useDriverStandings(year);
 
-  const race = { data: raceData ? adaptRaceDetail(raceData, year) : undefined, loading: raceLoading };
-  const weather = { data: weatherData ? adaptWeather(weatherData) : undefined, loading: weatherLoading };
-  const incidents = { data: incidentsData ? adaptIncidents(incidentsData) : undefined, loading: incidentsLoading };
-  const impact: { data: ChampionshipImpact[] | undefined; loading: boolean } = { data: undefined, loading: false };
+  const race = { data: raceData ? raceData : undefined, loading: raceLoading };
+  const weather = { data: weatherData ?? undefined, loading: weatherLoading };
+  const incidents = { data: incidentsData ?? undefined, loading: incidentsLoading };
+  
+  const impact: { data: ChampionshipImpact[] | undefined; loading: boolean } = useMemo(() => {
+    if (!resultsData || !standingsData) {
+      return { data: undefined, loading: resultsLoading || standingsLoading };
+    }
+    
+    const results = resultsData;
+    const standings = standingsData;
+    const leader = standings[0];
+    
+    if (!leader) return { data: [], loading: false };
+    
+    const impact: ChampionshipImpact[] = results
+      .filter((_, idx) => idx < 5)
+      .map(result => {
+        const standing = standings.find(s => s.driver.code === result.driver.code);
+        return {
+          driver: result.driver,
+          pointsGained: result.points,
+          newTotal: standing?.points ?? 0,
+          gapToLeader: Math.max(0, leader.points - (standing?.points ?? 0)),
+        };
+      });
+    
+    return { data: impact, loading: false };
+  }, [resultsData, standingsData, resultsLoading, standingsLoading]);
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <Panel label="RACE METADATA">
-        {race.loading || !race.data ? <Skeleton className="h-48" /> : (
+        {!race.data ? <EmptyState message="LOADING" /> : (
           <dl className="grid grid-cols-1 gap-y-3 font-mono text-xs sm:grid-cols-2">
             {([
               ["SEASON", race.data.year], ["ROUND", race.data.round],
@@ -44,7 +72,7 @@ export const OverviewTab = ({ year, round, upcoming }: RaceTabProps) => {
       </Panel>
 
       <Panel label="CHAMPIONSHIP IMPACT" title="Top 5 — point swings">
-        {upcoming ? <NotAvailable /> : impact.loading ? <Skeleton className="h-48" /> : (
+        {upcoming ? <NotAvailable /> : !impact.data ? <EmptyState message="LOADING" /> : (
           <div className="space-y-2">
             {impact.data?.map(i => (
               <div key={i.driver.id} className="grid grid-cols-12 items-center gap-2 border-b border-border-subtle/50 py-1.5 font-mono text-xs">
@@ -60,7 +88,7 @@ export const OverviewTab = ({ year, round, upcoming }: RaceTabProps) => {
 
       {!upcoming && (
         <Panel label="INCIDENTS" className="lg:col-span-2">
-          {incidents.loading ? <Skeleton className="h-20" /> : !incidents.data?.length ? (
+          {!incidents.data?.length ? (
             <p className="font-mono text-xs text-text-dim">No incidents recorded.</p>
           ) : (
             <ul className="space-y-2 font-mono text-xs">

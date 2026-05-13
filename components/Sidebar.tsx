@@ -8,8 +8,9 @@ import { cn } from "@/Lib/utils";
 export const Sidebar = () => {
   const pathname = usePathname();
   const params = useParams();
-  const currentYear = Number(params.year) || 2024;
-  const years = [2024];
+  const currentYear = Number(params.year) || new Date().getFullYear();
+  const baseYear = new Date().getFullYear();
+  const years = [baseYear, baseYear - 1, baseYear - 2];
 
   const linkBase = "flex items-center gap-3 px-4 py-2 text-sm font-mono tracking-wider transition-colors";
   const linkInactive = "text-text-dim hover:text-text hover:bg-panel-elev";
@@ -36,7 +37,7 @@ export const Sidebar = () => {
         <Link href={`/race/${currentYear}/1`} className={cn(linkBase, pathname.startsWith("/race") ? linkActive : linkInactive)}>
           <Flag size={14} /> RACES
         </Link>
-        <Link href="/driver-record" className={cn(linkBase, pathname.startsWith("/driver-record") ? linkActive : linkInactive)}>
+        <Link href={`/drivers/year/${currentYear}`} className={cn(linkBase, pathname.startsWith("/drivers") ? linkActive : linkInactive)}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="14"
@@ -55,7 +56,7 @@ export const Sidebar = () => {
             <path d="M18 14v3a3 3 0 0 1-3 3h-3" />
             <path d="M6 14v2" />
           </svg>
-          DRIVER RECORD
+          DRIVERS
         </Link>
 
         <div className="px-4 mt-6 mb-2 label-mono">Season</div>

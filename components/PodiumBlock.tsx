@@ -4,6 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { gsap } from "gsap";
 import { teamColor } from "@/components/DriverCode";
 import { getDriverFlagUrl } from "@/Lib/nationality";
+import { FlagImage } from "@/_Components/ui/FlagImage";
 import type { PodiumEntry, PodiumBlockProps } from "@/types/ui";
 
 export type { PodiumEntry, PodiumBlockProps };
@@ -33,16 +34,7 @@ function PodiumStep<T extends PodiumEntry>({
       data-podium-step
     >
       <div className="flex flex-col items-center gap-1 pb-2">
-        {flag && (
-          <img
-            src={flag}
-            alt=""
-            width={18}
-            height={12}
-            loading="lazy"
-            style={{ borderRadius: "2px", objectFit: "cover" }}
-          />
-        )}
+        {flag && <FlagImage src={flag} />}
         <span
           className="font-mono text-[13px] font-bold tracking-[0.12em]"
           style={{ color: isWinner ? "hsl(var(--amber))" : "hsl(var(--text))" }}

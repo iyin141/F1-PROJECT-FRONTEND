@@ -1,19 +1,18 @@
 'use client';
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { gsap } from "gsap";
 import { Flip } from "gsap/Flip";
 import { Pause, Play } from "lucide-react";
-import { Skeleton } from "@/components/Skeleton";
 import { teamColor } from "@/components/DriverCode";
 import { CompoundDot } from "@/components/CompoundDot";
 import { Slider } from "@/components/ui/slider";
 import { GenericTable, type ColumnDef, type RowVariant } from "@/components/ui/GenericTable";
 import { useRaceReplay, type Speed } from "@/hooks/useRaceReplay";
-import type { ReplayPosition, ReplayFrame } from "@/types/ui";
+import type { ReplayPosition, FlagType, Compound } from "@/types/ui";
 import { getDriverFlagUrl } from "@/Lib/nationality";
-import { useReplayData } from "@/features/race-detail/hooks/useRaceDetail";
-import { adaptReplayFrames } from "@/Lib/adapters";
+import { useReplayFrames } from "@/features/race-detail/hooks/useRaceDetail";
 
 gsap.registerPlugin(Flip);
 
@@ -24,15 +23,22 @@ const FLAG_BANNER: Record<string, { label: string; bg: string; text: string }> =
   VSC:    { label: "VIRTUAL SAFETY CAR", bg: "color-mix(in srgb, hsl(var(--amber)) 70%, transparent)",      text: "var(--black)" },
   YELLOW: { label: "YELLOW FLAG",        bg: "hsl(var(--amber))",                                            text: "var(--black)" },
   RED:    { label: "RED FLAG",           bg: "hsl(var(--red))",                                              text: "hsl(var(--text))" },
-  GREEN:  { label: "GREEN FLAG",         bg: "hsl(var(--green))",                                            text: "var(--black)" },
+};
+
+const INCIDENT_STYLE: Record<string, { bg: string; text: string }> = {
+  RED:          { bg: "hsl(var(--red) / 0.15)",   text: "hsl(var(--red))" },
+  SC:           { bg: "hsl(var(--amber) / 0.15)", text: "hsl(var(--amber))" },
+  VSC:          { bg: "hsl(var(--amber) / 0.15)", text: "hsl(var(--amber))" },
+  SAFETY_CAR:   { bg: "hsl(var(--amber) / 0.15)", text: "hsl(var(--amber))" },
+  YELLOW:       { bg: "hsl(var(--amber) / 0.15)", text: "hsl(var(--amber))" },
+  DEFAULT:      { bg: "var(--surface2)",           text: "hsl(var(--text-dim))" },
 };
 
 // ─── Row variant resolver ─────────────────────────────────────────────────────
 
 const getRowVariant = (row: ReplayPosition): RowVariant => {
-  if (row.dnf)     return "dnf";
-  if (row.fastLap) return "fastlap";
-  if (row.inPit)   return "pit";
+  if (row.status === "DNF" || row.status === "DNS") return "dnf";
+  if (row.inPit) return "pit";
   return "default";
 };
 
@@ -58,7 +64,7 @@ const columns: ColumnDef<ReplayPosition>[] = [
     render: (row) => (
       <span
         aria-hidden
-        className="inline-block h-7 w-[3px] rounded-sm"
+        className="inline-block h-7 w-0.75 rounded-sm"
         style={{ backgroundColor: teamColor(row.team) }}
       />
     ),
@@ -70,12 +76,11 @@ const columns: ColumnDef<ReplayPosition>[] = [
     render: (row) => {
       const url = getDriverFlagUrl(row.driver, 40);
       return url ? (
-        <img
+        <Image
           src={url}
           alt=""
           width={18}
           height={12}
-          loading="lazy"
           style={{ borderRadius: "2px", objectFit: "cover" }}
         />
       ) : null;
@@ -87,11 +92,29 @@ const columns: ColumnDef<ReplayPosition>[] = [
     header: "DRIVER",
     render: (row) => (
       <div className="min-w-0">
-        <div
-          className="font-mono text-sm font-semibold tracking-wider"
-          style={{ color: row.dnf ? "hsl(var(--muted))" : "hsl(var(--text))" }}
-        >
-          {row.driver}
+        <div className="flex items-center gap-2">
+          <div
+            className="font-mono text-sm font-semibold tracking-wider"
+            style={{ color: "hsl(var(--text))" }}
+          >
+            {row.driver}
+            {row.driverNumber != null && (
+              <span className="ml-1 text-[10px]" style={{ color: "hsl(var(--muted))" }}>
+                #{row.driverNumber}
+              </span>
+            )}
+          </div>
+          {row.status && (
+            <span
+              className="text-[9px] font-bold px-1.5 py-0.5 rounded"
+              style={{
+                backgroundColor: row.status === "DNF" ? "hsl(var(--red) / 0.2)" : "hsl(var(--muted) / 0.2)",
+                color: row.status === "DNF" ? "hsl(var(--red))" : "hsl(var(--muted))",
+              }}
+            >
+              {row.status}
+            </span>
+          )}
         </div>
         <div
           className="truncate font-mono text-[10px] uppercase tracking-[0.15em]"
@@ -99,6 +122,38 @@ const columns: ColumnDef<ReplayPosition>[] = [
         >
           {row.name}
         </div>
+      </div>
+    ),
+  },
+  {
+    key: "stints",
+    width: "120px",
+    header: "STINTS",
+    render: (row) => (
+      <div className="flex flex-col gap-0.5">
+        <div className="flex items-center gap-0.5">
+          {row.stints.map((compound, idx) => {
+            const isCurrent = idx === row.stints.length - 1;
+            return (
+              <div
+                key={idx}
+                style={{
+                  opacity: isCurrent ? 1 : 0.35,
+                  transform: isCurrent ? "scale(1.15)" : "none",
+                  transition: "opacity 0.2s",
+                }}
+              >
+                <CompoundDot compound={compound} />
+              </div>
+            );
+          })}
+        </div>
+        <span
+          className="font-mono text-[9px] tabular-nums"
+          style={{ color: "hsl(var(--muted))" }}
+        >
+          {row.tyreLap > 0 ? `L${row.tyreLap}` : "—"}
+        </span>
       </div>
     ),
   },
@@ -131,6 +186,41 @@ const columns: ColumnDef<ReplayPosition>[] = [
     ),
   },
   {
+    key: "delta",
+    width: "62px",
+    header: "DELTA",
+    align: "right",
+    render: (row) => {
+      const v = row.positionChange;
+      const text = v == null ? "—" : v > 0 ? `+${v}` : `${v}`;
+      const color =
+        v == null
+          ? "hsl(var(--muted))"
+          : v > 0
+            ? "hsl(var(--green))"
+            : v < 0
+              ? "hsl(var(--red))"
+              : "hsl(var(--text-dim))";
+
+      return (
+        <span className="font-mono text-xs tabular-nums" style={{ color }}>
+          {text}
+        </span>
+      );
+    },
+  },
+  {
+    key: "last",
+    width: "80px",
+    header: "LAST",
+    align: "right",
+    render: (row) => (
+      <span className="font-mono text-xs tabular-nums" style={{ color: "hsl(var(--text-dim))" }}>
+        {row.lastLapTime ?? "—"}
+      </span>
+    ),
+  },
+  {
     key: "tyre",
     width: "80px",
     header: "TYRE",
@@ -148,16 +238,24 @@ const columns: ColumnDef<ReplayPosition>[] = [
   },
   {
     key: "pit",
-    width: "52px",
+    width: "140px",
     header: "PIT",
     align: "right",
     render: (row) => (
-      <span
-        className="font-mono text-[10px] font-bold tracking-[0.2em]"
-        style={{ color: row.inPit ? "hsl(var(--amber))" : "hsl(var(--muted))" }}
-      >
-        {row.inPit ? "PIT" : "—"}
-      </span>
+      <div className="flex items-center justify-end gap-2 font-mono text-[10px] tabular-nums">
+        <span
+          className="font-bold tracking-[0.2em]"
+          style={{ color: row.inPit ? "hsl(var(--amber))" : "hsl(var(--muted))" }}
+        >
+          {row.inPit ? "PIT" : "—"}
+        </span>
+        <span style={{ color: "hsl(var(--muted))" }}>
+          {row.stopNumber != null ? `S${row.stopNumber}` : "—"}
+        </span>
+        <span style={{ color: "hsl(var(--text-dim))" }}>
+          {row.pitDurationSeconds != null ? `${row.pitDurationSeconds.toFixed(3)}s` : "—"}
+        </span>
+      </div>
     ),
   },
 ];
@@ -165,11 +263,12 @@ const columns: ColumnDef<ReplayPosition>[] = [
 // ─── ReplayScrubber ───────────────────────────────────────────────────────────
 
 export const ReplayScrubber = ({ year, round, enabled }: { year: number; round: number; enabled: boolean }) => {
-  const { positions, pitStops, isPending: loading } = useReplayData(year, round, enabled);
-  const frames = adaptReplayFrames(positions.data, pitStops.data);
+  const { frames, positions, incidents, pitStops, laps, isPending: loading } = useReplayFrames(year, round, enabled);
 
-  const r = useRaceReplay(frames ?? []);
+  const r = useRaceReplay(frames ?? []);  
   const towerRef = useRef<HTMLDivElement>(null);
+  const [bannerTick, setBannerTick] = useState(0);
+  const flagSequenceLength = r.frame?.flagSequence?.length ?? 0;
 
   useEffect(() => {
     const el = towerRef.current;
@@ -179,9 +278,19 @@ export const ReplayScrubber = ({ year, round, enabled }: { year: number; round: 
       if (!towerRef.current) return;
       Flip.from(state, { duration: 0.45, ease: "power2.inOut", absolute: false });
     });
-  }, [r.frame?.lap]);
+  }, [r.frame]);
 
-  if (!enabled || loading) return <Skeleton className="h-[32rem]" />;
+  useEffect(() => {
+    if (flagSequenceLength <= 1) return;
+
+    const timer = window.setInterval(() => {
+      setBannerTick((v) => v + 1);
+    }, 5000);
+
+    return () => window.clearInterval(timer);
+  }, [r.frame?.lap, flagSequenceLength]);
+
+  if (!enabled || loading) return null;
 
   if (!frames.length || !r.frame) {
     return (
@@ -191,9 +300,14 @@ export const ReplayScrubber = ({ year, round, enabled }: { year: number; round: 
     );
   }
 
-  const banner =
-    r.frame.flag && r.frame.flag !== "GREEN" ? FLAG_BANNER[r.frame.flag] : null;
+  const sequence = r.frame.flagSequence ?? [];
+  const activeFlag: FlagType | undefined =
+    sequence.length > 0
+      ? sequence[bannerTick % sequence.length]
+      : r.frame.flag;
+  const banner = activeFlag && FLAG_BANNER[activeFlag] ? FLAG_BANNER[activeFlag] : null;
   const progress = (r.lap / r.totalLaps) * 100;
+  const lapIncidents = r.frame.lapIncidents ?? [];
 
   return (
     <div className="space-y-4">
@@ -226,6 +340,27 @@ export const ReplayScrubber = ({ year, round, enabled }: { year: number; round: 
             </span>
           )}
         </div>
+
+        {/* Lap incidents */}
+        {lapIncidents.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-2 mb-3">
+            {lapIncidents.map((inc, i) => {
+              const key = (inc.flag ?? inc.type ?? "DEFAULT").toUpperCase().replace(/\s+/g, "_");
+              const style = INCIDENT_STYLE[key] ?? INCIDENT_STYLE.DEFAULT;
+              return (
+                <div
+                  key={i}
+                  className="flex items-center gap-1 rounded px-2 py-0.5 font-mono text-[10px]"
+                  style={{ backgroundColor: style.bg, color: style.text }}
+                >
+                  {inc.drivers?.length ? `${inc.drivers.slice(0, 2).join("/")} — ` : ""}
+                  {inc.message?.slice(0, 45) ?? inc.type}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         <div
           className="relative h-1 overflow-hidden rounded-full"
           style={{ backgroundColor: "var(--surface2)" }}
@@ -237,10 +372,41 @@ export const ReplayScrubber = ({ year, round, enabled }: { year: number; round: 
         </div>
       </div>
 
+      {/* Compounds legend */}
+      <div
+        className="flex items-center gap-2 rounded-lg border p-3"
+        style={{ backgroundColor: "var(--surface2)", borderColor: "hsl(var(--border-subtle))" }}
+      >
+        <span className="font-mono text-[10px] font-semibold" style={{ color: "hsl(var(--muted))" }}>
+          COMPOUNDS:
+        </span>
+        <div className="flex gap-2">
+          {(["soft", "medium", "hard", "inter", "wet"] as Compound[]).map((compound) => {
+            const isUsed = r.frame?.usedCompounds?.includes(compound) ?? false;
+            return (
+              <div
+                key={compound}
+                className="flex items-center gap-1 px-2 py-1 rounded text-[10px]"
+                style={{
+                  opacity: isUsed ? 1 : 0.1,
+                  backgroundColor: "var(--surface)",
+                  transition: "opacity 0.3s",
+                }}
+              >
+                <CompoundDot compound={compound} />
+                <span style={{ color: "hsl(var(--text-dim))", textTransform: "uppercase" }}>
+                  {compound}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Tower */}
       <div ref={towerRef}>
         <GenericTable<ReplayPosition>
-          className="data-grid w-full min-w-[36rem] font-mono text-xs md:min-w-[48rem]"
+          className="data-grid w-full min-w-xl font-mono text-xs md:min-w-3xl"
           columns={columns}
           data={r.frame.positions}
           getRowKey={(row) => row.driver}
@@ -270,7 +436,7 @@ export const ReplayScrubber = ({ year, round, enabled }: { year: number; round: 
             : <Play  className="ml-0.5 h-4 w-4" style={{ color: "hsl(var(--text))" }} />}
         </button>
 
-        <div className="min-w-[120px] flex-1">
+        <div className="min-w-30 flex-1">
           <Slider
             value={[r.lap]}
             min={1}

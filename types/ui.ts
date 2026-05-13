@@ -57,6 +57,7 @@ export interface Race {
   circuit: Circuit;
   status: "completed" | "upcoming" | "live";
   sessions: SessionSchedule[];
+  eventFormat?: string;
 }
 
 export interface RaceResult {
@@ -67,6 +68,7 @@ export interface RaceResult {
   gap?: string;
   points: number;
   fastestLap?: boolean;
+  fastestLapTime?: string | null;
   status?: string;
   startGrid: number;
 }
@@ -130,24 +132,66 @@ export interface ChampionshipImpact {
 }
 
 export type FlagType = "GREEN" | "SC" | "VSC" | "YELLOW" | "RED";
+export type ReplayStatus = "DNF" | "DNS" | null;
+
+export interface ReplayRawDriverLap {
+  lap?: number | null;
+  driverCode?: string | null;
+  driverNumber?: number | null;
+  position?: number | null;
+  positionChange?: number | null;
+  gapToLeaderSeconds?: number | null;
+  gapToAheadSeconds?: number | null;
+  lapTimeSeconds?: number | null;
+  lapTime?: string | null;
+  pitDurationSeconds?: number | null;
+  stopNumber?: number | null;
+  compoundIn?: string | null;
+  compoundOut?: string | null;
+  incidentType?: string | null;
+  incidentFlag?: string | null;
+  incidentMessage?: string | null;
+  incidentMessageType?: string | null;
+  incidentDrivers?: string[] | null;
+}
 
 export interface ReplayPosition {
   driver: string;
   name: string;
+  driverNumber?: number;
   team: TeamId;
   gap: string;
   interval: string;
+  positionChange?: number | null;
   tyre: Compound;
   tyreLap: number;
+  stints: Compound[];
+  lastLapTime?: string | null;
+  stopNumber?: number;
+  pitDurationSeconds?: number | null;
+  pitTyreIn?: Compound;
+  pitTyreOut?: Compound;
   inPit: boolean;
-  dnf: boolean;
-  fastLap: boolean;
+  dnf?: boolean;
+  fastLap?: boolean;
   pole: boolean;
+  status?: ReplayStatus;
+}
+
+export interface ReplayLapIncident {
+  type: string;
+  message?: string;
+  flag?: string;
+  drivers?: string[];
+  severity?: string;
 }
 
 export interface ReplayFrame {
   lap: number;
   flag: FlagType;
+  flagSequence?: FlagType[];
+  usedCompounds?: Compound[];
+  lapIncidents?: ReplayLapIncident[];
   positions: ReplayPosition[];
 }
 
@@ -182,6 +226,52 @@ export interface ConsistencyScore {
   bestLapMs: number;
   avgLapMs: number;
   topCompound: Compound;
+}
+
+// ---------------------------------------------------------------------------
+// Per-lap nullable analysis model
+// ---------------------------------------------------------------------------
+
+export interface RaceLapDriverEntry {
+  lapTimeMs: number | null;
+  compound: Compound | null;
+  stint: number | null;
+  sector1Ms: number | null;
+  sector2Ms: number | null;
+  sector3Ms: number | null;
+  isPersonalBest: boolean | null;
+}
+
+export interface RaceLapFrame {
+  lap: number;
+  /** Keyed by driver code, e.g. "VER", "LEC". */
+  drivers: Record<string, RaceLapDriverEntry>;
+}
+
+// ---------------------------------------------------------------------------
+// Teammate battle types
+// ---------------------------------------------------------------------------
+
+export type RacePhase = "early" | "mid" | "late";
+
+export interface PhaseBattle {
+  phase: RacePhase;
+  lapFrom: number;
+  lapTo: number;
+  aAvgMs: number | null;
+  bAvgMs: number | null;
+  /** driver code of faster driver, or null if tie / insufficient data */
+  winner: string | null;
+  deltaMs: number | null;
+}
+
+export interface TeammateBattle {
+  teamId: TeamId;
+  driverA: Driver;
+  driverB: Driver;
+  phases: PhaseBattle[];
+  /** driver code of the overall faster teammate, or null if inconclusive */
+  overallWinner: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -225,3 +315,52 @@ export type ColumnDef<T> = {
   cellClassName?: string;
   render: (row: T, idx: number) => ReactNode;
 };
+
+// ---------------------------------------------------------------------------
+// Driver career / season UI types (camelCase) — added in Phase 1 refactor.
+// These are derived from the backend endpoint shapes but are strictly UI-layer
+// types so components never import endpoint types directly.
+// ---------------------------------------------------------------------------
+
+export interface DriverCareerSeason {
+  year: number;
+  races: number;
+  wins: number;
+  podiums: number;
+  champion: boolean;
+}
+
+export interface DriverCareer {
+  driverCode: string;
+  driverName: string;
+  nationality: string;
+  seasons: DriverCareerSeason[];
+  totalWins: number;
+  totalPodiums: number;
+  championships: number;
+}
+
+export interface DriverSeasonRace {
+  year: number;
+  round: number;
+  raceName: string;
+  location: string;
+  raceDate: string;
+  gridPosition: number | null;
+  finishPosition: number | null;
+  points: number;
+  status: string;
+  fastestLap: boolean;
+  lapsCompleted: number | null;
+  qualifyingPosition: number | null;
+  qualifyingTime: string | null;
+}
+
+export interface DriverSeason {
+  driverCode: string;
+  driverName: string;
+  year: number;
+  totalRaces: number;
+  sprintWeekends: number;
+  races: DriverSeasonRace[];
+}

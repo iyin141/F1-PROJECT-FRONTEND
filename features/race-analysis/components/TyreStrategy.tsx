@@ -2,13 +2,11 @@
 
 import { useMemo } from "react";
 import * as d3 from "d3";
-import { Skeleton } from "@/components/Skeleton";
 import { useResizeObserver } from "@/hooks/use-resize-observer";
 import { compoundColor } from "@/components/CompoundDot";
 import { DRIVERS } from "@/Lib/data/drivers";
 import type { Compound, Stint } from "@/types/ui";
-import { useAllStints } from "@/features/race-analysis/hooks/useRaceAnalysis";
-import { adaptStints } from "@/Lib/adapters";
+import { useAllStints, useTyreStrategy } from "@/features/race-analysis/hooks/useRaceAnalysis";
 
 const COMPOUNDS: Compound[] = ["soft", "medium", "hard", "inter", "wet"];
 const ROW_H = 18;
@@ -16,30 +14,29 @@ const ROW_GAP = 3;
 const MARGIN = { top: 10, right: 16, bottom: 32, left: 52 };
 
 export const TyreStrategy = ({ year, round }: { year: number; round: number }) => {
-  const { data: stintsData, isLoading } = useAllStints(year, round);
-  const stints = { data: stintsData ? adaptStints(stintsData) : undefined, loading: isLoading };
+  const { data: stints, isLoading } = useTyreStrategy(year, round);
   const { ref, size } = useResizeObserver<HTMLDivElement>();
 
   const chart = useMemo(() => {
-    if (!stints.data || size.width < 60) return null;
+    if (!stints || size.width < 60) return null;
 
     const byDriver = DRIVERS.map((d) => ({
       driver: d,
-      stints: stints.data!
+      stints: (stints ?? [])
         .filter((s) => s.driverId === d.id)
         .sort((a, b) => a.startLap - b.startLap),
     })).filter((d) => d.stints.length > 0);
 
-    const totalLaps = d3.max(stints.data, (s) => s.endLap) ?? 57;
+    const totalLaps = d3.max(stints, (s) => s.endLap) ?? 57;
     const innerW = Math.max(0, size.width - MARGIN.left - MARGIN.right);
     const height =
       MARGIN.top + MARGIN.bottom + byDriver.length * (ROW_H + ROW_GAP);
     const x = d3.scaleLinear().domain([1, totalLaps]).range([0, innerW]);
 
     return { byDriver, x, xTicks: x.ticks(8), totalLaps, innerW, height };
-  }, [stints.data, size.width]);
+  }, [stints, size.width]);
 
-  if (stints.loading) return <Skeleton className="h-[30rem]" />;
+  if (isLoading) return null;
 
   return (
     <div ref={ref} className="w-full">

@@ -1,133 +1,141 @@
 'use client';
 
 import { useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowSlider } from "@/features/home/components/ArrowSlider";
 import { CalendarStripPanel } from "@/features/home/components/CalendarStripPanel";
 import { LastRacePanel } from "@/features/home/components/LastRacePanel";
 import { RightColumnPanels } from "@/features/home/components/RightColumnPanels";
 import { StatusStrip } from "@/features/home/components/StatusStrip";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import {
-  useSeasonScheduleFallback,
-  useDriverStandings,
-  useConstructorStandings,
-} from "@/features/season-hub/hooks/useSeasonHub";
+import { useSeasonSchedule, useDriverStandings, useConstructorStandings } from "@/features/season-hub/hooks/useSeasonHub";
 import {
   useRaceDetail,
   useRaceResults,
   useRaceWeather,
   useRaceIncidents,
+  useQualifyingResults,
 } from "@/features/race-detail/hooks/useRaceDetail";
-import {
-  adaptSeasonSchedule,
-  adaptRaceDetail,
-  adaptRaceResults,
-  adaptDriverStandings,
-  adaptConstructorStandings,
-  adaptWeather,
-  adaptIncidents,
-} from "@/Lib/adapters";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
-export const HomePageShell = () => {
+type HomePageShellProps = {
+  initialYear: number;
+};
+
+export const HomePageShell = ({ initialYear }: HomePageShellProps) => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const urlYear = searchParams.get("year");
+  const urlRound = searchParams.get("round");
+
+  const parsedYear = urlYear ? parseInt(urlYear, 10) : undefined;
+  const parsedRound = urlRound ? parseInt(urlRound, 10) : undefined;
+
   // ── Season schedule ────────────────────────────────────────────────────
-  const {
-    data: scheduleRaw,
-    selectedYear,
-    isLoading: scheduleLoading,
-  } = useSeasonScheduleFallback(CURRENT_YEAR);
+  const { data: calendar, isLoading: scheduleLoading } = useSeasonSchedule(parsedYear ?? CURRENT_YEAR);
 
-  const scheduleYear = selectedYear ?? CURRENT_YEAR;
+  const scheduleYear = parsedYear ?? initialYear;
 
-  const calendarRaces = useMemo(
-    () => (scheduleRaw ? adaptSeasonSchedule(scheduleRaw) : undefined),
-    [scheduleRaw],
-  );
+  const liveRace = useMemo(() => calendar?.find((r) => r.status === "live"), [calendar]);
+  const lastCompletedRace = useMemo(() => calendar?.filter((r) => r.status === "completed").at(-1), [calendar]);
+  const roundOneRace = useMemo(() => calendar?.find((r) => r.round === 1), [calendar]);
+  const nextUpcomingRace = useMemo(() => calendar?.find((r) => r.status === "upcoming" || r.status === "live"), [calendar]);
 
-  const liveRace = useMemo(
-    () => calendarRaces?.find((r) => r.status === "live"),
-    [calendarRaces],
-  );
-
-  const lastCompletedRace = useMemo(
-    () => calendarRaces?.filter((r) => r.status === "completed").at(-1),
-    [calendarRaces],
-  );
-
-  const roundOneRace = useMemo(
-    () => calendarRaces?.find((r) => r.round === 1),
-    [calendarRaces],
-  );
-
-  const firstUpcomingRace = useMemo(
-    () => calendarRaces?.find((r) => r.status === "upcoming"),
-    [calendarRaces],
-  );
-
-  const targetRace = useMemo(
-    () => liveRace ?? lastCompletedRace ?? roundOneRace ?? firstUpcomingRace,
-    [liveRace, lastCompletedRace, roundOneRace, firstUpcomingRace],
-  );
-
-  const nextUpcomingRace = useMemo(
-    () => calendarRaces?.find((r) => r.status === "upcoming" || r.status === "live"),
-    [calendarRaces],
-  );
+  const targetRace = useMemo(() => {
+    if (parsedRound && calendar) {
+      return calendar.find((r) => r.round === parsedRound) ?? null;
+    }
+    return liveRace ?? lastCompletedRace ?? roundOneRace ?? nextUpcomingRace ?? null;
+  }, [parsedRound, calendar, liveRace, lastCompletedRace, roundOneRace, nextUpcomingRace]);
 
   const hasLastRace = Boolean(targetRace);
-  // Only fetch result-type data (results/weather/incidents) for completed races;
-  // live and upcoming races don't have this data yet.
-  const hasCompletedRace = hasLastRace && targetRace?.status === "completed";
   const lastYear = targetRace?.year ?? scheduleYear;
-  const lastRound = targetRace?.round ?? 1;
+  const lastRound = targetRace?.round ?? parsedRound ?? 1;
+  const hasCompletedRace = targetRace?.status === "completed";
 
   // ── Last race detail + results ─────────────────────────────────────────
-  const { data: raceDetailRaw, isLoading: raceDetailLoading } = useRaceDetail(lastYear, lastRound, hasLastRace);
-  const { data: resultsRaw, isLoading: resultsLoading } = useRaceResults(lastYear, lastRound, hasCompletedRace);
-  const { data: weatherRaw } = useRaceWeather(lastYear, lastRound, hasCompletedRace);
-  const { data: incidentsRaw } = useRaceIncidents(lastYear, lastRound, hasCompletedRace);
+  const { data: raceDetail, isLoading: raceDetailLoading } = useRaceDetail(lastYear, lastRound, hasLastRace);
+  const { data: results, isLoading: resultsLoading } = useRaceResults(lastYear, lastRound, hasCompletedRace);
+  const { data: weather, isLoading: weatherLoading } = useRaceWeather(lastYear, lastRound, hasCompletedRace);
+  const { data: incidents, isLoading: incidentsLoading } = useRaceIncidents(lastYear, lastRound, hasCompletedRace);
+  const { data: qualiResults } = useQualifyingResults(lastYear, lastRound, hasCompletedRace);
 
   // ── Standings ──────────────────────────────────────────────────────────
-  const { data: driversRaw, isLoading: driversLoading } = useDriverStandings(scheduleYear);
-  const { data: constructorsRaw, isLoading: constructorsLoading } = useConstructorStandings(scheduleYear);
+  const { data: standings, isLoading: standingsLoading } = useDriverStandings(scheduleYear);
+  const { data: constructors, isLoading: constructorsLoading } = useConstructorStandings(scheduleYear);
 
-  // ── Adapted data ───────────────────────────────────────────────────────
   const lastRace = {
-    data: raceDetailRaw && hasLastRace ? adaptRaceDetail(raceDetailRaw, lastYear) : undefined,
+    data: raceDetail,
     loading: scheduleLoading || raceDetailLoading,
     error: undefined,
     reload: () => {},
   };
-  const lastResults = {
-    data: resultsRaw && hasLastRace ? adaptRaceResults(resultsRaw) : undefined,
-    loading: resultsLoading,
-  };
-  const lastWeather = { data: weatherRaw ? adaptWeather(weatherRaw) : undefined };
-  const lastIncidents = { data: incidentsRaw ? adaptIncidents(incidentsRaw) : undefined };
 
-  const standings = {
-    data: driversRaw ? adaptDriverStandings(driversRaw) : undefined,
-    loading: driversLoading,
-  };
-  const constructors = {
-    data: constructorsRaw ? adaptConstructorStandings(constructorsRaw) : undefined,
-    loading: constructorsLoading,
+  const lastResults = { data: results, loading: resultsLoading };
+
+  const pushSelection = (year: number, round?: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("year", String(year));
+    if (typeof round === "number") {
+      params.set("round", String(round));
+    } else {
+      params.delete("round");
+    }
+    const nextPath = `/home/${year}`;
+    const nextQuery = params.toString();
+    router.push(nextQuery ? `${nextPath}?${nextQuery}` : nextPath);
   };
 
-  const calendar = { data: calendarRaces, loading: scheduleLoading };
-  const nextRace = { data: nextUpcomingRace, loading: scheduleLoading };
+  const handlePrevYear = () => pushSelection(scheduleYear - 1);
+  const handleNextYear = () => pushSelection(scheduleYear + 1);
+
+  const handlePrevRound = () => {
+    if (calendar && targetRace?.round && targetRace.round > 1) {
+      const prevRound = targetRace.round - 1;
+      pushSelection(scheduleYear, prevRound);
+    }
+  };
+
+  const handleNextRound = () => {
+    if (calendar && targetRace?.round && targetRace.round < calendar.length) {
+      const nextRound = targetRace.round + 1;
+      pushSelection(scheduleYear, nextRound);
+    }
+  };
 
   return (
     <main className="min-h-screen w-full page-shell">
       <StatusStrip
-        calendar={calendar.data}
-        leader={standings.data?.[0]}
+        calendar={calendar}
+        leader={standings?.[0]}
         hasError={Boolean(lastRace.error)}
         onRetry={lastRace.reload}
+        year={scheduleYear}
       />
 
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="font-display text-3xl font-bold tracking-tight">Race Control</h1>
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-4">
+          <h1 className="font-display text-3xl font-bold tracking-tight">Race Control</h1>
+          <ArrowSlider
+            label="Year"
+            value={String(scheduleYear)}
+            onPrev={handlePrevYear}
+            onNext={handleNextYear}
+            prevDisabled={scheduleYear <= 1950}
+            nextDisabled={scheduleYear >= CURRENT_YEAR}
+          />
+          <ArrowSlider
+            label="Race"
+            value={targetRace ? `R${targetRace.round} · ${targetRace.shortName}` : "Select Race"}
+            onPrev={handlePrevRound}
+            onNext={handleNextRound}
+            disabled={!calendar}
+            prevDisabled={!calendar || !targetRace?.round || targetRace.round <= 1}
+            nextDisabled={!calendar || !targetRace?.round || targetRace.round >= calendar.length}
+          />
+        </div>
         <ThemeToggle />
       </div>
 
@@ -136,24 +144,25 @@ export const HomePageShell = () => {
           <LastRacePanel
             race={lastRace.data}
             results={lastResults.data}
-            incidents={lastIncidents.data}
-            weather={lastWeather.data}
+            qualiResults={qualiResults}
+            incidents={incidents}
+            weather={weather}
             loading={lastRace.loading || lastResults.loading}
           />
         </div>
 
         <RightColumnPanels
           year={scheduleYear}
-          nextRace={nextRace.data}
-          nextRaceLoading={nextRace.loading}
-          standings={standings.data}
-          standingsLoading={standings.loading}
-          constructors={constructors.data}
-          constructorsLoading={constructors.loading}
+          nextRace={nextUpcomingRace}
+          nextRaceLoading={scheduleLoading}
+          standings={standings}
+          standingsLoading={standingsLoading}
+          constructors={constructors}
+          constructorsLoading={constructorsLoading}
         />
       </div>
 
-      <CalendarStripPanel calendar={calendar.data} loading={calendar.loading} />
+      <CalendarStripPanel calendar={calendar} loading={scheduleLoading} year={scheduleYear} />
     </main>
   );
 };

@@ -11,6 +11,9 @@ export type DriverStandingRow = {
 
 export type DriverStandingsResponse = {
   year: number;
+  /** Primary key per API docs */
   standings: DriverStandingRow[];
+  /** Legacy fallback key — kept for adapter compatibility */
+  drivers?: DriverStandingRow[];
   readiness: ReadinessChecklist;
 };

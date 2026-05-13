@@ -2,6 +2,7 @@ import type { AnalysisSessionName, ResponseMeta } from "@/types/api";
 
 // Endpoint 11: GET /api/analysis/races/<year>/<round>/tyre-strategy/
 export type TyreStrategyRow = {
+  driver?: string | null;
   stint: number;
   compound: string;
   lap_start: number;

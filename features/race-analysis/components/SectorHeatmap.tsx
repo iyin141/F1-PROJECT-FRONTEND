@@ -1,9 +1,8 @@
 'use client';
 
 import { useMemo } from "react";
-import { Skeleton } from "@/components/Skeleton";
 import { driverById } from "@/Lib/data/drivers";
-import type { SectorAnalysis } from "@/types/ui";
+import { useSectorAnalysis, useDriverSectors } from "@/features/race-analysis/hooks/useRaceAnalysis";
 
 type ColKey = "s1" | "s2" | "s3";
 
@@ -18,14 +17,52 @@ function cellStyle(value: number, min: number, max: number): React.CSSProperties
   return { background: `hsl(${hue} 55% 22%)`, color: "hsl(var(--text))" };
 }
 
-export const SectorHeatmap = ({ year, round }: { year: number; round: number }) => {
-  const sectors: { data: SectorAnalysis[] | undefined; loading: boolean } = { data: undefined, loading: false };
+export const SectorHeatmap = ({
+  year,
+  round,
+  driverId,
+}: {
+  year: number;
+  round: number;
+  driverId?: string;
+}) => {
+  // Use driver-specific sectors hook when driverId is provided
+  const driverSectorsQuery = useDriverSectors(year, round, driverId);
+  // Fall back to all-driver sectors when no specific driver
+  const sectorQuery = useSectorAnalysis(year, round);
+
+  const isLoading = driverId ? driverSectorsQuery.isLoading : sectorQuery.isLoading;
+  const data = driverId ? driverSectorsQuery.data : sectorQuery.data;
+
+  // Extract sectors from data
+  const sectors = useMemo(() => {
+    if (driverId && driverSectorsQuery.data) {
+      // For single driver: data contains sector data array
+      const sectors = driverSectorsQuery.data.data;
+      if (!sectors || !Array.isArray(sectors)) return { data: undefined, loading: false };
+
+      const result = sectors.map((s: any) => ({
+        driverId,
+        s1Ms: (s.s1_ms ?? s.s1 ?? 0) * 1000, // Convert to ms
+        s2Ms: (s.s2_ms ?? s.s2 ?? 0) * 1000,
+        s3Ms: (s.s3_ms ?? s.s3 ?? 0) * 1000,
+      }));
+      return { data: result, loading: false };
+    }
+
+    if (!driverId && sectorQuery.data) {
+      // For all drivers: sectorQuery.data is already adapted
+      return { data: sectorQuery.data, loading: false };
+    }
+
+    return { data: undefined, loading: isLoading };
+  }, [driverId, driverSectorsQuery, sectorQuery, isLoading]);
 
   const { rows, colStats } = useMemo(() => {
     if (!sectors.data) return { rows: [], colStats: [] };
 
     const rows = sectors.data.map((d) => ({
-      code: driverById(d.driverId).code,
+      code: driverById(d.driverId)?.code ?? d.driverId,
       s1: d.s1Ms / 1000,
       s2: d.s2Ms / 1000,
       s3: d.s3Ms / 1000,
@@ -45,7 +82,7 @@ export const SectorHeatmap = ({ year, round }: { year: number; round: number }) 
     return { rows, colStats };
   }, [sectors.data]);
 
-  if (sectors.loading) return <Skeleton className="h-[24rem]" />;
+  if (sectors.loading) return <div className="h-96" />;
 
   const colFor = (col: ColKey) => colStats.find((c) => c.col === col)!;
 

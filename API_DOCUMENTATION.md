@@ -72,10 +72,10 @@ Query parameters are forwarded transparently. All routes are `force-dynamic`.
 
 ## 2. API Service Functions
 
-All functions live under `Api_services/` and are re-exported from `Api_services/index.ts`.
-They call the Next.js proxy routes (not the Django backend directly).
+All functions live under `actions/` and are re-exported from `actions/index.ts`.
+They call the server-side `actions` helpers (which call the backend directly via `Lib/server-client`).
 
-### `Api_services/season-hub.ts`
+### `actions/season-hub.ts`
 
 ```ts
 getSeasonSchedule(year: number): Promise<SeasonScheduleResponse>
@@ -100,7 +100,7 @@ getConstructorStandings(year: number): Promise<ConstructorStandingsResponse>
 
 ---
 
-### `Api_services/race-detail.ts`
+### `actions/race-detail.ts`
 
 ```ts
 getRaceDetail(year: number, round: number): Promise<RaceDetailResponse>
@@ -153,7 +153,7 @@ getRaceIncidents(
 
 ---
 
-### `Api_services/race-analysis.ts`
+### `actions/race-analysis.ts`
 
 All analysis functions accept a `BaseAnalysisQuery`:
 
@@ -246,7 +246,7 @@ getTelemetrySummary(
 
 ---
 
-### `Api_services/unified.ts`
+### `actions/unified.ts`
 
 ```ts
 getFullSession(
@@ -277,7 +277,7 @@ getUnifiedTrackStatus(year, round, query?: { session?, limit? }): Promise<Unifie
 
 ---
 
-### `Api_services/coverage.ts`
+### `actions/coverage.ts`
 
 ```ts
 getPersistenceCoverageByYear(year: number): Promise<PersistenceCoverageSeasonResponse>
@@ -295,7 +295,7 @@ getPersistenceCoverageByRace(year: number, round: number): Promise<PersistenceCo
 
 ---
 
-### `Api_services/client.ts` (utilities)
+### `Lib/server-client.ts` (utilities)
 
 ```ts
 getJson<T>(path: string): Promise<T>

@@ -8,6 +8,17 @@ export type SeasonRace = {
   location: string;
   circuit: string;
   country: string;
+  event_format?: string | null;
+  session1?: string | null;
+  session1_date_utc?: string | null;
+  session2?: string | null;
+  session2_date_utc?: string | null;
+  session3?: string | null;
+  session3_date_utc?: string | null;
+  session4?: string | null;
+  session4_date_utc?: string | null;
+  session5?: string | null;
+  session5_date_utc?: string | null;
 };
 
 // Legacy support while migrating consumers.
@@ -37,6 +48,17 @@ export type RaceDetailResponse = {
   location: string;
   circuit: string;
   country: string;
+  event_format?: string | null;
+  session1?: string | null;
+  session1_date_utc?: string | null;
+  session2?: string | null;
+  session2_date_utc?: string | null;
+  session3?: string | null;
+  session3_date_utc?: string | null;
+  session4?: string | null;
+  session4_date_utc?: string | null;
+  session5?: string | null;
+  session5_date_utc?: string | null;
   readiness: ReadinessChecklist;
   sessions?: string[];
 };

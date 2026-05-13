@@ -1,9 +1,12 @@
-import { proxyBackendGet } from "@/app/api/_lib/backend";
-import type { YearParams } from "@/types/mvp-api";
+import { BACKEND_API_URL } from "@/Lib/api/config";
 
-export const dynamic = "force-dynamic";
-
-export async function GET(_request: Request, context: { params: Promise<YearParams> }) {
-  const { year } = await context.params;
-  return proxyBackendGet(`/constructors/${year}/`);
+export async function GET(request: Request, { params: _params }: { params: Promise<{ year: string }> }) {
+  const params = await _params;
+  const url = new URL(request.url);
+  const search = url.search || "";
+  const backendUrl = `${BACKEND_API_URL}/api/constructors/${params.year}/${search}`;
+  const res = await fetch(backendUrl);
+  const headers = new Headers(res.headers);
+  headers.delete("content-encoding");
+  return new Response(res.body, { status: res.status, headers });
 }

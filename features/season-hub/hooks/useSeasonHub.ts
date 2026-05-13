@@ -1,67 +1,38 @@
-import { useMemo } from "react";
-import { useQuery, useQueries } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import {
   getSeasonSchedule,
   getDriverStandings,
   getConstructorStandings,
-} from "@/Api_services/season-hub";
-import { cacheConfig, queryKeys } from "@/Lib/queryKeys";
+} from "@/Lib/api/services";
+import { queryKeys, resolveCacheConfig } from "@/Lib/queryKeys";
+import { adaptSeasonSchedule, adaptDriverStandings, adaptConstructorStandings } from "@/Lib/adapters";
 
 export function useSeasonSchedule(year: number) {
   return useQuery({
-    queryKey: queryKeys.races.all(year),
+    queryKey: queryKeys.schedule.season(year),
     queryFn: () => getSeasonSchedule(year),
-    ...cacheConfig.activeSeason,
+    select: (raw: any) => (raw ? adaptSeasonSchedule(raw) : undefined),
+    retry: 2,
+    ...resolveCacheConfig(year),
   });
-}
-
-export function useSeasonScheduleFallback(baseYear: number) {
-  const years = useMemo(
-    () => [baseYear, baseYear - 1, baseYear + 1, baseYear - 2],
-    [baseYear],
-  );
-
-  const results = useQueries({
-    queries: years.map((year) => ({
-      queryKey: queryKeys.races.all(year),
-      queryFn: () => getSeasonSchedule(year),
-      ...cacheConfig.activeSeason,
-    })),
-  });
-
-  const selectedIndex = results.findIndex((q) => (q.data?.races?.length ?? 0) > 0);
-  const selected = selectedIndex >= 0 ? results[selectedIndex]?.data : undefined;
-
-  return {
-    years,
-    queries: results,
-    data: selected,
-    selectedYear: selected?.year,
-    isLoading: results.some((q) => q.isPending),
-    isError: results.some((q) => q.isError),
-  };
 }
 
 export function useDriverStandings(year: number) {
   return useQuery({
-    queryKey: queryKeys.standings.drivers(year),
+    queryKey: queryKeys.driverStandings.grid(year),
     queryFn: () => getDriverStandings(year),
-    ...cacheConfig.activeSeason,
+    select: (raw: any) => (raw ? adaptDriverStandings(raw) : undefined),
+    ...resolveCacheConfig(year),
   });
 }
 
 export function useConstructorStandings(year: number) {
   return useQuery({
-    queryKey: queryKeys.standings.constructors(year),
+    queryKey: queryKeys.constructorStandings.year(year),
     queryFn: () => getConstructorStandings(year),
-    ...cacheConfig.activeSeason,
+    select: (raw: any) => (raw ? adaptConstructorStandings(raw) : undefined),
+    ...resolveCacheConfig(year),
   });
 }
 
-// ---------------------------------------------------------------------------
-// Theme hook — re-exported from canonical location
-// ---------------------------------------------------------------------------
-
-/** @deprecated Import useTheme from "@/Lib/hooks/useTheme" instead. */
-export { useTheme } from "@/Lib/hooks/useTheme";

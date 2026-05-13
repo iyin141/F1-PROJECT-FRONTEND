@@ -1,9 +1,12 @@
 'use client';
 
-import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { prefetchDriverData } from "@/Lib/clientPrefetch";
+import { useMemo, useState, useTransition } from "react";
 import { Panel } from "@/components/Panel";
-import { Skeleton } from "@/components/Skeleton";
-import { DriverCode } from "@/components/DriverCode";
+import { teamColor } from "@/components/DriverCode";
 import { CompoundDot } from "@/components/CompoundDot";
 import { GenericTable, type ColumnDef } from "@/components/ui/GenericTable";
 import { NotAvailable } from "@/features/race-detail/components/NotAvailable";
@@ -11,9 +14,13 @@ import type { RaceTabProps } from "@/features/race-detail/components/tab-types";
 import type { PracticeResult } from "@/types/ui";
 import { PodiumBlock } from "@/components/PodiumBlock";
 import { usePracticeResults } from "@/features/race-detail/hooks/useRaceDetail";
-import { adaptPracticeResults } from "@/Lib/adapters";
+import { getDriverFlagUrl } from "@/Lib/nationality";
+import { FlagImage } from "@/_Components/ui/FlagImage";
 
-const columns: ColumnDef<PracticeResult>[] = [
+const buildColumns = (
+  year: number,
+  prefetchDriverRoute: (driverCode: string) => void,
+): ColumnDef<PracticeResult>[] => [
   {
     key: "pos",
     width: "1fr",
@@ -24,7 +31,27 @@ const columns: ColumnDef<PracticeResult>[] = [
     key: "driver",
     width: "4fr",
     header: "DRIVER",
-    render: r => <div className="min-w-0"><DriverCode driver={r.driver} showName /></div>,
+    render: (r) => {
+      const flag = getDriverFlagUrl(r.driver.code, 40);
+      return (
+        <div className="inline-flex min-w-0 items-center gap-2">
+          <span
+            aria-hidden
+            className="inline-block h-3.5 w-0.75 rounded-sm"
+            style={{ backgroundColor: teamColor(r.driver.team) }}
+          />
+          {flag ? <FlagImage src={flag} /> : null}
+          <Link
+            href={`/drivers/${r.driver.code}/${year}`}
+            onMouseEnter={() => prefetchDriverRoute(r.driver.code)}
+            className="font-semibold transition-colors hover:text-blue"
+          >
+            {r.driver.code}
+          </Link>
+          <span className="truncate text-text-dim">{r.driver.lastName}</span>
+        </div>
+      );
+    },
   },
   {
     key: "lap",
@@ -52,10 +79,32 @@ const columns: ColumnDef<PracticeResult>[] = [
   },
 ];
 
-export const PracticeTab = ({ year, round, upcoming }: RaceTabProps) => {
-  const [session, setSession] = useState<"fp1" | "fp2" | "fp3">("fp1");
-  const { data: pData, isLoading } = usePracticeResults(year, round, session.toUpperCase() as "FP1" | "FP2" | "FP3");
-  const p = { data: pData ? adaptPracticeResults(pData) : undefined, loading: isLoading };
+type PracticeTabProps = RaceTabProps & {
+  availableSessions?: ("FP1" | "FP2" | "FP3")[];
+};
+
+export const PracticeTab = ({ year, round, upcoming, availableSessions }: PracticeTabProps) => {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  // Use the available sessions from the race schedule, defaulting to all three
+  const sessions = availableSessions?.length ? availableSessions : (["FP1", "FP2", "FP3"] as const);
+  const [session, setSession] = useState<"FP1" | "FP2" | "FP3">(sessions[0]);
+
+  const queryClient = useQueryClient();
+
+  // call both next route prefetch and react-query data prefetch
+  const prefetchDriverRouteAndData = (driverCode: string) => {
+    router.prefetch(`/drivers/${driverCode}/${year}`);
+    void prefetchDriverData(queryClient, driverCode, year);
+  };
+
+  const columns = useMemo(
+    () => buildColumns(year, prefetchDriverRouteAndData),
+    [year],
+  );
+
+  const { data: pData, isLoading } = usePracticeResults(year, round, session);
+  const p = { data: pData ?? undefined, loading: isLoading };
 
   if (upcoming) return <NotAvailable />;
 
@@ -65,13 +114,13 @@ export const PracticeTab = ({ year, round, upcoming }: RaceTabProps) => {
 
   return (
     <Panel
-      label={`PRACTICE · ${session.toUpperCase()}`}
+      label={`PRACTICE · ${session}`}
       action={
-        <div className="flex gap-1">
-          {(["fp1", "fp2", "fp3"] as const).map(s => (
+        <div className={`flex gap-1 ${isPending ? "pointer-events-none opacity-70" : ""}`}>
+          {sessions.map(s => (
             <button
               key={s}
-              onClick={() => setSession(s)}
+              onClick={() => startTransition(() => setSession(s))}
               className={`rounded-sm px-3 py-1 font-mono text-[10px] uppercase tracking-wider ${session === s ? "bg-red text-white" : "text-text-dim hover:text-text"}`}
             >
               {s}
@@ -80,12 +129,12 @@ export const PracticeTab = ({ year, round, upcoming }: RaceTabProps) => {
         </div>
       }
     >
-      {p.loading ? <Skeleton className="h-96" /> : (
+      {(
         <div className="space-y-4">
           {podiumResults.length === 3 && (
             <PodiumBlock
               results={podiumResults}
-              label={`${session.toUpperCase()} TOP 3`}
+              label={`${session} TOP 3`}
               renderStats={(r) => (
                 <>
                   <span
@@ -108,7 +157,7 @@ export const PracticeTab = ({ year, round, upcoming }: RaceTabProps) => {
           )}
           <div className="panel-scroll w-full">
           <GenericTable<PracticeResult>
-            className="data-grid w-full min-w-[36rem] font-mono text-xs md:min-w-[42rem]"
+            className="data-grid w-full min-w-xl font-mono text-xs md:min-w-2xl"
             columns={columns}
             data={tableResults}
             getRowKey={r => r.driver.id}

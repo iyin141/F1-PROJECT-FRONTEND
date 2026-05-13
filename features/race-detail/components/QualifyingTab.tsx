@@ -1,23 +1,30 @@
 'use client';
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { prefetchDriverData } from "@/Lib/clientPrefetch";
+import { useMemo } from "react";
 import { cn } from "@/Lib/utils";
 import { Panel } from "@/components/Panel";
-import { Skeleton } from "@/components/Skeleton";
 import { teamColor } from "@/components/DriverCode";
 import { GenericTable, type ColumnDef } from "@/components/ui/GenericTable";
 import { NotAvailable } from "@/features/race-detail/components/NotAvailable";
 import type { RaceTabProps } from "@/features/race-detail/components/tab-types";
 import type { QualifyingResult } from "@/types/ui";
 import { useQualifyingResults } from "@/features/race-detail/hooks/useRaceDetail";
-import { adaptQualifyingResults } from "@/Lib/adapters";
 import { getDriverFlagUrl } from "@/Lib/nationality";
 import { PodiumBlock } from "@/components/PodiumBlock";
+import { FlagImage } from "@/_Components/ui/FlagImage";
 
 // Derive which segment is the driver's "best" (i.e., the latest they competed in)
 const bestSegment = (r: QualifyingResult): "Q1" | "Q2" | "Q3" =>
   r.q3 != null ? "Q3" : r.q2 != null ? "Q2" : "Q1";
 
-const columns: ColumnDef<QualifyingResult>[] = [
+const buildColumns = (
+  year: number,
+  prefetchDriverRoute: (driverCode: string) => void,
+): ColumnDef<QualifyingResult>[] => [
   {
     key: "pos",
     width: "40px",
@@ -37,7 +44,7 @@ const columns: ColumnDef<QualifyingResult>[] = [
     render: (r) => (
       <span
         aria-hidden
-        className="inline-block h-7 w-[3px] rounded-sm"
+        className="inline-block h-7 w-0.75 rounded-sm"
         style={{ backgroundColor: teamColor(r.driver.team) }}
       />
     ),
@@ -48,16 +55,7 @@ const columns: ColumnDef<QualifyingResult>[] = [
     align: "center",
     render: (r) => {
       const flag = getDriverFlagUrl(r.driver.code, 40);
-      return flag ? (
-        <img
-          src={flag}
-          alt=""
-          width={18}
-          height={12}
-          loading="lazy"
-          style={{ borderRadius: "2px", objectFit: "cover" }}
-        />
-      ) : null;
+      return flag ? <FlagImage src={flag} /> : null;
     },
   },
   {
@@ -71,7 +69,13 @@ const columns: ColumnDef<QualifyingResult>[] = [
             className="font-mono text-sm font-semibold tracking-wider"
             style={{ color: "hsl(var(--text))" }}
           >
-            {r.driver.code}
+            <Link
+              href={`/drivers/${r.driver.code}/${year}`}
+              onMouseEnter={() => prefetchDriverRoute(r.driver.code)}
+              className="transition-colors hover:text-blue"
+            >
+              {r.driver.code}
+            </Link>
           </div>
           <div
             className="truncate font-mono text-[10px] uppercase tracking-[0.15em]"
@@ -166,8 +170,22 @@ const columns: ColumnDef<QualifyingResult>[] = [
 ];
 
 export const QualifyingTab = ({ year, round, upcoming }: RaceTabProps) => {
+  const router = useRouter();
+
+  const queryClient = useQueryClient();
+
+  const prefetchDriverRoute = (driverCode: string) => {
+    router.prefetch(`/drivers/${driverCode}/${year}`);
+    void prefetchDriverData(queryClient, driverCode, year);
+  };
+
+  const columns = useMemo(
+    () => buildColumns(year, prefetchDriverRoute),
+    [year],
+  );
+
   const { data: qData, isLoading } = useQualifyingResults(year, round);
-  const q = { data: qData ? adaptQualifyingResults(qData) : undefined, loading: isLoading };
+  const q = { data: qData ?? undefined, loading: isLoading };
   if (upcoming) return <NotAvailable />;
 
   const allResults = q.data ?? [];
@@ -176,9 +194,7 @@ export const QualifyingTab = ({ year, round, upcoming }: RaceTabProps) => {
 
   return (
     <Panel label="QUALIFYING · Q1 / Q2 / Q3">
-      {q.loading ? (
-        <Skeleton className="h-96" />
-      ) : (
+      {(
         <div className="space-y-4">
           {podiumResults.length === 3 && (
             <PodiumBlock
@@ -202,7 +218,7 @@ export const QualifyingTab = ({ year, round, upcoming }: RaceTabProps) => {
                     </span>
                     {isWinner && (
                       <span
-                        className="rounded-sm px-1 py-0.5 text-[9px] font-bold tracking-[0.1em]"
+                        className="rounded-sm px-1 py-0.5 text-[9px] font-bold tracking-widest"
                         style={{
                           color: "hsl(var(--amber))",
                           backgroundColor: "color-mix(in srgb, hsl(var(--amber)) 18%, transparent)",
@@ -218,7 +234,7 @@ export const QualifyingTab = ({ year, round, upcoming }: RaceTabProps) => {
           )}
           <div className="panel-scroll w-full">
           <GenericTable<QualifyingResult>
-            className="data-grid w-full min-w-[36rem] font-mono text-xs md:min-w-[42rem]"
+            className="data-grid w-full min-w-xl font-mono text-xs md:min-w-2xl"
             columns={columns}
             data={tableResults}
             getRowKey={(r) => r.driver.id}

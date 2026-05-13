@@ -1,13 +1,21 @@
 'use client';
 
 import * as Tabs from "@radix-ui/react-tabs";
-import { DriverCode } from "@/components/DriverCode";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { prefetchDriverData } from "@/Lib/clientPrefetch";
+import { teamColor } from "@/components/DriverCode";
 import { Panel } from "@/components/Panel";
-import { Skeleton } from "@/components/Skeleton";
 import { GenericTable, type ColumnDef } from "@/components/ui/GenericTable";
 import type { ConstructorStanding, DriverStanding } from "@/types/ui";
+import { getDriverFlagUrl } from "@/Lib/nationality";
+import { FlagImage } from "@/_Components/ui/FlagImage";
 
-const driverColumns: ColumnDef<DriverStanding>[] = [
+const getDriverColumns = (
+  year: number,
+  prefetchDriverRoute: (driverCode: string) => void,
+): ColumnDef<DriverStanding>[] => [
   {
     key: "position",
     width: "1fr",
@@ -18,7 +26,27 @@ const driverColumns: ColumnDef<DriverStanding>[] = [
     key: "driver",
     width: "4fr",
     header: "DRIVER",
-    render: standing => <DriverCode driver={standing.driver} showName />,
+    render: (standing) => {
+      const flag = getDriverFlagUrl(standing.driver.code, 40);
+      return (
+      <span className="inline-flex min-w-0 items-center gap-2 font-mono text-xs tracking-wider">
+        <span
+          aria-hidden
+          className="inline-block h-3.5 w-0.75 rounded-sm"
+          style={{ backgroundColor: teamColor(standing.driver.team) }}
+        />
+        {flag ? <FlagImage src={flag} /> : null}
+        <Link
+          href={`/drivers/${standing.driver.code}/${year}`}
+          onMouseEnter={() => prefetchDriverRoute(standing.driver.code)}
+          className="font-semibold transition-colors hover:text-blue"
+        >
+          {standing.driver.code}
+        </Link>
+        <span className="truncate text-text-dim">{standing.driver.lastName}</span>
+      </span>
+      );
+    },
   },
   {
     key: "points",
@@ -66,6 +94,16 @@ export const StandingsPanel = ({
   constructors,
   constructorsLoading,
 }: StandingsPanelProps) => {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const prefetchDriverRoute = (driverCode: string) => {
+    router.prefetch(`/drivers/${driverCode}/${year}`);
+    void prefetchDriverData(queryClient, driverCode, year);
+  };
+
+  const driverColumns = getDriverColumns(year, prefetchDriverRoute);
+
   return (
     <Panel label="STANDINGS" title={`${year} Championship`}>
       <Tabs.Root defaultValue="drivers">
@@ -81,9 +119,6 @@ export const StandingsPanel = ({
           ))}
         </Tabs.List>
         <Tabs.Content value="drivers">
-          {driversLoading ? (
-            <div className="space-y-2">{[...Array(10)].map((_, i) => <Skeleton key={i} className="h-6" />)}</div>
-          ) : (
             <GenericTable<DriverStanding>
               className="font-mono text-xs"
               columns={driverColumns}
@@ -91,12 +126,8 @@ export const StandingsPanel = ({
               getRowKey={standing => standing.driver.id}
               striped
             />
-          )}
         </Tabs.Content>
         <Tabs.Content value="constructors">
-          {constructorsLoading ? (
-            <div className="space-y-2">{[...Array(10)].map((_, i) => <Skeleton key={i} className="h-6" />)}</div>
-          ) : (
             <GenericTable<ConstructorStanding>
               className="font-mono text-xs"
               columns={constructorColumns}
@@ -104,7 +135,6 @@ export const StandingsPanel = ({
               getRowKey={standing => standing.team.id}
               striped
             />
-          )}
         </Tabs.Content>
       </Tabs.Root>
     </Panel>

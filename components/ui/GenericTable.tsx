@@ -103,7 +103,7 @@ export function GenericTable<T>({
   };
 
   return (
-    <div className={cn("overflow-hidden rounded-[2px] border border-border-subtle bg-panel", className)}>
+    <div className={cn("overflow-hidden rounded-xs border border-border-subtle bg-panel", className)}>
       {showHeaders && (
         <div
           className="grid items-center border-b border-border-subtle bg-panel-elev px-3 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-text-dim"

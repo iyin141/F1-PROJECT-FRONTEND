@@ -1,0 +1,49 @@
+# API Completeness Checklist
+
+This file tracks the required API endpoints and data payloads for each feature and component in the F1 Control Room dashboard to ensure all necessary data is fetched.
+
+## 1. Home Page (`features/home`)
+- [ ] **Season Schedule / Calendar Strip**
+  - Requires: `getSeasonSchedule(year)`
+  - Renders: `CalendarStripPanel`
+- [ ] **Status Strip**
+  - Requires: `getSeasonSchedule(year)`, `getDriverStandings(year)`
+  - Renders: `StatusStrip` (Total rounds, Leader name/points)
+- [ ] **Last Race Details**
+  - Requires: `getRaceDetail(year, round)`, `getRaceResults(year, round)`, `getUnifiedWeather(year, round)`, `getUnifiedIncidents(year, round)`
+  - Renders: `LastRacePanel`
+- [ ] **Right Column (Standings)**
+  - Requires: `getDriverStandings(year)`, `getConstructorStandings(year)`
+  - Renders: `RightColumnPanels`
+
+## 2. Season Hub (`features/season-hub`)
+- [ ] **Season Overview / Header**
+  - Requires: `getSeasonSchedule(year)`
+  - Renders: `SeasonHeader`
+- [ ] **Standings Tables (Drivers & Constructors)**
+  - Requires: `getDriverStandings(year)`, `getConstructorStandings(year)`
+  - Renders: Standings views
+
+## 3. Race Detail (`features/race-detail`)
+- [ ] **Race Overview Tab**
+  - Requires: `getRaceDetail(year, round)`, `getRaceResults(year, round)`
+- [ ] **Qualifying Tab**
+  - Requires: `getQualifyingResults(year, round)`
+- [ ] **Practice Tab**
+  - Requires: `getPracticeResults(year, round, session)` for FP1, FP2, FP3
+- [ ] **Weather & Incidents**
+  - Requires: `getUnifiedWeather(year, round)`, `getUnifiedIncidents(year, round)`
+
+## 4. Race Analysis (`features/race-analysis`)
+- [ ] **Telemetry / Laps**
+  - Requires: `getLapsAnalysis(year, round)`
+- [ ] **Pace & Stints**
+  - Requires: `getStintsAnalysis(year, round)`
+- [ ] **Sectors / Heatmap**
+  - Requires: `getSectorsAnalysis(year, round)` (or similar endpoints in analysis)
+
+## 5. Driver Record (`features/driver-record`)
+- [ ] **Driver Career History**
+  - Requires: Iterative `getDriverStandings(year)` or specific driver summary endpoints.
+- [ ] **Driver Telemetry Summary**
+  - Requires: `getLapsAnalysis` filtered by driver.

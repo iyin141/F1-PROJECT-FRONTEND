@@ -12,6 +12,15 @@ export const formatLapMs = (ms: number) => {
 
 export const formatGap = (ms: number) => `+${(ms / 1000).toFixed(3)}`;
 
+import type { AnalysisSessionCode, AnalysisSessionName } from "@/types/api";
+
+/** Maps AnalysisSessionName (including long-form aliases) to the short API session code. */
+export function toSessionCode(session: AnalysisSessionName): AnalysisSessionCode {
+  if (session === "Race") return "R";
+  if (session === "Qualifying") return "Q";
+  return session;
+}
+
 /** Maps the display session names used in AnalysisPanels to API session codes. */
 export const normalizeSession = (
   session: "RACE" | "QUALIFYING" | "FP1" | "FP2" | "FP3",

@@ -2,10 +2,16 @@ import type { AnalysisSessionName, ResponseFilters, ResponseMeta } from "@/types
 
 // Endpoint 22: GET /api/unified/races/<year>/<round>/track-status/
 export type UnifiedTrackStatusRow = {
-  lap: number;
-  message?: string;
   status: string;
-  time: string;
+  // Primary fields (API docs)
+  lap_number?: number;
+  status_duration_laps?: number | null;
+  cause?: string | null;
+  affected_zone?: string | null;
+  // Legacy / fallback fields
+  lap?: number;
+  message?: string;
+  time?: string;
   reason?: string;
 };
 

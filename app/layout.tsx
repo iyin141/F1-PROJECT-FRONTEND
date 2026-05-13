@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes";
 
 import { QueryProvider } from "@/_Stores/QueryProvider";
 import { Sidebar } from "@/components/Sidebar";
+import { NavigationProgress } from "@/components/NavigationProgress";
 
 import "./globals.css";
 
@@ -42,6 +43,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full bg-bg text-text">
+        <NavigationProgress />
         <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
           <QueryProvider>
             <div className="flex min-h-screen">

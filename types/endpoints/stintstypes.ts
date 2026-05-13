@@ -10,6 +10,7 @@ export type StintAnalysisRow = {
   best_lap?: string | null;
   avg_pace?: string | null;
   pace_degradation?: string | null;
+  duration_laps?: number;
 };
 
 export type StintDriverAnalysisRow = {
@@ -19,6 +20,7 @@ export type StintDriverAnalysisRow = {
   lap_start: number;
   lap_end: number;
   duration_laps?: number;
+  lap_count?: number;
 };
 
 export type StintsAnalysisResponse = {

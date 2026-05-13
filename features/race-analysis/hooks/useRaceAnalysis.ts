@@ -1,53 +1,33 @@
 import { useQuery } from "@tanstack/react-query";
-
-import {
-  getLapsAnalysis,
-  getPaceAnalysis,
-  getStintsAnalysis,
-  getSectorAnalysis,
-  getTyreStrategyAnalysis,
-  getTelemetry,
-  getTelemetryOverlay,
-  getTelemetrySummary,
-} from "@/Api_services/race-analysis";
-import {
-  getPersistenceCoverageByYear,
-  getPersistenceCoverageByRace,
-} from "@/Api_services/coverage";
+import { useMemo } from "react";
 import { cacheConfig, queryKeys } from "@/Lib/queryKeys";
 import type { AnalysisSessionName } from "@/types/api";
-
-// ---------------------------------------------------------------------------
-// Coverage
-// ---------------------------------------------------------------------------
-
-export function useCoverageSeason(year: number) {
-  return useQuery({
-    queryKey: queryKeys.coverage.season(year),
-    queryFn: () => getPersistenceCoverageByYear(year),
-    ...cacheConfig.coverage,
-  });
-}
-
-export function useCoverageRound(year: number, round: number) {
-  return useQuery({
-    queryKey: queryKeys.coverage.round(year, round),
-    queryFn: () => getPersistenceCoverageByRace(year, round),
-    ...cacheConfig.coverage,
-  });
-}
+import { getAnalysis, getTelemetry, getTelemetryOverlay, getTelemetrySummary, getUnifiedPositions } from "@/Lib/api/services";
+import type { UnifiedPositionsResponse, TelemetryResponse, TelemetryOverlayResponse, TelemetrySummaryResponse } from "@/types/endpoints";
+import {
+  adaptRaceLapFrames,
+  adaptLapTimes,
+  adaptStints,
+  adaptTyreStrategy,
+  adaptSectorAnalysis,
+  adaptTeammateBattles,
+  adaptConsistencyByStint,
+} from "@/Lib/adapters";
+import { DRIVERS } from "@/Lib/data/drivers";
+import type {
+  RaceLapFrame,
+  LapTime,
+  Stint,
+  SectorAnalysis,
+  ConsistencyScore,
+  TeammateBattle,
+} from "@/types/ui";
 
 // ---------------------------------------------------------------------------
 // Grid-wide (no driver filter)
 // ---------------------------------------------------------------------------
 
-export function useTyreStrategy(year: number, round: number) {
-  return useQuery({
-    queryKey: queryKeys.analysis.tyre(year, round),
-    queryFn: () => getTyreStrategyAnalysis(year, round, { session: "R" }),
-    ...cacheConfig.historical,
-  });
-}
+// (tyre strategy hook implemented later with proper select)
 
 // ---------------------------------------------------------------------------
 // Driver-filtered analysis
@@ -60,8 +40,8 @@ export function useDriverLaps(
   driver: string | undefined,
 ) {
   return useQuery({
-    queryKey: queryKeys.analysis.laps(year, round, driver),
-    queryFn: () => getLapsAnalysis(year, round, { session: "R", driver }),
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", driver),
+    queryFn: () => getAnalysis(year, round, "laps", { session: "R", driver }),
     ...cacheConfig.historical,
     enabled: !!driver,
   });
@@ -73,8 +53,8 @@ export function useDriverPace(
   driver: string | undefined,
 ) {
   return useQuery({
-    queryKey: queryKeys.analysis.pace(year, round, driver),
-    queryFn: () => getPaceAnalysis(year, round, { session: "R", driver }),
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "pace", driver),
+    queryFn: () => getAnalysis(year, round, "pace", { session: "R", driver }),
     ...cacheConfig.historical,
     enabled: !!driver,
   });
@@ -86,8 +66,8 @@ export function useDriverStints(
   driver: string | undefined,
 ) {
   return useQuery({
-    queryKey: queryKeys.analysis.stints(year, round, driver),
-    queryFn: () => getStintsAnalysis(year, round, { session: "R", driver }),
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "stints", driver),
+    queryFn: () => getAnalysis(year, round, "stints", { session: "R", driver }),
     ...cacheConfig.historical,
     enabled: !!driver,
   });
@@ -95,18 +75,85 @@ export function useDriverStints(
 
 export function useAllLaps(year: number, round: number) {
   return useQuery({
-    queryKey: queryKeys.analysis.laps(year, round, undefined),
-    queryFn: () => getLapsAnalysis(year, round, { session: "R" }),
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", undefined),
+    queryFn: () => getAnalysis(year, round, "laps", { session: "R" }),
     ...cacheConfig.historical,
   });
 }
 
 export function useAllStints(year: number, round: number) {
-  return useQuery({
-    queryKey: queryKeys.analysis.stints(year, round, undefined),
-    queryFn: () => getStintsAnalysis(year, round, { session: "R" }),
+  return useQuery<Stint[] | undefined>({
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "stints", undefined),
+    queryFn: () => getAnalysis(year, round, "stints", { session: "R" }),
+    select: (raw: any) => (raw ? adaptStints(raw) : undefined),
     ...cacheConfig.historical,
   });
+}
+
+export function useRaceLapFrames(year: number, round: number, enabled = true) {
+  return useQuery<RaceLapFrame[] | undefined>({
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", undefined),
+    queryFn: () => getAnalysis(year, round, "laps", { session: "R" }),
+    select: (raw: any) => (raw ? adaptRaceLapFrames(raw) : undefined),
+    ...cacheConfig.historical,
+    enabled,
+  });
+}
+
+export function useLapTimes(year: number, round: number, enabled = true) {
+  return useQuery<LapTime[] | undefined>({
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", undefined),
+    queryFn: () => getAnalysis(year, round, "laps", { session: "R" }),
+    select: (raw: any) => (raw ? adaptLapTimes(raw) : undefined),
+    ...cacheConfig.historical,
+    enabled,
+  });
+}
+
+export function useTyreStrategy(year: number, round: number) {
+  return useQuery<Stint[] | undefined>({
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "tyre"),
+    queryFn: () => getAnalysis(year, round, "tyre-strategy", { session: "R" }),
+    select: (raw: any) => (raw ? adaptTyreStrategy(raw) : undefined),
+    ...cacheConfig.historical,
+  });
+}
+
+export function useSectorAnalysis(year: number, round: number) {
+  return useQuery<SectorAnalysis[] | undefined>({
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", undefined),
+    queryFn: () => getAnalysis(year, round, "laps", { session: "R" }),
+    select: (raw: any) => (raw ? adaptSectorAnalysis(raw) : undefined),
+    ...cacheConfig.historical,
+  });
+}
+
+export function useConsistencyByStint(year: number, round: number, enabled = true) {
+  const framesQuery = useRaceLapFrames(year, round, enabled);
+  const frames = framesQuery.data ?? [];
+  const data = useMemo(() => (frames.length ? adaptConsistencyByStint(frames, DRIVERS) : new Map<number | "overall", ConsistencyScore[]>()), [frames]);
+  return { data, isLoading: framesQuery.isLoading, isError: framesQuery.isError } as {
+    data: Map<number | "overall", ConsistencyScore[]>;
+    isLoading: boolean;
+    isError: boolean;
+  };
+}
+
+export function useTeammateBattles(year: number, round: number, enabled = true) {
+  const framesQuery = useRaceLapFrames(year, round, enabled);
+  const frames = framesQuery.data ?? [];
+  const data = useMemo(() => {
+    if (!frames.length) return [] as TeammateBattle[];
+    const raceDriverCodes = new Set<string>();
+    for (const frame of frames) for (const code of Object.keys(frame.drivers)) raceDriverCodes.add(code);
+    const raceDrivers = DRIVERS.filter((d) => raceDriverCodes.has(d.code));
+    return adaptTeammateBattles(frames, raceDrivers);
+  }, [frames]) as TeammateBattle[];
+  return { data, isLoading: framesQuery.isLoading, isError: framesQuery.isError } as {
+    data: TeammateBattle[];
+    isLoading: boolean;
+    isError: boolean;
+  };
 }
 
 export function useDriverSectors(
@@ -115,16 +162,15 @@ export function useDriverSectors(
   driver: string | undefined,
 ) {
   return useQuery({
-    queryKey: queryKeys.analysis.sectors(year, round, driver),
-    queryFn: () => getSectorAnalysis(year, round, { session: "R", driver }),
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "sectors", driver),
+    queryFn: () => getAnalysis(year, round, "sector-analysis", { session: "R", driver }),
     ...cacheConfig.historical,
     enabled: !!driver,
   });
 }
 
 // ---------------------------------------------------------------------------
-// Telemetry — coverage-gated
-// Each hook first checks coverage before enabling the actual fetch.
+// Telemetry
 // ---------------------------------------------------------------------------
 
 export function useTelemetry(
@@ -134,28 +180,17 @@ export function useTelemetry(
   lap: number | null,
   session: AnalysisSessionName = "R",
 ) {
-  const { data: coverage } = useCoverageRound(year, round);
-
-  const sessionKey = session === "Race" ? "R" : session === "Qualifying" ? "Q" : session;
-  const telemetryAvailable =
-    coverage?.sessions?.[sessionKey]?.telemetry === true;
-
-  return useQuery({
-    queryKey: queryKeys.analysis.telemetry(
+  return useQuery<TelemetryResponse>({
+    queryKey: queryKeys.telemetry.single(
       year,
       round,
       driver ?? "",
       lap ?? 0,
       session,
     ),
-    queryFn: () =>
-      getTelemetry(year, round, {
-        session,
-        driver: driver!,
-        lap: lap!,
-      }),
+    queryFn: () => getTelemetry(year, round, { driver: driver!, lap: lap!, session }),
     ...cacheConfig.heavyOptIn,
-    enabled: telemetryAvailable && !!driver && lap !== null,
+    enabled: !!driver && lap !== null,
   });
 }
 
@@ -167,29 +202,21 @@ export function useTelemetryOverlay(
   lap: number | undefined,
   session: AnalysisSessionName = "R",
 ) {
-  const { data: coverage } = useCoverageRound(year, round);
-
-  const sessionKey = session === "Race" ? "R" : session === "Qualifying" ? "Q" : session;
-  const telemetryAvailable =
-    coverage?.sessions?.[sessionKey]?.telemetry === true;
-
-  return useQuery({
-    queryKey: queryKeys.analysis.telemetryOverlay(
+  return useQuery<TelemetryOverlayResponse>({
+    queryKey: queryKeys.telemetry.overlay(
       year,
       round,
       driverA ?? "",
       driverB ?? "",
       lap,
     ),
-    queryFn: () =>
-      getTelemetryOverlay(year, round, {
-        session,
-        driver_a: driverA!,
-        driver_b: driverB!,
-        lap,
-      }),
+    queryFn: () => {
+      const params: Record<string, string | number> = { driver_a: driverA!, driver_b: driverB!, session };
+      if (lap !== undefined) params.lap = lap;
+      return getTelemetryOverlay(year, round, params);
+    },
     ...cacheConfig.heavyOptIn,
-    enabled: telemetryAvailable && !!driverA && !!driverB,
+    enabled: !!driverA && !!driverB,
   });
 }
 
@@ -200,26 +227,28 @@ export function useTelemetrySummary(
   lap: number | null,
   session: AnalysisSessionName = "R",
 ) {
-  const { data: coverage } = useCoverageRound(year, round);
-
-  const sessionKey = session === "Race" ? "R" : session === "Qualifying" ? "Q" : session;
-  const telemetryAvailable =
-    coverage?.sessions?.[sessionKey]?.telemetry === true;
-
-  return useQuery({
-    queryKey: queryKeys.analysis.telemetrySummary(
+  return useQuery<TelemetrySummaryResponse>({
+    queryKey: queryKeys.telemetry.summary(
       year,
       round,
       driver ?? "",
       lap ?? 0,
     ),
-    queryFn: () =>
-      getTelemetrySummary(year, round, {
-        session,
-        driver: driver!,
-        lap: lap!,
-      }),
+    queryFn: () => getTelemetrySummary(year, round, { driver: driver!, lap: lap!, session }),
     ...cacheConfig.heavyOptIn,
-    enabled: telemetryAvailable && !!driver && lap !== null,
+    enabled: !!driver && lap !== null,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Unified — Positions
+// ---------------------------------------------------------------------------
+
+export function useRacePositions(year: number, round: number, enabled = true) {
+  return useQuery<UnifiedPositionsResponse>({
+    queryKey: queryKeys.sessionData.byType(year, round, "positions"),
+    queryFn: () => getUnifiedPositions(year, round, "R"),
+    ...cacheConfig.historical,
+    enabled,
   });
 }

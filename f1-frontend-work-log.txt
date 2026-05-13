@@ -3,7 +3,7 @@ Updated: 2026-04-11
 
 Completed work in this restart:
 - Reset the frontend API layer by deleting the old app/api route handlers.
-- Removed Api_services implementation files from the previous frontend pass.
+ - Removed actions implementation files from the previous frontend pass.
 - Removed the old feature UI files in _Components.
 - Removed the starter app pages under app/page.tsx and app/races/*.
 - Rebuilt app/layout.tsx to use Bebas Neue, DM Sans, DM Mono, and ThemeProvider.
@@ -28,7 +28,7 @@ Build log updates made today:
 - Re-appended the API list and build-log sections after the latest architecture rewrite.
 - Synced build-log notes with the new Race Replay tab update on the Race Detail page.
 - Implemented the full B2 API layer with Next.js route handlers under app/api for core, analysis, unified, and coverage endpoint groups.
-- Added typed frontend service modules in Api_services (client, season-hub, race-detail, race-analysis, unified, coverage) and exported them through a shared index.
+ - Added typed frontend service modules in actions (season-hub, race-detail, race-analysis, unified, coverage) and exported them through a shared index.
 - Synced endpoint and payload coverage with the latest backend document, including coverage persistence endpoints and missing response contracts.
 - Performed strict schema alignment across endpoint contract files to match backend response shapes (readiness, year, meta, and filters_applied patterns).
 - Fixed telemetry overlay query naming to align with backend expectations (driver_a/driver_b).

@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Panel } from "@/components/Panel";
-import { Skeleton } from "@/components/Skeleton";
+import { FlagImage } from "@/_Components/ui/FlagImage";
 import { teamColor } from "@/components/DriverCode";
 import { GenericTable, type ColumnDef } from "@/components/ui/GenericTable";
 import { NotAvailable } from "@/features/race-detail/components/NotAvailable";
@@ -12,7 +13,6 @@ import { getDriverFlagUrl } from "@/Lib/nationality";
 import { PodiumBlock } from "@/components/PodiumBlock";
 import type { CSSProperties } from "react";
 import { useRaceResults } from "@/features/race-detail/hooks/useRaceDetail";
-import { adaptRaceResults } from "@/Lib/adapters";
 
 const INITIAL_COUNT = 10;
 
@@ -75,7 +75,7 @@ const columns: ColumnDef<RaceResult>[] = [
     render: (r) => (
       <span
         aria-hidden
-        className="inline-block h-7 w-[3px] rounded-sm"
+        className="inline-block h-7 w-0.75 rounded-sm"
         style={{ backgroundColor: teamColor(r.driver.team) }}
       />
     ),
@@ -86,16 +86,7 @@ const columns: ColumnDef<RaceResult>[] = [
     align: "center",
     render: (r) => {
       const flag = getDriverFlagUrl(r.driver.code, 40);
-      return flag ? (
-        <img
-          src={flag}
-          alt=""
-          width={18}
-          height={12}
-          loading="lazy"
-          style={{ borderRadius: "2px", objectFit: "cover" }}
-        />
-      ) : null;
+      return flag ? <FlagImage src={flag} /> : null;
     },
   },
   {
@@ -104,12 +95,13 @@ const columns: ColumnDef<RaceResult>[] = [
     header: "DRIVER",
     render: (r) => (
       <div className="min-w-0">
-        <div
-          className="font-mono text-sm font-semibold tracking-wider"
+        <Link
+          href={`/drivers/${r.driver.code}`}
+          className="font-mono text-sm font-semibold tracking-wider transition-colors hover:text-blue"
           style={{ color: "hsl(var(--text))" }}
         >
           {r.driver.code}
-        </div>
+        </Link>
         <div
           className="truncate font-mono text-[10px] uppercase tracking-[0.15em]"
           style={{ color: "hsl(var(--muted))" }}
@@ -166,7 +158,7 @@ const columns: ColumnDef<RaceResult>[] = [
     render: (r) =>
       r.fastestLap ? (
         <span
-          className="rounded-sm px-1 py-0.5 font-mono text-[9px] font-bold tracking-[0.1em]"
+          className="rounded-sm px-1 py-0.5 font-mono text-[9px] font-bold tracking-widest"
           style={{
             color: "var(--purple)",
             backgroundColor: "color-mix(in srgb, var(--purple) 18%, transparent)",
@@ -183,7 +175,7 @@ export const RaceTab = ({ year, round, upcoming }: RaceTabProps) => {
   const listRef = useRef<HTMLDivElement>(null);
 
   const { data: resultsData, isLoading } = useRaceResults(year, round);
-  const results = { data: resultsData ? adaptRaceResults(resultsData) : undefined, loading: isLoading };
+  const results = { data: resultsData, loading: isLoading };
 
   useEffect(() => {
     const el = listRef.current;
@@ -199,7 +191,7 @@ export const RaceTab = ({ year, round, upcoming }: RaceTabProps) => {
     requestAnimationFrame(() => {
       el.style.maxHeight = `${INITIAL_COUNT * 48}px`;
     });
-  }, [expanded, results.data]);
+  }, [expanded, resultsData]);
 
   if (upcoming) return <NotAvailable />;
 
@@ -221,9 +213,7 @@ export const RaceTab = ({ year, round, upcoming }: RaceTabProps) => {
 
   return (
     <Panel label="RACE CLASSIFICATION">
-      {results.loading ? (
-        <Skeleton className="h-96" />
-      ) : (
+      {(
         <div className="space-y-4">
           {/* ── Podium top 3 ── */}
           {podiumResults.length === 3 && (
@@ -251,7 +241,7 @@ export const RaceTab = ({ year, round, upcoming }: RaceTabProps) => {
                     )}
                     {r.fastestLap && (
                       <span
-                        className="rounded-sm px-1 py-0.5 text-[9px] font-bold tracking-[0.1em]"
+                        className="rounded-sm px-1 py-0.5 text-[9px] font-bold tracking-widest"
                         style={{
                           color: "var(--purple)",
                           backgroundColor: "color-mix(in srgb, var(--purple) 18%, transparent)",
@@ -277,7 +267,7 @@ export const RaceTab = ({ year, round, upcoming }: RaceTabProps) => {
               }}
             >
               <GenericTable<RaceResult>
-                className="data-grid w-full min-w-[36rem] font-mono text-xs md:min-w-[42rem]"
+                className="data-grid w-full min-w-xl font-mono text-xs md:min-w-2xl"
                 columns={columns}
                 data={tableResults}
                 getRowKey={(r) => r.driver.id}

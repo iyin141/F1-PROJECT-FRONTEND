@@ -36,7 +36,7 @@ Notes:
 
 ### Non-editable zones
 
-- [ ] No modifications made in Api_services.
+- [ ] No modifications made in actions.
 - [ ] No modifications made in app/api.
 - [ ] No modifications made in Lib/queryKeys.ts.
 - [ ] No modifications made in \_Stores (except usage imports if needed).

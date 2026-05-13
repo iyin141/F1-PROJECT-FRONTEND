@@ -1,7 +1,6 @@
 'use client';
 
 import Link from "next/link";
-import { Skeleton } from "@/components/Skeleton";
 import type { Race } from "@/types/ui";
 
 type Props = { race: Race | undefined; year: number; round: number };
@@ -25,7 +24,7 @@ export const AnalysisHeader = ({ race, year, round }: Props) => (
     </div>
     <div className="flex items-baseline gap-3">
       <h1 className="font-display text-2xl font-semibold tracking-tight">
-        {race?.name ?? <Skeleton className="inline-block h-8 w-72" />}
+        {race?.name ?? <span className="inline-block h-8 w-72" />}
       </h1>
       <span
         className="font-mono text-[12px] uppercase tracking-[0.16em]"

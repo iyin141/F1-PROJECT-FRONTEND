@@ -1,23 +1,32 @@
 import type { ReadinessChecklist } from "@/types/api";
 
 // Endpoint 3: GET /api/races/<year>/<round>/results/
+// Backend serializers: QualifyingResultSerializer + RaceResultSerializer
 export type QualifyingResultRow = {
-  position: number;
+  position: number | null;
+  driver_number: number | null;
   driver_name: string;
-  constructor: string;
-  grid: number;
-  time: string | null;
+  team?: string;
+  constructor?: string;
+  q1_time: string | null;
+  q2_time: string | null;
+  q3_time: string | null;
 };
 
 export type RaceResultRow = {
-  position: number;
+  position: number | null;
+  driver_number: number | null;
   driver_name: string;
-  constructor: string;
-  grid: number;
+  team?: string;
+  constructor?: string;
+  grid_position: number | null;
   laps: number;
   status: string;
-  time: string | null;
+  time?: string | null;
   points: number;
+  gap?: string | null;
+  fastest_lap?: string | null;
+  fastest_lap_of_race?: boolean | null;
 };
 
 export type RaceResultsResponse = {

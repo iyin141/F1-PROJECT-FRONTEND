@@ -4,36 +4,33 @@ import { useMemo } from "react";
 import * as d3 from "d3";
 import { driverById, DRIVERS } from "@/Lib/data/drivers";
 import { teamColor } from "@/components/DriverCode";
-import { Skeleton } from "@/components/Skeleton";
 import { useResizeObserver } from "@/hooks/use-resize-observer";
 import type { LapTime } from "@/types/ui";
-import { useAllLaps } from "@/features/race-analysis/hooks/useRaceAnalysis";
-import { adaptLapTimes } from "@/Lib/adapters";
+import { useLapTimes } from "@/features/race-analysis/hooks/useRaceAnalysis";
 
 const CHART_H = 280;
 const MARGIN = { top: 14, right: 14, bottom: 32, left: 46 };
 const TOP_N = 10;
 
 export const PaceDistribution = ({ year, round }: { year: number; round: number }) => {
-  const { data: lapsData, isLoading } = useAllLaps(year, round);
-  const laps = { data: lapsData ? adaptLapTimes(lapsData) : undefined, loading: isLoading };
+  const { data: laps, isLoading } = useLapTimes(year, round);
   const { ref, size } = useResizeObserver<HTMLDivElement>();
 
   const chart = useMemo(() => {
-    if (!laps.data || size.width < 60) return null;
+    if (!laps || size.width < 60) return null;
 
     const innerW = Math.max(0, size.width - MARGIN.left - MARGIN.right);
     const innerH = CHART_H - MARGIN.top - MARGIN.bottom;
 
     // Top N drivers in grid order from DRIVERS list
     const topDriverIds = DRIVERS.map((d) => d.id)
-      .filter((id) => laps.data!.some((l) => l.driverId === id))
+      .filter((id) => (laps ?? []).some((l) => l.driverId === id))
       .slice(0, TOP_N);
 
     const boxes = topDriverIds
       .map((id) => {
-        const times = laps
-          .data!.filter((l) => l.driverId === id && !l.pit)
+        const times = (laps ?? [])
+          .filter((l) => l.driverId === id && !l.pit)
           .map((l) => l.timeMs / 1000)
           .sort(d3.ascending);
         if (times.length < 3) return null;
@@ -74,9 +71,9 @@ export const PaceDistribution = ({ year, round }: { year: number; round: number 
       .nice();
 
     return { boxes, x, y, innerW, innerH };
-  }, [laps.data, size.width]);
+  }, [laps, size.width]);
 
-  if (laps.loading) return <Skeleton className="h-[280px]" />;
+  if (isLoading) return <div className="h-[280px]" />;
 
   return (
     <div ref={ref} className="w-full">

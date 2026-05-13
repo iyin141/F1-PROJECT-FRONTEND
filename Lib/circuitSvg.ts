@@ -38,31 +38,39 @@ type CircuitEntry = {
   layouts: Array<{ layoutId: string; seasons: string }>;
 };
 
-function getLayoutId(jsonCircuitId: string, year: number): string | null {
+function getLayoutId(jsonCircuitId: string, year: number): {id : string , entry : any } | null {
   const entry = (CIRCUITS_DATA as CircuitEntry[]).find((c) => c.id === jsonCircuitId);
   if (!entry) return null;
+  
 
   const match = entry.layouts.find((l) => seasonIncludes(l.seasons, year));
-  if (match) return match.layoutId;
-
-  return entry.layouts[entry.layouts.length - 1]?.layoutId ?? null;
+  
+  if (match)
+  {
+    
+    return { id: match.layoutId, entry };
+  }
+  
+  return { id: entry.layouts[entry.layouts.length - 1]?.layoutId ?? null, entry };
 }
+
+
 
 export type CircuitTheme = "dark" | "light";
 
-export function getCircuitSvgPath(
+export function getCircuitSvgPathandciruitname(
   circuitId: string,
   year: number,
   theme: CircuitTheme,
-): string | null {
+): {url : string , entry : any } | null {
   const layoutId = getLayoutId(circuitId, year);
   if (!layoutId) return null;
 
   const style = theme === "dark" ? "white-outline" : "black-outline";
 
-  if (DETAILED_LAYOUT_IDS.has(layoutId)) {
-    return `/circuits/detailed/${style}/${layoutId}.svg`;
+  if (DETAILED_LAYOUT_IDS.has(layoutId.id)) {
+    return { url: `/circuits/detailed/${style}/${layoutId.id}.svg`, entry: layoutId.entry };
   }
 
-  return `/circuits/minimal/${style}/${layoutId}.svg`;
+  return { url: `/circuits/minimal/${style}/${layoutId.id}.svg`, entry: layoutId.entry };
 }

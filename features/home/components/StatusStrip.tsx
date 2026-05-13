@@ -9,13 +9,14 @@ type StatusStripProps = {
   leader: DriverStanding | undefined;
   hasError: boolean;
   onRetry: () => void;
+  year?: number;
 };
 
-export const StatusStrip = ({ calendar, leader, hasError, onRetry }: StatusStripProps) => {
+export const StatusStrip = ({ calendar, leader, hasError, onRetry, year }: StatusStripProps) => {
   return (
     <header className="mb-6 flex flex-col gap-4 rounded-sm border border-border-subtle bg-panel px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
       <div className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-2">
-        <span className="label-mono">SEASON 2024</span>
+        <span className="label-mono">SEASON {year ?? new Date().getFullYear()}</span>
         {calendar && (
           <span className="font-mono text-xs">
             ROUND <span className="text-text">{calendar.filter(r => r.status === "completed").length}</span>

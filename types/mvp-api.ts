@@ -9,3 +9,8 @@ export type YearRoundParams = {
   year: string;
   round: string;
 };
+
+export type IdentifierYearParams = {
+  identifier: string;
+  year: string;
+};

@@ -261,3 +261,274 @@
     color: hsl(var(--muted));
   }
 }
+
+:root {
+  --color-skeleton-from: rgba(255, 255, 255, 0.06);
+  --color-skeleton-to: rgba(255, 255, 255, 0.12);
+  --color-accent: #e10600;
+  --color-green: #00d2be;
+  --color-red: #e10600;
+  --color-muted: rgba(255, 255, 255, 0.1);
+  --color-muted-text: rgba(255, 255, 255, 0.4);
+}
+
+#nav-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 3px;
+  background: var(--color-accent);
+  transition: width 0.1s ease;
+  z-index: 9999;
+  opacity: 0;
+}
+
+#nav-progress.nav-progress--active {
+  opacity: 1;
+  width: 85%;
+  transition:
+    width 2s cubic-bezier(0.1, 0.5, 0.8, 1),
+    opacity 0.1s;
+}
+
+#nav-progress.nav-progress--done {
+  width: 100%;
+  opacity: 0;
+  transition:
+    width 0.2s ease,
+    opacity 0.3s ease 0.1s;
+}
+
+.section-loading {
+  border: 1px solid hsl(var(--border-subtle));
+  border-radius: 0.25rem;
+  background: hsl(var(--panel));
+  min-height: 13rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.section-loading__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: hsl(var(--text-dim));
+}
+
+.grid-slots,
+.timing-tower,
+.points-bars,
+.telemetry-lines,
+.pin-row {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.grid-slots {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.timing-tower,
+.points-bars {
+  grid-template-columns: 1fr;
+}
+
+.pin-row {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-items: end;
+}
+
+.grid-slot,
+.timing-cell,
+.points-bar,
+.pin-dot {
+  border-radius: 0.2rem;
+  background: linear-gradient(
+    90deg,
+    var(--color-skeleton-from),
+    var(--color-skeleton-to)
+  );
+}
+
+.grid-slot {
+  height: 2rem;
+  animation: slot-fill 1.2s ease-in-out infinite;
+}
+
+.timing-cell {
+  height: 1.2rem;
+  animation: flicker 1.3s steps(4, end) infinite;
+}
+
+.points-bar {
+  height: 0.8rem;
+  animation: fill-bar 1.6s ease-in-out infinite;
+  transform-origin: left center;
+}
+
+.pin-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  justify-self: center;
+  background: var(--color-accent);
+  animation: drop-pin 1.4s ease-in-out infinite;
+}
+
+.trace-svg {
+  width: 100%;
+  max-width: 24rem;
+  height: 4.25rem;
+}
+
+.trace-line {
+  fill: none;
+  stroke: var(--color-green);
+  stroke-width: 2;
+  stroke-dasharray: 320;
+  stroke-dashoffset: 320;
+  animation: draw-trace 1.9s linear infinite;
+}
+
+.telemetry-line {
+  height: 0.7rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-green),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: telemetry-wave 1.2s linear infinite;
+}
+
+.telemetry-line:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.telemetry-line:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.helmet-shell {
+  width: 7rem;
+  height: 4.2rem;
+  border: 2px solid hsl(var(--border));
+  border-radius: 1.9rem 1.9rem 1.2rem 1.2rem;
+  background: linear-gradient(
+    160deg,
+    hsl(var(--panel-elev)),
+    hsl(var(--panel))
+  );
+  overflow: hidden;
+  position: relative;
+}
+
+.visor-sweep {
+  position: absolute;
+  top: 1.5rem;
+  left: -35%;
+  width: 45%;
+  height: 1rem;
+  background: color-mix(in srgb, var(--color-accent) 60%, transparent);
+  transform: skewX(-30deg);
+  animation: visor-scan 1.5s ease-in-out infinite;
+}
+
+@keyframes slot-fill {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scaleY(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes flicker {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes fill-bar {
+  0% {
+    transform: scaleX(0.25);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(0.35);
+    opacity: 0.5;
+  }
+}
+
+@keyframes draw-trace {
+  0% {
+    stroke-dashoffset: 320;
+  }
+  45% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -320;
+  }
+}
+
+@keyframes telemetry-wave {
+  0% {
+    background-position: 100% 0;
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    background-position: -100% 0;
+    opacity: 0.45;
+  }
+}
+
+@keyframes drop-pin {
+  0% {
+    transform: translateY(-0.75rem);
+    opacity: 0;
+  }
+  35% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 0.65;
+  }
+}
+
+@keyframes visor-scan {
+  0% {
+    left: -35%;
+    opacity: 0.2;
+  }
+  45% {
+    opacity: 1;
+  }
+  100% {
+    left: 110%;
+    opacity: 0.2;
+  }
+}
