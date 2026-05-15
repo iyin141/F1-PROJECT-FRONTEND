@@ -45,6 +45,37 @@ export const HomePageShell = ({ initialYear }: HomePageShellProps) => {
     if (parsedRound) setHomeRound(parsedRound);
   }, [parsedYear, parsedRound, initialYear, setHomeYear, setHomeRound]);
 
+  // Re-seed when user navigates with browser Back/Forward (popstate)
+  useEffect(() => {
+    const onPopState = () => {
+      try {
+        const url = new URL(window.location.href);
+        const searchYearRaw = url.searchParams.get("year");
+        const searchRoundRaw = url.searchParams.get("round");
+        const searchYear = searchYearRaw ? parseInt(searchYearRaw, 10) : undefined;
+        const searchRound = searchRoundRaw ? parseInt(searchRoundRaw, 10) : undefined;
+
+        // Prefer explicit search params for shareability
+        if (searchYear !== undefined && !Number.isNaN(searchYear)) {
+          setHomeYear(searchYear);
+        } else {
+          setHomeYear(initialYear);
+        }
+
+        if (searchRound !== undefined && !Number.isNaN(searchRound)) {
+          setHomeRound(searchRound);
+        } else {
+          setHomeRound(null);
+        }
+      } catch (e) {
+        // ignore malformed URL
+      }
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [initialYear, setHomeYear, setHomeRound]);
+
   // ── Season schedule ────────────────────────────────────────────────────
   const scheduleYear = storeHomeYear ?? parsedYear ?? initialYear;
   const { data: calendar, isLoading: scheduleLoading } = useSeasonSchedule(scheduleYear);
@@ -89,16 +120,12 @@ export const HomePageShell = ({ initialYear }: HomePageShellProps) => {
   const lastResults = { data: results, loading: resultsLoading || isRestoring };
 
   const pushSelection = (year: number, round?: number) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams();
     params.set("year", String(year));
     if (typeof round === "number") {
       params.set("round", String(round));
-    } else {
-      params.delete("round");
     }
-    const nextPath = `/home/${year}`;
-    const nextQuery = params.toString();
-    const url = nextQuery ? `${nextPath}?${nextQuery}` : nextPath;
+    const url = `/?${params.toString()}`;
 
     // Update store for instant UI and update URL without navigation
     setHomeYear(year);

@@ -37,7 +37,7 @@ export const Sidebar = () => {
         <Link href={`/race/${currentYear}/1`} className={cn(linkBase, pathname.startsWith("/race") ? linkActive : linkInactive)}>
           <Flag size={14} /> RACES
         </Link>
-        <Link href={`/drivers/year/${currentYear}`} className={cn(linkBase, pathname.startsWith("/drivers") ? linkActive : linkInactive)}>
+        <Link href={`/drivers?year=${currentYear}`} className={cn(linkBase, pathname.startsWith("/drivers") ? linkActive : linkInactive)}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="14"

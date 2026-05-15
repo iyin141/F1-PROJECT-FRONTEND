@@ -120,7 +120,7 @@ export function DriversHubPage({ year }: DriversHubPageProps) {
             minYear={minYear}
             onNavigate={(nextYear) => {
               setDriversYear(nextYear);
-              window.history.replaceState(null, "", `/drivers/year/${nextYear}`);
+              window.history.replaceState(null, "", `/drivers?year=${nextYear}`);
             }}
           />
         }

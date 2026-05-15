@@ -25,7 +25,7 @@ export function HomePageClient({ year }: HomePageClientProps) {
 
   const onNavigate = (nextYear: number) => {
     setHomeYear(nextYear);
-    window.history.replaceState(null, "", `/home/${nextYear}`);
+    window.history.replaceState(null, "", `/?year=${nextYear}`);
   };
   return (
     <main className="min-h-screen w-full page-shell">
