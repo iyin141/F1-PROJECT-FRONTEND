@@ -82,7 +82,7 @@ export function TelemetryOverlay({
   const lap = lapInput.trim() ? Number(lapInput) : undefined;
   const lapNum = Number.isFinite(lap) ? lap : undefined;
 
-  const { data, isLoading } = usePersistentTelemetryOverlay(
+  const { data } = usePersistentTelemetryOverlay(
     year,
     round,
     driverAId ?? undefined,

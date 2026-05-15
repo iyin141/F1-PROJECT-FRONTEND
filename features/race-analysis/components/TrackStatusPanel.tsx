@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useTrackStatus } from "@/features/race-detail/hooks/useRaceDetail";
+import Skeleton from "@/components/animations/Skeleton";
 
 const STATUS_COLORS: Record<string, string> = {
   green: "hsl(var(--green))",
@@ -55,7 +56,7 @@ export const TrackStatusPanel = ({
     };
   }, [data]);
 
-  if (isLoading) return <div className="h-48" />;
+  if (isLoading) return <Skeleton height={192} />;
   if (!stats) return <div className="text-muted text-sm">No track status data</div>;
 
   return (

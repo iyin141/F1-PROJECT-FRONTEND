@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { GenericTable } from "@/components/ui/GenericTable";
 import { useAllStints } from "@/features/race-analysis/hooks/useRaceAnalysis";
+import Skeleton from "@/components/animations/Skeleton";
 import { formatLapMs } from "@/Lib/format";
 import type { AnalysisDriverOption } from "@/features/race-analysis/components/DriverSelect";
 import type { Stint } from "@/types/ui";
@@ -79,7 +80,7 @@ export function StintAnalysis({
     return { maxLap, byDriver };
   }, [rows]);
 
-  if (isLoading) return null;
+  if (isLoading) return <Skeleton height={256} />;
 
   return (
     <div className="space-y-5">

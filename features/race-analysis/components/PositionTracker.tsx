@@ -5,6 +5,7 @@ import * as d3 from "d3";
 import { EmptyState } from "@/components/EmptyState";
 import { useResizeObserver } from "@/hooks/use-resize-observer";
 import { teamColor } from "@/components/DriverCode";
+import Skeleton from "@/components/animations/Skeleton";
 import { driverById } from "@/Lib/data/drivers";
 import { useRacePositions } from "@/features/race-analysis/hooks/useRaceAnalysis";
 import type { AnalysisDriverOption } from "@/features/race-analysis/components/DriverSelect";
@@ -207,7 +208,7 @@ export const PositionTracker = ({
     while (tooltipRef.current.firstChild) tooltipRef.current.removeChild(tooltipRef.current.firstChild);
   }, []);
 
-  if (isLoading) return null;
+  if (isLoading) return <Skeleton height={320} />;
 
   if (!positionsData?.data?.length || !traces.length) {
     return (

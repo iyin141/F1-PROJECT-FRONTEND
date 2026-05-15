@@ -9,7 +9,12 @@ import { GenericTable, type ColumnDef } from "@/components/ui/GenericTable";
 import { formatDate, countdownTo } from "@/Lib/format";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import FadeInPanel from "@/components/animations/FadeInPanel";
 import type { ConstructorStanding, DriverStanding, Race, SessionSchedule } from "@/types/ui";
+import {
+  ScheduleAnimation,
+  StandingsAnimation,
+} from "@/components/animations/SectionLoadingAnimations";
 
 const scheduleColumns: ColumnDef<SessionSchedule>[] = [
   {
@@ -131,11 +136,42 @@ export const RightColumnPanels = ({
   const [showAll, setShowAll] = useState(false);
   const [isPending, startTransition] = useTransition();
   const nextRaceIso = useMemo(() => nextRace?.date ?? "", [nextRace?.date]);
+  void nextRaceLoading;
+  void standingsLoading;
+  void constructorsLoading;
+
+  const championshipContent =
+    championshipView === "drivers"
+      ? standingsLoading
+        ? <StandingsAnimation />
+        : (
+          <GenericTable<DriverStanding>
+            className="font-mono text-xs"
+            columns={standingsColumns}
+            data={showAll ? (standings ?? []) : (standings?.slice(0, 5) ?? [])}
+            getRowKey={standing => standing.driver.id}
+            striped
+          />
+        )
+      : constructorsLoading
+        ? <StandingsAnimation />
+        : (
+          <GenericTable<ConstructorStanding>
+            className="font-mono text-xs"
+            columns={constructorColumns}
+            data={showAll ? (constructors ?? []) : (constructors?.slice(0, 5) ?? [])}
+            getRowKey={standing => standing.team.id}
+            striped
+          />
+        );
 
   return (
     <div className="space-y-6">
-      <Panel label="NEXT RACE" title={nextRace?.name ?? "OFF SEASON"}>
-        {!nextRace ? (
+      <FadeInPanel delay={0}>
+        <Panel label="NEXT RACE" title={nextRace?.name ?? "OFF SEASON"}>
+        {nextRaceLoading ? (
+          <ScheduleAnimation />
+        ) : !nextRace ? (
           <EmptyState message="OFF SEASON" description="Awaiting next season opener." />
         ) : (
           <>
@@ -154,9 +190,11 @@ export const RightColumnPanels = ({
             </div>
           </>
         )}
-      </Panel>
+        </Panel>
+      </FadeInPanel>
 
-      <Panel
+      <FadeInPanel delay={80}>
+        <Panel
         label="CHAMPIONSHIP"
         title={championshipView === "drivers" ? "Drivers" : "Constructors"}
         action={
@@ -209,27 +247,12 @@ export const RightColumnPanels = ({
               transition={{ duration: 0.2 }}
               className="w-full"
             >
-              {championshipView === "drivers" ? (
-                  <GenericTable<DriverStanding>
-                    className="font-mono text-xs"
-                    columns={standingsColumns}
-                    data={showAll ? (standings ?? []) : (standings?.slice(0, 5) ?? [])}
-                    getRowKey={standing => standing.driver.id}
-                    striped
-                  />
-              ) : (
-                <GenericTable<ConstructorStanding>
-                  className="font-mono text-xs"
-                  columns={constructorColumns}
-                  data={showAll ? (constructors ?? []) : (constructors?.slice(0, 5) ?? [])}
-                  getRowKey={standing => standing.team.id}
-                  striped
-                />
-              )}
+              {championshipContent}
             </motion.div>
           </AnimatePresence>
         </motion.div>
-      </Panel>
+        </Panel>
+      </FadeInPanel>
     </div>
   );
 };

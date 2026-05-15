@@ -14,8 +14,12 @@ export interface PrefetchQueryConfig {
   queryKey: readonly unknown[];
   pathname: string;
   query?: Record<string, string | number | boolean | null | undefined>;
-  adapter?: (raw: any) => unknown;
-  options?: any;
+  // Adapter receives raw JSON from the backend — treat as `unknown` and let the adapter
+  // perform narrowing. Avoid `any` for safer typing.
+  adapter?: (raw: unknown) => unknown;
+  // Allow passing the same options object you'd give to QueryClient.prefetchQuery
+  // (keeps flexibility while avoiding `any`).
+  options?: Parameters<QueryClient["prefetchQuery"]>[0];
 }
 
 /**
@@ -61,7 +65,10 @@ export async function prefetchQueries(queries: PrefetchQueryConfig[]) {
       queryFn: async () => {
         console.log("[prefetch] serverGetJson", { pathname, query });
         try {
-          const payload = await serverGetJson(pathname, query as any);
+          const payload = await serverGetJson(
+            pathname,
+            query as Record<string, string | number | boolean | null | undefined>
+          );
           console.log("[prefetch] serverGetJson ok", { pathname });
           return payload;
         } catch (err) {

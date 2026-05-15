@@ -1,8 +1,10 @@
-'use client';
+"use client";
 
+import { useEffect } from "react";
 import { RaceHeader } from "@/features/race-detail/components/RaceHeader";
 import { RaceTabs } from "@/features/race-detail/components/RaceTabs";
 import { useRaceDetail } from "@/features/race-detail/hooks/useRaceDetail";
+import { useNavStore } from "@/_Stores/navStore";
 import type { RaceDetailResponse } from "@/types/endpoints/racestypes";
 
 type RaceDetailShellProps = {
@@ -11,7 +13,20 @@ type RaceDetailShellProps = {
 };
 
 export const RaceDetailShell = ({ year, round }: RaceDetailShellProps) => {
-  const { data: raceData, isLoading } = useRaceDetail(year, round);
+  const setRaceYear = useNavStore((s) => s.setRaceYear);
+  const setRaceRound = useNavStore((s) => s.setRaceRound);
+  const storeRaceYear = useNavStore((s) => s.raceYear);
+  const storeRaceRound = useNavStore((s) => s.raceRound);
+
+  useEffect(() => {
+    setRaceYear(year);
+    setRaceRound(round);
+  }, [year, round, setRaceYear, setRaceRound]);
+
+  const effectiveYear = storeRaceYear ?? year;
+  const effectiveRound = storeRaceRound ?? round;
+
+  const { data: raceData, isLoading } = useRaceDetail(effectiveYear, effectiveRound);
   const race = { data: raceData ? raceData : undefined, loading: isLoading };
   const upcoming = race.data?.status === "upcoming";
 
@@ -23,11 +38,11 @@ export const RaceDetailShell = ({ year, round }: RaceDetailShellProps) => {
 
   return (
     <main className="page-shell w-full">
-      <RaceHeader race={race.data} loading={race.loading} year={year} round={round} isSprint={isSprint} />
+      <RaceHeader race={race.data} loading={race.loading} year={effectiveYear} round={effectiveRound} isSprint={isSprint} />
       {race.data && (
         <RaceTabs
-          year={year}
-          round={round}
+          year={effectiveYear}
+          round={effectiveRound}
           upcoming={upcoming}
           isSprint={isSprint}
           practiceSessions={practiceSessions as ("FP1" | "FP2" | "FP3")[]}

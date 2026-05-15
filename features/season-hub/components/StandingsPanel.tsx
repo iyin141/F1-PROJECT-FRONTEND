@@ -4,9 +4,10 @@ import * as Tabs from "@radix-ui/react-tabs";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { prefetchDriverData } from "@/Lib/clientPrefetch";
+import { getDriverCareerBridged, getDriverSeasonBridged } from "@/Lib/api/bridged/drivers";
 import { teamColor } from "@/components/DriverCode";
 import { Panel } from "@/components/Panel";
+import { Skeleton } from "@/components/Skeleton";
 import { GenericTable, type ColumnDef } from "@/components/ui/GenericTable";
 import type { ConstructorStanding, DriverStanding } from "@/types/ui";
 import { getDriverFlagUrl } from "@/Lib/nationality";
@@ -99,7 +100,8 @@ export const StandingsPanel = ({
 
   const prefetchDriverRoute = (driverCode: string) => {
     router.prefetch(`/drivers/${driverCode}/${year}`);
-    void prefetchDriverData(queryClient, driverCode, year);
+    void getDriverCareerBridged(queryClient, driverCode);
+    if (year !== undefined) void getDriverSeasonBridged(queryClient, driverCode, year);
   };
 
   const driverColumns = getDriverColumns(year, prefetchDriverRoute);
@@ -119,6 +121,17 @@ export const StandingsPanel = ({
           ))}
         </Tabs.List>
         <Tabs.Content value="drivers">
+          {driversLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 px-3 py-2">
+                  <span className="w-8"><Skeleton className="h-4 w-8" /></span>
+                  <div className="flex-1"><Skeleton className="h-4 w-3/4" /></div>
+                  <span className="w-12"><Skeleton className="h-4 w-full" /></span>
+                </div>
+              ))}
+            </div>
+          ) : (
             <GenericTable<DriverStanding>
               className="font-mono text-xs"
               columns={driverColumns}
@@ -126,8 +139,19 @@ export const StandingsPanel = ({
               getRowKey={standing => standing.driver.id}
               striped
             />
+          )}
         </Tabs.Content>
         <Tabs.Content value="constructors">
+          {constructorsLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 px-3 py-2">
+                  <div className="flex-1"><Skeleton className="h-4 w-3/4" /></div>
+                  <span className="w-12"><Skeleton className="h-4 w-full" /></span>
+                </div>
+              ))}
+            </div>
+          ) : (
             <GenericTable<ConstructorStanding>
               className="font-mono text-xs"
               columns={constructorColumns}
@@ -135,6 +159,7 @@ export const StandingsPanel = ({
               getRowKey={standing => standing.team.id}
               striped
             />
+          )}
         </Tabs.Content>
       </Tabs.Root>
     </Panel>

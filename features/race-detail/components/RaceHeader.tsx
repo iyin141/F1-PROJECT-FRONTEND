@@ -20,6 +20,7 @@ type RaceHeaderProps = {
 export const RaceHeader = ({ race, loading, year, round, isSprint }: RaceHeaderProps) => {
   const { isDark } = useAppTheme();
   const theme = isDark ? "dark" : "light";
+  void loading;
   const getnameandpath = race ? getCircuitSvgPathandciruitname(race.circuit.id, race.year, theme) : null;
   const circuitSvg = getnameandpath?.url ?? null;
   const name = getnameandpath?.entry?.name;

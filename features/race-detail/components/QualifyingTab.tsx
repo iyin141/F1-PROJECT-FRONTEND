@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { prefetchDriverData } from "@/Lib/clientPrefetch";
+import { getDriverCareerBridged, getDriverSeasonBridged } from "@/Lib/api/bridged/drivers";
 import { useMemo } from "react";
 import { cn } from "@/Lib/utils";
 import { Panel } from "@/components/Panel";
@@ -16,6 +16,7 @@ import { useQualifyingResults } from "@/features/race-detail/hooks/useRaceDetail
 import { getDriverFlagUrl } from "@/Lib/nationality";
 import { PodiumBlock } from "@/components/PodiumBlock";
 import { FlagImage } from "@/_Components/ui/FlagImage";
+import { Skeleton } from "@/components/Skeleton";
 
 // Derive which segment is the driver's "best" (i.e., the latest they competed in)
 const bestSegment = (r: QualifyingResult): "Q1" | "Q2" | "Q3" =>
@@ -176,7 +177,8 @@ export const QualifyingTab = ({ year, round, upcoming }: RaceTabProps) => {
 
   const prefetchDriverRoute = (driverCode: string) => {
     router.prefetch(`/drivers/${driverCode}/${year}`);
-    void prefetchDriverData(queryClient, driverCode, year);
+    void getDriverCareerBridged(queryClient, driverCode);
+    if (year !== undefined) void getDriverSeasonBridged(queryClient, driverCode, year);
   };
 
   const columns = useMemo(
@@ -184,9 +186,28 @@ export const QualifyingTab = ({ year, round, upcoming }: RaceTabProps) => {
     [year],
   );
 
-  const { data: qData, isLoading } = useQualifyingResults(year, round);
-  const q = { data: qData ?? undefined, loading: isLoading };
+  const { data: qData, isLoading, isFetching } = useQualifyingResults(year, round);
+  const loading = isLoading || (isFetching && !qData);
+  const q = { data: qData ?? undefined, loading };
   if (upcoming) return <NotAvailable />;
+
+  if (loading) {
+    return (
+      <Panel label="QUALIFYING · Q1 / Q2 / Q3">
+        <div className="space-y-4">
+          <div className="panel-scroll w-full">
+            <div className="space-y-2">
+              {Array.from({ length: 20 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 px-4 py-2">
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Panel>
+    );
+  }
 
   const allResults = q.data ?? [];
   const podiumResults = allResults.filter((r) => r.position === 1 || r.position === 2 || r.position === 3);

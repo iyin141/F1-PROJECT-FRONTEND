@@ -1,10 +1,10 @@
 'use client';
 
-import { useMemo } from "react";
+// (no direct React imports required in this file)
 import { teamColor } from "@/components/DriverCode";
 import { formatLapMs } from "@/Lib/format";
 import { useTeammateBattles } from "@/features/race-analysis/hooks/useRaceAnalysis";
-import { DRIVERS } from "@/Lib/data/drivers";
+import Skeleton from "@/components/animations/Skeleton";
 import type { TeammateBattle, PhaseBattle, RacePhase } from "@/types/ui";
 import type { AnalysisDriverOption } from "./DriverSelect";
 
@@ -193,8 +193,9 @@ interface TeammateBattlesProps {
 
 export const TeammateBattles = ({ year, round, drivers }: TeammateBattlesProps) => {
   const { data: battles, isLoading } = useTeammateBattles(year, round);
+  void drivers;
 
-    if (isLoading) return null;
+  if (isLoading) return <Skeleton height={200} />;
   if (battles.length === 0) {
     return (
       <div

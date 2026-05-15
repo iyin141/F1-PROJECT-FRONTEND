@@ -1,6 +1,4 @@
 import { notFound } from "next/navigation";
-import { HydrationBoundary, prefetchQueries } from "@/Lib/prefetch";
-import { queryKeys } from "@/Lib/queryKeys";
 import { SeasonHubShell } from "@/features/season-hub/SeasonHub";
 
 type SeasonPageProps = {
@@ -19,26 +17,5 @@ export default async function SeasonHub({ params }: SeasonPageProps) {
     notFound();
   }
 
-  console.log("[prefetch] SeasonHub: starting prefetch", { year });
-  const { dehydratedState } = await prefetchQueries([
-    {
-      queryKey: queryKeys.schedule.season(year),
-      pathname: `/races/${year}/`,
-    },
-    {
-      queryKey: queryKeys.driverStandings.grid(year),
-      pathname: `/drivers/${year}/`,
-    },
-    {
-      queryKey: queryKeys.constructorStandings.year(year),
-      pathname: `/constructors/${year}/`,
-    },
-  ]);
-  console.log("[prefetch] SeasonHub: prefetch complete", { year });
-
-  return (
-    <HydrationBoundary state={dehydratedState}>
-      <SeasonHubShell year={year} />
-    </HydrationBoundary>
-  );
+  return <SeasonHubShell year={year} />;
 }

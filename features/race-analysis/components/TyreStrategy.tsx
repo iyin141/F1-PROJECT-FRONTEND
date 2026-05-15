@@ -3,10 +3,11 @@
 import { useMemo } from "react";
 import * as d3 from "d3";
 import { useResizeObserver } from "@/hooks/use-resize-observer";
+import Skeleton from "@/components/animations/Skeleton";
 import { compoundColor } from "@/components/CompoundDot";
 import { DRIVERS } from "@/Lib/data/drivers";
-import type { Compound, Stint } from "@/types/ui";
-import { useAllStints, useTyreStrategy } from "@/features/race-analysis/hooks/useRaceAnalysis";
+import type { Compound } from "@/types/ui";
+import { useTyreStrategy } from "@/features/race-analysis/hooks/useRaceAnalysis";
 
 const COMPOUNDS: Compound[] = ["soft", "medium", "hard", "inter", "wet"];
 const ROW_H = 18;
@@ -36,7 +37,7 @@ export const TyreStrategy = ({ year, round }: { year: number; round: number }) =
     return { byDriver, x, xTicks: x.ticks(8), totalLaps, innerW, height };
   }, [stints, size.width]);
 
-  if (isLoading) return null;
+  if (isLoading) return <Skeleton height={200} />;
 
   return (
     <div ref={ref} className="w-full">

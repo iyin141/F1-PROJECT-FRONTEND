@@ -8,7 +8,7 @@ import { formatDate } from "@/Lib/format";
 import type { ReactNode } from "react";
 import { NotAvailable } from "@/features/race-detail/components/NotAvailable";
 import type { RaceTabProps } from "@/features/race-detail/components/tab-types";
-import type { ChampionshipImpact, Driver } from "@/types/ui";
+import type { ChampionshipImpact } from "@/types/ui";
 import { useRaceDetail, useRaceWeather, useRaceIncidents, useRaceResults } from "@/features/race-detail/hooks/useRaceDetail";
 import { useDriverStandings } from "@/features/season-hub/hooks/useSeasonHub";
 

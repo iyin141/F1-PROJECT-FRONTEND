@@ -2,6 +2,8 @@
 
 import { useMemo } from "react";
 import { useTelemetrySummary } from "@/features/race-analysis/hooks/useRaceAnalysis";
+import type { TelemetrySummaryLap } from "@/types/endpoints/telemetrysummarytypes";
+import Skeleton from "@/components/animations/Skeleton";
 
 export const TelemetrySummaryCard = ({
   year,
@@ -37,7 +39,7 @@ export const TelemetrySummaryCard = ({
     }
 
     // TelemetrySummaryLap[] format - aggregate
-    const laps = telemetry as any[];
+    const laps = telemetry as TelemetrySummaryLap[];
     if (laps.length === 0) return null;
     const speedAvg =
       laps.reduce((sum, l) => sum + (l.avg_speed ?? 0), 0) / laps.length;
@@ -58,7 +60,7 @@ export const TelemetrySummaryCard = ({
     };
   }, [data]);
 
-  if (isLoading) return <div className="h-48" />;
+  if (isLoading) return <Skeleton height={192} />;
   if (!stats) return <div className="text-muted text-sm">No data</div>;
 
   return (

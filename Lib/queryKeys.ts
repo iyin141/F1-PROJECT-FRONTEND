@@ -9,13 +9,19 @@ export const cacheConfig = {
   /** Completed race data — never changes once available. */
   historical: {
     staleTime: Infinity,
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    // Treat historical years as immutable: never garbage-collect and don't refetch
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   },
 
   /** Live season data — refreshes after each race weekend. */
   activeSeason: {
     staleTime: 5 * 60 * 1000,
+    // Keep current season relatively short-lived, but avoid automatic refetchs
     gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   },
 
   /** Completed race payloads — large but stable once the race is finished. */

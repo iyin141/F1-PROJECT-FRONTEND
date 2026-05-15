@@ -23,6 +23,7 @@ export function FlagImage({
       height={height}
       loading="lazy"
       className={`rounded-sm object-cover ${className}`}
+      style={{ height: 'auto' }}
     />
   );
 }

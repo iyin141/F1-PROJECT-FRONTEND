@@ -3,6 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { getRaceResultsBridged } from "@/Lib/api/bridged";
 import { useAppTheme } from "@/hooks/useAppTheme";
 import { Panel } from "@/components/Panel";
 import { getCircuitSvgPathandciruitname } from "@/Lib/circuitSvg";
@@ -19,6 +21,8 @@ export const CalendarStripPanel = ({ calendar, loading, year }: CalendarStripPan
   const { isDark } = useAppTheme();
   const theme = isDark ? "dark" : "light";
   const router = useRouter();
+  const queryClient = useQueryClient();
+  void loading;
 
   return (
     <Panel label="CALENDAR" title={`Season ${year ?? new Date().getFullYear()}`} className="mt-6">
@@ -39,7 +43,10 @@ export const CalendarStripPanel = ({ calendar, loading, year }: CalendarStripPan
               <Link
                 key={r.round}
                 href={`/race/${r.year}/${r.round}`}
-                onMouseEnter={() => router.prefetch(`/race/${r.year}/${r.round}`)}
+                onMouseEnter={() => {
+                  router.prefetch(`/race/${r.year}/${r.round}`);
+                  void getRaceResultsBridged(queryClient, r.year, r.round);
+                }}
                 className={`relative flex min-h-42 flex-col justify-between overflow-hidden rounded-sm border px-3 py-3 font-mono text-[11px] transition-colors
                  border-border-subtle text-text-dim hover:border-border hover:text-text`}
               >

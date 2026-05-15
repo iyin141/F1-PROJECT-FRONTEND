@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from "react";
+import Skeleton from "@/components/animations/Skeleton";
 import * as d3 from "d3";
 import { driverById, DRIVERS } from "@/Lib/data/drivers";
 import { teamColor } from "@/components/DriverCode";
@@ -73,7 +74,7 @@ export const PaceDistribution = ({ year, round }: { year: number; round: number 
     return { boxes, x, y, innerW, innerH };
   }, [laps, size.width]);
 
-  if (isLoading) return <div className="h-[280px]" />;
+  if (isLoading) return <Skeleton height={280} />;
 
   return (
     <div ref={ref} className="w-full">

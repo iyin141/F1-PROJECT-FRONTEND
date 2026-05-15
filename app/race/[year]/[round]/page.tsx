@@ -1,6 +1,4 @@
 import { notFound } from "next/navigation";
-import { HydrationBoundary, prefetchQueries } from "@/Lib/prefetch";
-import { queryKeys } from "@/Lib/queryKeys";
 import { RaceDetailShell } from "@/features/race-detail/RaceDetail";
 
 type RaceDetailPageProps = {
@@ -19,26 +17,5 @@ export default async function RaceDetailPage({ params }: RaceDetailPageProps) {
     notFound();
   }
 
-  console.log("[prefetch] RaceDetailPage: starting prefetch", { year, round });
-  const { dehydratedState } = await prefetchQueries([
-    {
-      queryKey: queryKeys.raceResults.detail(year, round),
-      pathname: `/races/${year}/${round}/`,
-    },
-    {
-      queryKey: queryKeys.raceResults.session(year, round, "R"),
-      pathname: `/races/${year}/${round}/results/`,
-    },
-    {
-      queryKey: queryKeys.raceResults.qualifying(year, round),
-      pathname: `/races/${year}/${round}/qualifying/`,
-    },
-  ]);
-  console.log("[prefetch] RaceDetailPage: prefetch complete", { year, round });
-
-  return (
-    <HydrationBoundary state={dehydratedState}>
-      <RaceDetailShell year={year} round={round} />
-    </HydrationBoundary>
-  );
+  return <RaceDetailShell year={year} round={round} />;
 }

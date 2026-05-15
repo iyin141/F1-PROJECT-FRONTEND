@@ -4,7 +4,7 @@ import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 // Use the local analysis API routes instead of server actions
 import { cacheConfig, queryKeys } from "@/Lib/queryKeys";
-import { getTelemetry, getTelemetryOverlay } from "@/Lib/api/services";
+import { getTelemetry, getTelemetryOverlay } from "@/Lib/api/services/analysis";
 import type {
   TelemetryOverlayResponse,
   TelemetryResponse,
@@ -102,7 +102,7 @@ export function usePersistentTelemetryOverlay(
       driverB ?? "",
       lap,
     ),
-    queryFn: () => getTelemetryOverlay(year, round, { driver_a: driverA!, driver_b: driverB!, session, lap: lap as any }),
+    queryFn: () => getTelemetryOverlay(year, round, { driver_a: driverA!, driver_b: driverB!, session, lap }),
     ...cacheConfig.heavyOptIn,
     enabled: !!driverA && !!driverB,
     initialData,

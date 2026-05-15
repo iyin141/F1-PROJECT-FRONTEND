@@ -11,6 +11,7 @@ import type { RaceTabProps } from "@/features/race-detail/components/tab-types";
 import type { RaceResult } from "@/types/ui";
 import { getDriverFlagUrl } from "@/Lib/nationality";
 import { PodiumBlock } from "@/components/PodiumBlock";
+import { Skeleton } from "@/components/Skeleton";
 import type { CSSProperties } from "react";
 import { useRaceResults } from "@/features/race-detail/hooks/useRaceDetail";
 
@@ -174,8 +175,9 @@ export const RaceTab = ({ year, round, upcoming }: RaceTabProps) => {
   const [expanded, setExpanded] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const { data: resultsData, isLoading } = useRaceResults(year, round);
-  const results = { data: resultsData, loading: isLoading };
+  const { data: resultsData, isLoading, isFetching } = useRaceResults(year, round);
+  const loading = isLoading || (isFetching && !resultsData);
+  const results = { data: resultsData, loading };
 
   useEffect(() => {
     const el = listRef.current;
@@ -194,6 +196,24 @@ export const RaceTab = ({ year, round, upcoming }: RaceTabProps) => {
   }, [expanded, resultsData]);
 
   if (upcoming) return <NotAvailable />;
+
+  if (loading) {
+    return (
+      <Panel label="RACE CLASSIFICATION">
+        <div className="space-y-4">
+          <div className="panel-scroll w-full">
+            <div className="space-y-2">
+              {Array.from({ length: 20 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 px-4 py-2">
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Panel>
+    );
+  }
 
   const sorted = [...(results.data ?? [])].sort((a, b) => {
     const av = isRetired(a.position) ? 999 : a.position;

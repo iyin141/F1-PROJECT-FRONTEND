@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useMemo } from "react";
+import Skeleton from "@/components/animations/Skeleton";
 import gsap from "gsap";
 import { teamColor } from "@/components/DriverCode";
 import { CompoundDot } from "@/components/CompoundDot";
@@ -140,7 +141,7 @@ export const ConsistencyCards = ({ year, round }: { year: number; round: number 
 
   const activeScores = byStint?.get(activeTab) ?? [];
 
-  if (isLoading) return null;
+  if (isLoading) return <Skeleton height={128} />;
 
   const tabs: TabKey[] = ["overall", ...stintKeys];
 

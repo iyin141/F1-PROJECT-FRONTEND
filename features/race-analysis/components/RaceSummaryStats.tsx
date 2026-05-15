@@ -5,6 +5,7 @@ import { CompoundDot } from "@/components/CompoundDot";
 import { teamColor } from "@/components/DriverCode";
 import { formatLapMs } from "@/Lib/format";
 import { useRaceLapFrames } from "@/features/race-analysis/hooks/useRaceAnalysis";
+import Skeleton from "@/components/animations/Skeleton";
 import type { RaceLapFrame } from "@/types/ui";
 import type { Compound } from "@/types/ui";
 import type { AnalysisDriverOption } from "./DriverSelect";
@@ -95,7 +96,7 @@ export const RaceSummaryStats = ({ year, round, drivers }: RaceSummaryStatsProps
   const compoundFastest = useMemo(() => deriveCompoundFastest(frames ?? []), [frames]);
   const stintTop5 = useMemo(() => deriveStintTopFive(frames ?? []), [frames]);
 
-  if (isLoading) return null;
+  if (isLoading) return <Skeleton height={96} />;
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

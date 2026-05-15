@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { prefetchDriverData } from "@/Lib/clientPrefetch";
+import { getDriverCareerBridged, getDriverSeasonBridged } from "@/Lib/api/bridged/drivers";
 import { useMemo, useState, useTransition } from "react";
 import { Panel } from "@/components/Panel";
 import { teamColor } from "@/components/DriverCode";
@@ -92,10 +92,11 @@ export const PracticeTab = ({ year, round, upcoming, availableSessions }: Practi
 
   const queryClient = useQueryClient();
 
-  // call both next route prefetch and react-query data prefetch
+  // call both next route prefetch and react-query data prefetch (cache-first)
   const prefetchDriverRouteAndData = (driverCode: string) => {
     router.prefetch(`/drivers/${driverCode}/${year}`);
-    void prefetchDriverData(queryClient, driverCode, year);
+    void getDriverCareerBridged(queryClient, driverCode);
+    if (year !== undefined) void getDriverSeasonBridged(queryClient, driverCode, year);
   };
 
   const columns = useMemo(

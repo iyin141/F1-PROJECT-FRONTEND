@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { driverById } from "@/Lib/data/drivers";
 import { useSectorAnalysis, useDriverSectors } from "@/features/race-analysis/hooks/useRaceAnalysis";
+import Skeleton from "@/components/animations/Skeleton";
 
 type ColKey = "s1" | "s2" | "s3";
 
@@ -82,7 +83,7 @@ export const SectorHeatmap = ({
     return { rows, colStats };
   }, [sectors.data]);
 
-  if (sectors.loading) return <div className="h-96" />;
+  if (sectors.loading) return <Skeleton height={384} />;
 
   const colFor = (col: ColKey) => colStats.find((c) => c.col === col)!;
 

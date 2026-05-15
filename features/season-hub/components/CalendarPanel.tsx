@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { getRaceResultsBridged } from "@/Lib/api/bridged";
 import { ChevronRight } from "lucide-react";
 import { DriverCode } from "@/components/DriverCode";
 import { EmptyState } from "@/components/EmptyState";
 import { Panel } from "@/components/Panel";
+import { Skeleton } from "@/components/Skeleton";
 import { GenericTable, type ColumnDef } from "@/components/ui/GenericTable";
 import { formatDate } from "@/Lib/format";
 import type { Driver, Race } from "@/types/ui";
@@ -102,6 +105,7 @@ const SpotlightCard = ({
   winner?: Driver;
 }) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   if (!race) {
     return (
@@ -133,7 +137,10 @@ const SpotlightCard = ({
   return (
     <Link
       href={`/race/${race.year}/${race.round}`}
-      onMouseEnter={() => router.prefetch(`/race/${race.year}/${race.round}`)}
+      onMouseEnter={() => {
+        router.prefetch(`/race/${race.year}/${race.round}`);
+        void getRaceResultsBridged(queryClient, race.year, race.round);
+      }}
       className="block rounded-xs border border-border-subtle bg-panel-elev px-4 py-3 transition-colors hover:border-border"
     >
       {content}
@@ -173,8 +180,29 @@ export const CalendarPanel = ({ year, calendar, loading, view }: CalendarPanelPr
   });
 
   return (
-    <Panel label={view === "list" ? "RACE CALENDAR · LIST" : "RACE CALENDAR · GRID"} title={`${calendar?.length ?? 0} rounds`}>
-      {!calendar?.length ? (
+    <Panel label={view === "list" ? "RACE CALENDAR · LIST" : "RACE CALENDAR · GRID"} title={`${calendar?.length ?? "—"} rounds`}>
+      {loading ? (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div className="rounded-xs border border-border-subtle bg-panel-elev px-4 py-3">
+              <Skeleton className="h-6 w-3/4" />
+            </div>
+            <div className="rounded-xs border border-border-subtle bg-panel-elev px-4 py-3">
+              <Skeleton className="h-6 w-3/4" />
+            </div>
+          </div>
+
+          <div className="panel-scroll w-full">
+            <div className="space-y-2">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 px-4 py-2">
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : !calendar?.length ? (
         <EmptyState message={`NO RACE DATA FOR ${year}`} description="No fixtures available for this season." />
       ) : (
         <div className="space-y-4">

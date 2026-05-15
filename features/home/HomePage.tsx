@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { ArrowSlider } from "@/features/home/components/ArrowSlider";
 import { CalendarStripPanel } from "@/features/home/components/CalendarStripPanel";
 import { LastRacePanel } from "@/features/home/components/LastRacePanel";
@@ -9,6 +9,8 @@ import { RightColumnPanels } from "@/features/home/components/RightColumnPanels"
 import { StatusStrip } from "@/features/home/components/StatusStrip";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useSeasonSchedule, useDriverStandings, useConstructorStandings } from "@/features/season-hub/hooks/useSeasonHub";
+import { useNavStore } from "@/_Stores/navStore";
+import { useIsRestoring } from "@/_Stores/QueryProvider";
 import {
   useRaceDetail,
   useRaceResults,
@@ -24,7 +26,6 @@ type HomePageShellProps = {
 };
 
 export const HomePageShell = ({ initialYear }: HomePageShellProps) => {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const urlYear = searchParams.get("year");
@@ -33,10 +34,20 @@ export const HomePageShell = ({ initialYear }: HomePageShellProps) => {
   const parsedYear = urlYear ? parseInt(urlYear, 10) : undefined;
   const parsedRound = urlRound ? parseInt(urlRound, 10) : undefined;
 
-  // ── Season schedule ────────────────────────────────────────────────────
-  const { data: calendar, isLoading: scheduleLoading } = useSeasonSchedule(parsedYear ?? CURRENT_YEAR);
+  const setHomeYear = useNavStore((s) => s.setHomeYear);
+  const setHomeRound = useNavStore((s) => s.setHomeRound);
+  const storeHomeYear = useNavStore((s) => s.homeYear);
 
-  const scheduleYear = parsedYear ?? initialYear;
+  // Seed store on mount/param change
+  useEffect(() => {
+    const seedYear = parsedYear ?? initialYear;
+    setHomeYear(seedYear);
+    if (parsedRound) setHomeRound(parsedRound);
+  }, [parsedYear, parsedRound, initialYear, setHomeYear, setHomeRound]);
+
+  // ── Season schedule ────────────────────────────────────────────────────
+  const scheduleYear = storeHomeYear ?? parsedYear ?? initialYear;
+  const { data: calendar, isLoading: scheduleLoading } = useSeasonSchedule(scheduleYear);
 
   const liveRace = useMemo(() => calendar?.find((r) => r.status === "live"), [calendar]);
   const lastCompletedRace = useMemo(() => calendar?.filter((r) => r.status === "completed").at(-1), [calendar]);
@@ -58,22 +69,24 @@ export const HomePageShell = ({ initialYear }: HomePageShellProps) => {
   // ── Last race detail + results ─────────────────────────────────────────
   const { data: raceDetail, isLoading: raceDetailLoading } = useRaceDetail(lastYear, lastRound, hasLastRace);
   const { data: results, isLoading: resultsLoading } = useRaceResults(lastYear, lastRound, hasCompletedRace);
-  const { data: weather, isLoading: weatherLoading } = useRaceWeather(lastYear, lastRound, hasCompletedRace);
-  const { data: incidents, isLoading: incidentsLoading } = useRaceIncidents(lastYear, lastRound, hasCompletedRace);
+  const { data: weather } = useRaceWeather(lastYear, lastRound, hasCompletedRace);
+  const { data: incidents } = useRaceIncidents(lastYear, lastRound, hasCompletedRace);
   const { data: qualiResults } = useQualifyingResults(lastYear, lastRound, hasCompletedRace);
 
   // ── Standings ──────────────────────────────────────────────────────────
   const { data: standings, isLoading: standingsLoading } = useDriverStandings(scheduleYear);
   const { data: constructors, isLoading: constructorsLoading } = useConstructorStandings(scheduleYear);
 
+  const isRestoring = useIsRestoring();
+
   const lastRace = {
     data: raceDetail,
-    loading: scheduleLoading || raceDetailLoading,
+    loading: scheduleLoading || raceDetailLoading || isRestoring,
     error: undefined,
     reload: () => {},
   };
 
-  const lastResults = { data: results, loading: resultsLoading };
+  const lastResults = { data: results, loading: resultsLoading || isRestoring };
 
   const pushSelection = (year: number, round?: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -85,7 +98,13 @@ export const HomePageShell = ({ initialYear }: HomePageShellProps) => {
     }
     const nextPath = `/home/${year}`;
     const nextQuery = params.toString();
-    router.push(nextQuery ? `${nextPath}?${nextQuery}` : nextPath);
+    const url = nextQuery ? `${nextPath}?${nextQuery}` : nextPath;
+
+    // Update store for instant UI and update URL without navigation
+    setHomeYear(year);
+    if (typeof round === "number") setHomeRound(round);
+    else setHomeRound(null);
+    window.history.replaceState(null, "", url);
   };
 
   const handlePrevYear = () => pushSelection(scheduleYear - 1);
@@ -107,6 +126,7 @@ export const HomePageShell = ({ initialYear }: HomePageShellProps) => {
 
   return (
     <main className="min-h-screen w-full page-shell">
+   
       <StatusStrip
         calendar={calendar}
         leader={standings?.[0]}
@@ -154,15 +174,15 @@ export const HomePageShell = ({ initialYear }: HomePageShellProps) => {
         <RightColumnPanels
           year={scheduleYear}
           nextRace={nextUpcomingRace}
-          nextRaceLoading={scheduleLoading}
+          nextRaceLoading={scheduleLoading || isRestoring}
           standings={standings}
-          standingsLoading={standingsLoading}
+          standingsLoading={standingsLoading || isRestoring}
           constructors={constructors}
-          constructorsLoading={constructorsLoading}
+          constructorsLoading={constructorsLoading || isRestoring}
         />
       </div>
 
-      <CalendarStripPanel calendar={calendar} loading={scheduleLoading} year={scheduleYear} />
+      <CalendarStripPanel calendar={calendar} loading={scheduleLoading || isRestoring} year={scheduleYear} />
     </main>
   );
 };

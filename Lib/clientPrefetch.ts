@@ -1,9 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/Lib/queryKeys";
-function buildClientUrl(pathname: string) {
-  const normalizedPath = pathname.startsWith("/") ? pathname : `/${pathname}`;
-  return `/api${normalizedPath}`;
-}
+import { getDriverCareerBridged, getDriverSeasonBridged } from "@/Lib/api/bridged/drivers";
 
 export async function prefetchDriverData(
   queryClient: QueryClient,
@@ -14,32 +11,10 @@ export async function prefetchDriverData(
 
   const tasks: Promise<unknown>[] = [];
 
-  tasks.push(
-    queryClient.prefetchQuery({
-      queryKey: queryKeys.driverStandings.career(driverCode),
-      queryFn: async () => {
-          const url = buildClientUrl(`/drivers/${driverCode}/career/`);
-          const res = await fetch(url, { method: "GET", headers: { Accept: "application/json" } });
-          if (!res.ok) return {} as any;
-          const raw = await res.json();
-          return raw;
-        },
-    }),
-  );
+  tasks.push(getDriverCareerBridged(queryClient, driverCode));
 
   if (year !== undefined) {
-    tasks.push(
-      queryClient.prefetchQuery({
-        queryKey: queryKeys.driverStandings.season(driverCode, year),
-        queryFn: async () => {
-          const url = buildClientUrl(`/drivers/${driverCode}/${year}/`);
-          const res = await fetch(url, { method: "GET", headers: { Accept: "application/json" } });
-          if (!res.ok) return {} as any;
-          const raw = await res.json();
-          return raw;
-        },
-      }),
-    );
+    tasks.push(getDriverSeasonBridged(queryClient, driverCode, year));
   }
 
   await Promise.allSettled(tasks);

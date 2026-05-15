@@ -1,6 +1,5 @@
+import React, { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { HydrationBoundary, prefetchQueries } from "@/Lib/prefetch";
-import { queryKeys } from "@/Lib/queryKeys";
 import { HomePageShell } from "@/features/home/HomePage";
 
 type HomeYearPageProps = {
@@ -19,26 +18,9 @@ export default async function HomeYearPage({ params }: HomeYearPageProps) {
     notFound();
   }
 
-  console.log("[prefetch] HomeYearPage: starting prefetch", { year });
-  const { dehydratedState } = await prefetchQueries([
-    {
-      queryKey: queryKeys.schedule.season(year),
-      pathname: `/races/${year}/`,
-    },
-    {
-      queryKey: queryKeys.driverStandings.grid(year),
-      pathname: `/drivers/${year}/`,
-    },
-    {
-      queryKey: queryKeys.constructorStandings.year(year),
-      pathname: `/constructors/${year}/`,
-    },
-  ]);
-  console.log("[prefetch] HomeYearPage: prefetch complete", { year });
-
   return (
-    <HydrationBoundary state={dehydratedState}>
+    <Suspense fallback={<div className="page-shell" />}>
       <HomePageShell initialYear={year} />
-    </HydrationBoundary>
+    </Suspense>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useRef, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useRef, useEffect } from "react";
+import { useNavStore } from "@/_Stores/navStore";
 import { gsap } from "gsap";
 import { ScrollingCar } from "@/_Components/ScrollingCar";
 import { EmptyState } from "@/components/EmptyState";
@@ -21,8 +21,10 @@ type DriverRecordShellProps = {
 };
 
 export function DriverRecordShell({ driverCode, year }: DriverRecordShellProps) {
-  const router = useRouter();
-  const [selectedYear, setSelectedYear] = useState<number | null>(year);
+  const setDriverYear = useNavStore((s) => s.setDriverYear);
+  const storeDriverYear = useNavStore((s) => s.driverYear);
+
+  const selectedYear = storeDriverYear ?? year;
   const sectionRef = useRef<HTMLDivElement | null>(null);
 
   const code = driverCode.toUpperCase();
@@ -35,8 +37,8 @@ export function DriverRecordShell({ driverCode, year }: DriverRecordShellProps) 
   );
 
   useEffect(() => {
-    setSelectedYear(year);
-  }, [year]);
+    setDriverYear(year);
+  }, [year, setDriverYear]);
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -74,9 +76,9 @@ export function DriverRecordShell({ driverCode, year }: DriverRecordShellProps) 
           selectedYear={selectedYear}
           teamId={teamId}
           onSelectYear={(nextYear) => {
-            setSelectedYear(nextYear);
-            if (nextYear) {
-              router.push(`/drivers/${code}/${nextYear}`);
+              if (nextYear) {
+                setDriverYear(nextYear);
+                window.history.replaceState(null, "", `/drivers/${code}/${nextYear}`);
             }
           }}
           seasonData={season.data}

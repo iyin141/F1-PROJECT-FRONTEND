@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Panel } from "@/components/Panel";
+import { Skeleton } from "@/components/Skeleton";
 import { DriverCode } from "@/components/DriverCode";
 import { YearNavigator } from "@/components/ui/YearNavigator";
 import { DRIVERS, TEAMS } from "@/Lib/data/drivers";
 import { useDriverStandings } from "@/features/season-hub/hooks/useSeasonHub";
+import { useNavStore } from "@/_Stores/navStore";
 import type { Driver } from "@/types/ui";
 
 function dedupeDrivers(drivers: Driver[]) {
@@ -29,7 +31,15 @@ type DriversHubPageProps = {
 
 export function DriversHubPage({ year }: DriversHubPageProps) {
   const [search, setSearch] = useState("");
-  const { data: standingsData, isLoading: standingsLoading } = useDriverStandings(year);
+  const setDriversYear = useNavStore((s) => s.setDriversYear);
+  const storeDriversYear = useNavStore((s) => s.driversYear);
+
+  useEffect(() => {
+    setDriversYear(year);
+  }, [year, setDriversYear]);
+
+  const effectiveYear = storeDriversYear ?? year;
+  const { data: standingsData, isLoading: standingsLoading, isFetching: standingsFetching } = useDriverStandings(effectiveYear);
   const minYear = 1950;
 
   const { drivers, source, loading } = useMemo(() => {
@@ -41,15 +51,16 @@ export function DriversHubPage({ year }: DriversHubPageProps) {
       return { drivers: unique, source: "standings" as const, loading: false };
     }
 
-    if (!standingsLoading) {
-      const fallbackDrivers = dedupeDrivers(DRIVERS).sort((a, b) =>
-        a.lastName.localeCompare(b.lastName),
-      );
-      return { drivers: fallbackDrivers, source: "fallback" as const, loading: false };
+    if (standingsLoading || standingsFetching) {
+      return { drivers: [], source: "loading" as const, loading: true };
     }
 
-    return { drivers: [], source: "loading" as const, loading: true };
-  }, [standingsData, standingsLoading]);
+    // No standings and not currently loading/fetching — show local fallback
+    const fallbackDrivers = dedupeDrivers(DRIVERS).sort((a, b) =>
+      a.lastName.localeCompare(b.lastName),
+    );
+    return { drivers: fallbackDrivers, source: "fallback" as const, loading: false };
+  }, [standingsData, standingsLoading, standingsFetching]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -104,7 +115,14 @@ export function DriversHubPage({ year }: DriversHubPageProps) {
         label="DRIVERS"
         title={`${source === "standings" ? "Standings" : source === "loading" ? "Loading" : "Fallback"} List · ${year}`}
         action={
-          <YearNavigator year={year} minYear={minYear} />
+          <YearNavigator
+            year={effectiveYear}
+            minYear={minYear}
+            onNavigate={(nextYear) => {
+              setDriversYear(nextYear);
+              window.history.replaceState(null, "", `/drivers/year/${nextYear}`);
+            }}
+          />
         }
       >
         {source === "fallback" && (
@@ -113,7 +131,22 @@ export function DriversHubPage({ year }: DriversHubPageProps) {
           </p>
         )}
 
-        {filtered.length === 0 ? (
+        {loading ? (
+          <ul className="divide-y divide-border-subtle border border-border-subtle">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <li key={i} className="px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 mr-4">
+                    <Skeleton className="h-4 w-48" />
+                  </div>
+                  <div>
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : filtered.length === 0 ? (
           <p className="py-6 text-center font-mono text-xs uppercase tracking-[0.18em] text-text-dim">
             No drivers match your search.
           </p>
@@ -122,7 +155,7 @@ export function DriversHubPage({ year }: DriversHubPageProps) {
             {filtered.map((driver) => (
               <li key={driver.code}>
                 <Link
-                  href={`/drivers/${driver.code}/${year}`}
+                    href={`/drivers/${driver.code}/${effectiveYear}`}
                   className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-panel-elev"
                 >
                   <DriverCode driver={driver} showName />

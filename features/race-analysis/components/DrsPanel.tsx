@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from "react";
+import Skeleton from "@/components/animations/Skeleton";
 import { useDrs } from "@/features/race-detail/hooks/useRaceDetail";
 import { driverById } from "@/Lib/data/drivers";
 
@@ -47,7 +48,7 @@ export const DrsPanel = ({
     };
   }, [data]);
 
-  if (isLoading) return <div className="h-48" />;
+  if (isLoading) return <Skeleton height={192} />;
   if (!stats) return <div className="text-muted text-sm">No DRS data</div>;
 
   return (

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from "react";
+import Skeleton from "@/components/animations/Skeleton";
 import * as d3 from "d3";
 import { driverById } from "@/Lib/data/drivers";
 import { useResizeObserver } from "@/hooks/use-resize-observer";
@@ -103,7 +104,7 @@ export const PaceComparison = ({
     return { kind: "compare" as const, traces, x, y, lineGen, p95, innerW, innerH };
   }, [laps, size.width, mode, driverAId, driverBId, driverCId]);
 
-  if (isLoading) return <div className="h-70" />;
+  if (isLoading) return <Skeleton height={280} />;
 
   return (
     <div ref={ref} className="w-full">

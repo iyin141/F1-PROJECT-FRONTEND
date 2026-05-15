@@ -9,6 +9,7 @@ type YearNavigatorProps = {
   minYear?: number;
   maxYear?: number;
   label?: string;
+  onNavigate?: (nextYear: number) => void;
 };
 
 const MIN_YEAR = 1950;
@@ -18,6 +19,7 @@ export function YearNavigator({
   minYear = MIN_YEAR,
   maxYear = new Date().getFullYear(),
   label = "Year",
+  onNavigate,
 }: YearNavigatorProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -25,6 +27,11 @@ export function YearNavigator({
   const navigateToYear = useCallback(
     (nextYear: number) => {
       if (nextYear < minYear || nextYear > maxYear) return;
+
+      if (onNavigate) {
+        onNavigate(nextYear);
+        return;
+      }
 
       const segments = pathname.split("/");
       const yearIndex = segments.findIndex(
@@ -35,7 +42,7 @@ export function YearNavigator({
       segments[yearIndex] = String(nextYear);
       router.push(segments.join("/"));
     },
-    [maxYear, minYear, pathname, router],
+    [maxYear, minYear, pathname, router, onNavigate],
   );
 
   return (

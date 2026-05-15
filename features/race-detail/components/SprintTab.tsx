@@ -240,8 +240,8 @@ const sprintRaceColumns: ColumnDef<RaceResult>[] = [
 export const SprintTab = ({ year, round, upcoming }: RaceTabProps) => {
   const [view, setView] = useState<"shootout" | "race">("race");
   const [isPending, startTransition] = useTransition();
-  const { data: shootoutResults, isLoading: shootoutLoading } = useSprintShootoutResults(year, round, !upcoming);
-  const { data: sprintResults, isLoading: sprintLoading } = useSprintResults(year, round, !upcoming);
+  const { data: shootoutResults } = useSprintShootoutResults(year, round, !upcoming);
+  const { data: sprintResults } = useSprintResults(year, round, !upcoming);
 
   if (upcoming) return <NotAvailable />;
 

@@ -26,7 +26,7 @@ export function DriverTelemetryPanel({
   const lap = lapInput.trim() ? Number(lapInput) : null;
   const lapNum = lap !== null && Number.isFinite(lap) ? lap : null;
 
-  const { data, isLoading } = usePersistentTelemetry(
+  const { data } = usePersistentTelemetry(
     year,
     round,
     driverId ?? undefined,
@@ -34,7 +34,7 @@ export function DriverTelemetryPanel({
     "R",
   );
 
-  const points = data?.data ?? [];
+  const points = useMemo(() => data?.data ?? [], [data?.data]);
 
   const { ref, size } = useResizeObserver<HTMLDivElement>();
   const chart = useMemo(() => {

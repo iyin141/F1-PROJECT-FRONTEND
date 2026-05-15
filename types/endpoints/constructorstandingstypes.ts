@@ -13,9 +13,9 @@ export type ConstructorStandingRow = {
 
 export type ConstructorStandingsResponse = {
   year: number;
-  /** Primary key per API docs */
-  standings: ConstructorStandingRow[];
-  /** Legacy fallback key — kept for adapter compatibility */
+  /** Primary key per API docs (may be `standings` or legacy `constructors`) */
+  standings?: ConstructorStandingRow[];
+  /** Alternative key returned by some endpoints */
   constructors?: ConstructorStandingRow[];
   readiness: ReadinessChecklist;
 };

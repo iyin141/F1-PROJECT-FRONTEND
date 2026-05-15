@@ -263,7 +263,7 @@ const columns: ColumnDef<ReplayPosition>[] = [
 // ─── ReplayScrubber ───────────────────────────────────────────────────────────
 
 export const ReplayScrubber = ({ year, round, enabled }: { year: number; round: number; enabled: boolean }) => {
-  const { frames, positions, incidents, pitStops, laps, isPending: loading } = useReplayFrames(year, round, enabled);
+  const { frames, isPending: loading } = useReplayFrames(year, round, enabled);
 
   const r = useRaceReplay(frames ?? []);  
   const towerRef = useRef<HTMLDivElement>(null);

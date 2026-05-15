@@ -1,7 +1,4 @@
 import { notFound } from "next/navigation";
-
-import { HydrationBoundary, prefetchQueries } from "@/Lib/prefetch";
-import { queryKeys } from "@/Lib/queryKeys";
 import { DriverRecordShell } from "@/features/driver-record";
 
 type DriverYearPageProps = {
@@ -22,22 +19,5 @@ export default async function DriverYearPage({ params }: DriverYearPageProps) {
     notFound();
   }
 
-  console.log("[prefetch] DriverYearPage: starting prefetch", { driverCode, year });
-  const { dehydratedState } = await prefetchQueries([
-    {
-      queryKey: queryKeys.driverStandings.career(driverCode),
-      pathname: `/drivers/${driverCode}/career/`,
-    },
-    {
-      queryKey: queryKeys.driverStandings.season(driverCode, year),
-      pathname: `/drivers/${driverCode}/${year}/`,
-    },
-  ]);
-  console.log("[prefetch] DriverYearPage: prefetch complete", { driverCode, year });
-
-  return (
-    <HydrationBoundary state={dehydratedState}>
-      <DriverRecordShell driverCode={driverCode} year={year} />
-    </HydrationBoundary>
-  );
+  return <DriverRecordShell driverCode={driverCode} year={year} />;
 }

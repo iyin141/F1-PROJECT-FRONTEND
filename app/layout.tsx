@@ -5,6 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { QueryProvider } from "@/_Stores/QueryProvider";
 import { Sidebar } from "@/components/Sidebar";
 import { NavigationProgress } from "@/components/NavigationProgress";
+import RouteTransition from "@/components/animations/RouteTransition";
 
 import "./globals.css";
 
@@ -49,7 +50,9 @@ export default function RootLayout({
             <div className="flex min-h-screen">
               <Sidebar />
               <div className="flex-1 min-w-0 md:pl-[15%]">
-                {children}
+                <RouteTransition>
+                  {children}
+                </RouteTransition>
               </div>
             </div>
           </QueryProvider>

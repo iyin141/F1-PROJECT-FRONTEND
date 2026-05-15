@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from "react";
+import Skeleton from "@/components/animations/Skeleton";
 import { useDriverPace } from "@/features/race-analysis/hooks/useRaceAnalysis";
 import { formatLapMs } from "@/Lib/format";
 
@@ -34,7 +35,7 @@ export const DriverPacePanel = ({
     };
   }, [data]);
 
-  if (isLoading) return <div className="h-64" />;
+  if (isLoading) return <Skeleton height={256} />;
   if (!stats) return <div className="text-muted text-sm">No data</div>;
 
   return (

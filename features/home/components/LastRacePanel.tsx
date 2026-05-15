@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useTransition } from "react";
+import FadeInPanel from "@/components/animations/FadeInPanel";
 import Link from "next/link";
 import { ArrowRight, Calendar, Cloud, CloudRain, Sun } from "lucide-react";
 import { DriverCode } from "@/components/DriverCode";
@@ -136,148 +137,152 @@ export const LastRacePanel = ({ race, results, qualiResults, incidents, weather,
   // When there are no results, show the upcoming race schedule
   if (!loading && !hasResults && race && isUpcoming) {
     return (
-      <Panel
-        label={race.status === "live" ? "LIVE RACE" : "NEXT RACE"}
-        title={race.name}
-        action={
-          <Link
-            href={`/race/${race.year}/${race.round}`}
-            className="inline-flex items-center gap-2 border border-red bg-red/10 px-3 py-1.5 font-mono text-[11px] tracking-wider text-red transition-colors hover:bg-red hover:text-white"
-          >
-            VIEW RACE <ArrowRight size={12} />
-          </Link>
-        }
-      >
-        <div className="space-y-4">
-          {/* Race date header */}
-          <div className="flex items-center gap-2 font-mono text-xs text-text-dim">
-            <Calendar size={14} />
-            <span>{formatDate(race.date)}</span>
-            <span>·</span>
-            <span>{race.circuit.name}</span>
-            <span>·</span>
-            <span>{race.circuit.country}</span>
-          </div>
+      <FadeInPanel>
+        <Panel
+          label={race.status === "live" ? "LIVE RACE" : "NEXT RACE"}
+          title={race.name}
+          action={
+            <Link
+              href={`/race/${race.year}/${race.round}`}
+              className="inline-flex items-center gap-2 border border-red bg-red/10 px-3 py-1.5 font-mono text-[11px] tracking-wider text-red transition-colors hover:bg-red hover:text-white"
+            >
+              VIEW RACE <ArrowRight size={12} />
+            </Link>
+          }
+        >
+          <div className="space-y-4">
+            {/* Race date header */}
+            <div className="flex items-center gap-2 font-mono text-xs text-text-dim">
+              <Calendar size={14} />
+              <span>{formatDate(race.date)}</span>
+              <span>·</span>
+              <span>{race.circuit.name}</span>
+              <span>·</span>
+              <span>{race.circuit.country}</span>
+            </div>
 
-          {/* Session schedule from session1–session5 */}
-          {race.sessions.length > 0 ? (
-            <div className="space-y-1">
-              <div className="label-mono mb-2">SESSION SCHEDULE</div>
-              {race.sessions.map((session, idx) => {
-                const sessionLabel = session.id.toUpperCase().replace("FP", "PRACTICE ").replace("QUALIFYING", "QUALIFYING").replace("RACE", "RACE");
-                return (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between rounded-sm border border-border-subtle/50 px-3 py-2 font-mono text-xs"
-                  >
-                    <span
-                      className="font-semibold uppercase tracking-wider"
-                      style={{ color: session.id === "race" ? "hsl(var(--red))" : "hsl(var(--text))" }}
+            {/* Session schedule from session1–session5 */}
+            {race.sessions.length > 0 ? (
+              <div className="space-y-1">
+                <div className="label-mono mb-2">SESSION SCHEDULE</div>
+                {race.sessions.map((session, idx) => {
+                  const sessionLabel = session.id.toUpperCase().replace("FP", "PRACTICE ").replace("QUALIFYING", "QUALIFYING").replace("RACE", "RACE");
+                  return (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between rounded-sm border border-border-subtle/50 px-3 py-2 font-mono text-xs"
                     >
-                      {sessionLabel}
-                    </span>
-                    <span className="tabular-nums text-text-dim">
-                      {session.startsAt ? formatSessionDate(session.startsAt) : "TBC"}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="py-4 text-center font-mono text-xs text-text-dim">
-              Session schedule will be available closer to the race weekend.
-            </div>
-          )}
-        </div>
-      </Panel>
+                      <span
+                        className="font-semibold uppercase tracking-wider"
+                        style={{ color: session.id === "race" ? "hsl(var(--red))" : "hsl(var(--text))" }}
+                      >
+                        {sessionLabel}
+                      </span>
+                      <span className="tabular-nums text-text-dim">
+                        {session.startsAt ? formatSessionDate(session.startsAt) : "TBC"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-4 text-center font-mono text-xs text-text-dim">
+                Session schedule will be available closer to the race weekend.
+              </div>
+            )}
+          </div>
+        </Panel>
+      </FadeInPanel>
     );
   }
 
   return (
-    <Panel
-      label="LAST RACE"
-      title={race?.name}
-      action={
-        race && (
-          <Link
-            href={`/race/${race.year}/${race.round}`}
-            className="inline-flex items-center gap-2 border border-red bg-red/10 px-3 py-1.5 font-mono text-[11px] tracking-wider text-red transition-colors hover:bg-red hover:text-white"
-          >
-            VIEW MORE <ArrowRight size={12} />
-          </Link>
-        )
-      }
-    >
-      {!results?.length ? (
-        <EmptyState message="NO RESULTS" />
-      ) : (
-        <>
-          {hasQualifying && (
-            <div className={`mb-3 flex border-b border-border-subtle ${isPending ? "pointer-events-none opacity-70" : ""}`}>
-              <button
-                type="button"
-                onClick={() => startTransition(() => setActiveView("race"))}
-                className={`px-3 py-2 font-mono text-[10px] uppercase tracking-[0.18em] transition-colors ${
-                  activeView === "race"
-                    ? "border-b border-red text-red"
-                    : "text-text-dim hover:text-text"
-                }`}
-              >
-                Race
-              </button>
-              <button
-                type="button"
-                onClick={() => startTransition(() => setActiveView("quali"))}
-                className={`px-3 py-2 font-mono text-[10px] uppercase tracking-[0.18em] transition-colors ${
-                  activeView === "quali"
-                    ? "border-b border-red text-red"
-                    : "text-text-dim hover:text-text"
-                }`}
-              >
-                Qualifying
-              </button>
-            </div>
-          )}
-          <div className="panel-scroll w-full">
-            {activeView === "quali" && hasQualifying ? (
-              <GenericTable<QualifyingResult>
-                className="data-grid w-full min-w-xl font-mono text-xs md:min-w-2xl"
-                columns={qualifyingColumns}
-                data={visibleQualifyingResults}
-                getRowKey={q => q.driver.id}
-                striped
-                getRowVariant={q => (q.position === 1 ? "pole" : "default")}
-              />
-            ) : (
-              <GenericTable<RaceResult>
-                className="data-grid w-full min-w-xl font-mono text-xs md:min-w-2xl"
-                columns={raceColumns}
-                data={visibleRaceResults}
-                getRowKey={r => r.driver.id}
-                striped
-                getRowVariant={r => {
-                  if (r.position === 1) return "pole";
-                  if (r.fastestLap) return "fastlap";
-                  return "default";
-                }}
-              />
+    <FadeInPanel>
+      <Panel
+        label="LAST RACE"
+        title={race?.name}
+        action={
+          race && (
+            <Link
+              href={`/race/${race.year}/${race.round}`}
+              className="inline-flex items-center gap-2 border border-red bg-red/10 px-3 py-1.5 font-mono text-[11px] tracking-wider text-red transition-colors hover:bg-red hover:text-white"
+            >
+              VIEW MORE <ArrowRight size={12} />
+            </Link>
+          )
+        }
+      >
+        {!results?.length ? (
+          <EmptyState message="NO RESULTS" />
+        ) : (
+          <>
+            {hasQualifying && (
+              <div className={`mb-3 flex border-b border-border-subtle ${isPending ? "pointer-events-none opacity-70" : ""}`}>
+                <button
+                  type="button"
+                  onClick={() => startTransition(() => setActiveView("race"))}
+                  className={`px-3 py-2 font-mono text-[10px] uppercase tracking-[0.18em] transition-colors ${
+                    activeView === "race"
+                      ? "border-b border-red text-red"
+                      : "text-text-dim hover:text-text"
+                  }`}
+                >
+                  Race
+                </button>
+                <button
+                  type="button"
+                  onClick={() => startTransition(() => setActiveView("quali"))}
+                  className={`px-3 py-2 font-mono text-[10px] uppercase tracking-[0.18em] transition-colors ${
+                    activeView === "quali"
+                      ? "border-b border-red text-red"
+                      : "text-text-dim hover:text-text"
+                  }`}
+                >
+                  Qualifying
+                </button>
+              </div>
             )}
-          </div>
-          {activeView === "race" && (
-            <div className="mt-4 grid grid-cols-2 gap-4 border-t border-border-subtle pt-4 sm:grid-cols-4">
-              <div><div className="label-mono">POLE</div><div className="mt-1 font-mono text-sm">{results[0]?.driver.code}</div></div>
-              <div><div className="label-mono">FASTEST LAP</div><div className="mt-1 font-mono text-sm">{results.find(r => r.fastestLap)?.driver.code ?? "—"}</div></div>
-              <div><div className="label-mono">SC PERIODS</div><div className="mt-1 font-mono text-sm tabular-nums">{scCount}</div></div>
-              <div>
-                <div className="label-mono">WEATHER</div>
-                <div className="mt-1 flex items-center gap-1 font-mono text-sm">
-                  {weather && <><WeatherIcon condition={weather.conditions} /> {weather.airTempC}°C</>}
+            <div className="panel-scroll w-full">
+              {activeView === "quali" && hasQualifying ? (
+                <GenericTable<QualifyingResult>
+                  className="data-grid w-full min-w-xl font-mono text-xs md:min-w-2xl"
+                  columns={qualifyingColumns}
+                  data={visibleQualifyingResults}
+                  getRowKey={q => q.driver.id}
+                  striped
+                  getRowVariant={q => (q.position === 1 ? "pole" : "default")}
+                />
+              ) : (
+                <GenericTable<RaceResult>
+                  className="data-grid w-full min-w-xl font-mono text-xs md:min-w-2xl"
+                  columns={raceColumns}
+                  data={visibleRaceResults}
+                  getRowKey={r => r.driver.id}
+                  striped
+                  getRowVariant={r => {
+                    if (r.position === 1) return "pole";
+                    if (r.fastestLap) return "fastlap";
+                    return "default";
+                  }}
+                />
+              )}
+            </div>
+            {activeView === "race" && (
+              <div className="mt-4 grid grid-cols-2 gap-4 border-t border-border-subtle pt-4 sm:grid-cols-4">
+                <div><div className="label-mono">POLE</div><div className="mt-1 font-mono text-sm">{results[0]?.driver.code}</div></div>
+                <div><div className="label-mono">FASTEST LAP</div><div className="mt-1 font-mono text-sm">{results.find(r => r.fastestLap)?.driver.code ?? "—"}</div></div>
+                <div><div className="label-mono">SC PERIODS</div><div className="mt-1 font-mono text-sm tabular-nums">{scCount}</div></div>
+                <div>
+                  <div className="label-mono">WEATHER</div>
+                  <div className="mt-1 flex items-center gap-1 font-mono text-sm">
+                    {weather && <><WeatherIcon condition={weather.conditions} /> {weather.airTempC}°C</>}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </>
-      )}
-    </Panel>
+            )}
+          </>
+        )}
+      </Panel>
+    </FadeInPanel>
   );
 };

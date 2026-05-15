@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { cacheConfig, queryKeys } from "@/Lib/queryKeys";
 import type { AnalysisSessionName } from "@/types/api";
-import { getAnalysis, getTelemetry, getTelemetryOverlay, getTelemetrySummary, getUnifiedPositions } from "@/Lib/api/services";
+import { getAnalysis, getTelemetry, getTelemetryOverlay, getTelemetrySummary } from "@/Lib/api/services/analysis";
+import { getUnifiedPositions } from "@/Lib/api/services/unified";
 import type { UnifiedPositionsResponse, TelemetryResponse, TelemetryOverlayResponse, TelemetrySummaryResponse } from "@/types/endpoints";
 import {
   adaptRaceLapFrames,
