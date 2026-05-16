@@ -1,39 +1,13 @@
 'use client';
 
-import { useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-// Use the local analysis API routes instead of server actions
-import { cacheConfig, queryKeys } from "@/Lib/queryKeys";
-import { getTelemetry, getTelemetryOverlay } from "@/Lib/api/services/analysis";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/Lib/queryKeys";
+import { fetchTelemetry, fetchTelemetryOverlay } from "@/Lib/queryFunctions";
 import type {
   TelemetryOverlayResponse,
   TelemetryResponse,
 } from "@/types/endpoints";
 import type { AnalysisSessionName } from "@/types/api";
-
-const MAX_PERSIST_SIZE = 1_000_000;
-
-function readLocalStorageJson<T>(key: string): T | undefined {
-  if (typeof window === "undefined") return undefined;
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return undefined;
-    return JSON.parse(raw) as T;
-  } catch {
-    return undefined;
-  }
-}
-
-function writeLocalStorageJson<T>(key: string, value: T) {
-  if (typeof window === "undefined") return;
-  try {
-    const raw = JSON.stringify(value);
-    if (raw.length > MAX_PERSIST_SIZE) return;
-    window.localStorage.setItem(key, raw);
-  } catch {
-    // Ignore quota and serialization failures.
-  }
-}
 
 export function usePersistentTelemetry(
   year: number,
@@ -42,16 +16,7 @@ export function usePersistentTelemetry(
   lap: number | null,
   session: AnalysisSessionName = "R",
 ) {
-  const storageKey = useMemo(
-    () =>
-      `f1:telem:${year}:${round}:${session}:${driver ?? ""}:${lap ?? ""}`,
-    [year, round, session, driver, lap],
-  );
-
-  const initialData = useMemo(
-    () => readLocalStorageJson<TelemetryResponse>(storageKey),
-    [storageKey],
-  );
+  const qc = useQueryClient();
 
   const query = useQuery<TelemetryResponse>({
     queryKey: queryKeys.telemetry.single(
@@ -61,15 +26,11 @@ export function usePersistentTelemetry(
       lap ?? 0,
       session,
     ),
-    queryFn: () => getTelemetry(year, round, { session, driver: driver!, lap: lap! }),
-    ...cacheConfig.heavyOptIn,
+    queryFn: () => fetchTelemetry(year, round, driver!, lap!, session, qc),
+    staleTime: 86400000,
+    gcTime: 86400000,
     enabled: !!driver && lap !== null,
-    initialData,
   });
-
-  useEffect(() => {
-    if (query.data) writeLocalStorageJson(storageKey, query.data);
-  }, [query.data, storageKey]);
 
   return query;
 }
@@ -82,17 +43,7 @@ export function usePersistentTelemetryOverlay(
   lap: number | undefined,
   session: AnalysisSessionName = "R",
 ) {
-  const ordered = useMemo(() => [driverA ?? "", driverB ?? ""].sort(), [driverA, driverB]);
-  const storageKey = useMemo(
-    () =>
-      `f1:telem-ov:${year}:${round}:${session}:${ordered[0]}:${ordered[1]}:${lap ?? ""}`,
-    [year, round, session, ordered, lap],
-  );
-
-  const initialData = useMemo(
-    () => readLocalStorageJson<TelemetryOverlayResponse>(storageKey),
-    [storageKey],
-  );
+  const qc = useQueryClient();
 
   const query = useQuery<TelemetryOverlayResponse>({
     queryKey: queryKeys.telemetry.overlay(
@@ -102,15 +53,11 @@ export function usePersistentTelemetryOverlay(
       driverB ?? "",
       lap,
     ),
-    queryFn: () => getTelemetryOverlay(year, round, { driver_a: driverA!, driver_b: driverB!, session, lap }),
-    ...cacheConfig.heavyOptIn,
+    queryFn: () => fetchTelemetryOverlay(year, round, driverA!, driverB!, lap, qc, session),
+    staleTime: 86400000,
+    gcTime: 86400000,
     enabled: !!driverA && !!driverB,
-    initialData,
   });
-
-  useEffect(() => {
-    if (query.data) writeLocalStorageJson(storageKey, query.data);
-  }, [query.data, storageKey]);
 
   return query;
 }

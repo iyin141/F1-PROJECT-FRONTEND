@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { getRaceResultsBridged } from "@/Lib/api/bridged";
+import { fetchRaceResults } from "@/Lib/queryFunctions";
 import { ChevronRight } from "lucide-react";
 import { DriverCode } from "@/components/DriverCode";
 import { EmptyState } from "@/components/EmptyState";
@@ -139,7 +139,7 @@ const SpotlightCard = ({
       href={`/race/${race.year}/${race.round}`}
       onMouseEnter={() => {
         router.prefetch(`/race/${race.year}/${race.round}`);
-        void getRaceResultsBridged(queryClient, race.year, race.round);
+        fetchRaceResults(race.year, race.round, queryClient).catch(() => {});
       }}
       className="block rounded-xs border border-border-subtle bg-panel-elev px-4 py-3 transition-colors hover:border-border"
     >

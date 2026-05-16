@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { getDriverCareerBridged, getDriverSeasonBridged } from "@/Lib/api/bridged/drivers";
+import { fetchDriverCareer, fetchDriverSeason } from "@/Lib/queryFunctions";
 import { useMemo } from "react";
 import { cn } from "@/Lib/utils";
 import { Panel } from "@/components/Panel";
@@ -177,8 +177,8 @@ export const QualifyingTab = ({ year, round, upcoming }: RaceTabProps) => {
 
   const prefetchDriverRoute = (driverCode: string) => {
     router.prefetch(`/drivers/${driverCode}/${year}`);
-    void getDriverCareerBridged(queryClient, driverCode);
-    if (year !== undefined) void getDriverSeasonBridged(queryClient, driverCode, year);
+    void fetchDriverCareer(driverCode, queryClient);
+    if (year !== undefined) void fetchDriverSeason(driverCode, year, queryClient);
   };
 
   const columns = useMemo(

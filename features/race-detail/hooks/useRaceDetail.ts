@@ -3,16 +3,22 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import { useIsRestoring } from "@/_Stores/QueryProvider";
 
 import {
-  getRaceDetail,
-  getRaceResults,
-  getQualifyingResults,
-  getPracticeResults,
-  getSprintResults,
-  getSprintShootoutResults,
-} from "@/Lib/api/services/races";
-import { getUnifiedPositions, getUnifiedIncidents, getUnifiedPitStops, getUnifiedWeather, getUnifiedDrs, getUnifiedTrackStatus, getFullSession } from "@/Lib/api/services/unified";
-import { getLapsAnalysis } from "@/Lib/api/services/analysis";
-import { cacheConfig, queryKeys, resolveCacheConfig } from "@/Lib/queryKeys";
+  fetchRaceDetail,
+  fetchRaceResults,
+  fetchQualifyingResults,
+  fetchPracticeResults,
+  fetchSprintResults,
+  fetchSprintShootoutResults,
+  fetchUnifiedWeather,
+  fetchUnifiedIncidents,
+  fetchUnifiedPositions,
+  fetchUnifiedPitStops,
+  fetchUnifiedDrs,
+  fetchUnifiedTrackStatus,
+  fetchFullSession,
+  fetchLapsAnalysis,
+} from "@/Lib/queryFunctions";
+import { queryKeys } from "@/Lib/queryKeys";
 import type { PracticeSessionName } from "@/types/api";
 import {
   adaptRaceDetail,
@@ -35,39 +41,43 @@ import type { UnifiedPositionsResponse } from "@/types/endpoints/positionstypes"
 import type { UnifiedPitStopsResponse } from "@/types/endpoints/pitstopstypes";
 import type { LapsAnalysisResponse } from "@/types/endpoints/lapstypes";
 
-export const raceDetailQueryFn = getRaceDetail;
-export const raceResultsQueryFn = getRaceResults;
 
 export function useRaceDetail(year: number, round: number, enabled = true) {
   const isRestoring = useIsRestoring();
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.raceResults.detail(year, round),
-    queryFn: () => getRaceDetail(year, round),
+    queryFn: () => fetchRaceDetail(year, round, qc),
     select: (raw: RaceDetailResponse | undefined) => (raw ? adaptRaceDetail(raw, year) : undefined),
     enabled: enabled && !isRestoring,
-    ...resolveCacheConfig(year),
+    staleTime: 86400000,
+    gcTime: 86400000,
   });
 }
 
 export function useRaceResults(year: number, round: number, enabled = true) {
   const isRestoring = useIsRestoring();
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.raceResults.session(year, round, "R"),
-    queryFn: () => getRaceResults(year, round),
+    queryFn: () => fetchRaceResults(year, round, qc),
     select: (raw: RaceResultsResponse | undefined) => (raw ? adaptRaceResults(raw) : undefined),
     enabled: enabled && !isRestoring,
-    ...resolveCacheConfig(year),
+    staleTime: 86400000,
+    gcTime: 86400000,
   });
 }
 
 export function useQualifyingResults(year: number, round: number, enabled = true) {
   const isRestoring = useIsRestoring();
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.raceResults.qualifying(year, round),
-    queryFn: () => getQualifyingResults(year, round),
+    queryFn: () => fetchQualifyingResults(year, round, qc),
     select: (raw: QualifyingResultsResponse | undefined) => (raw ? adaptQualifyingResults(raw) : undefined),
     enabled: enabled && !isRestoring,
-    ...resolveCacheConfig(year),
+    staleTime: 86400000,
+    gcTime: 86400000,
   });
 }
 
@@ -78,86 +88,102 @@ export function usePracticeResults(
   enabled = true,
 ) {
   const isRestoring = useIsRestoring();
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.raceResults.session(year, round, session),
-    queryFn: () => getPracticeResults(year, round, session),
+    queryFn: () => fetchPracticeResults(year, round, session, qc),
     select: (raw: PracticeResultsResponse | undefined) => (raw ? adaptPracticeResults(raw) : undefined),
     enabled: enabled && !isRestoring,
-    ...resolveCacheConfig(year),
+    staleTime: 86400000,
+    gcTime: 86400000,
   });
 }
 
 export function useSprintResults(year: number, round: number, enabled = true) {
   const isRestoring = useIsRestoring();
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.raceResults.session(year, round, "S"),
-    queryFn: () => getSprintResults(year, round),
+    queryFn: () => fetchSprintResults(year, round, qc),
     select: (raw: SprintResultsResponse | undefined) => (raw ? adaptSprintResults(raw) : undefined),
     enabled: enabled && !isRestoring,
-    ...resolveCacheConfig(year),
+    staleTime: 86400000,
+    gcTime: 86400000,
   });
 }
 
 export function useSprintShootoutResults(year: number, round: number, enabled = true) {
   const isRestoring = useIsRestoring();
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.raceResults.session(year, round, "SS"),
-    queryFn: () => getSprintShootoutResults(year, round),
+    queryFn: () => fetchSprintShootoutResults(year, round, qc),
     select: (raw: SprintShootoutResultsResponse | undefined) => (raw ? adaptSprintShootoutResults(raw) : undefined),
     enabled: enabled && !isRestoring,
-    ...resolveCacheConfig(year),
+    staleTime: 86400000,
+    gcTime: 86400000,
   });
 }
 
 export function useRaceWeather(year: number, round: number, enabled = true) {
   const isRestoring = useIsRestoring();
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.sessionData.byType(year, round, "weather"),
-    queryFn: () => getUnifiedWeather(year, round, "R"),
+    queryFn: () => fetchUnifiedWeather(year, round, "R", qc),
     select: (raw: UnifiedWeatherResponse | undefined) => (raw ? adaptWeather(raw) : undefined),
     enabled: enabled && !isRestoring,
-    ...cacheConfig.completedRace,
+    staleTime: 86400000,
+    gcTime: 86400000,
   });
 }
 
 export function useRaceIncidents(year: number, round: number, enabled = true) {
   const isRestoring = useIsRestoring();
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.sessionData.byType(year, round, "incidents"),
-    queryFn: () => getUnifiedIncidents(year, round, "R"),
+    queryFn: () => fetchUnifiedIncidents(year, round, "R", qc),
     select: (raw: UnifiedIncidentsResponse | undefined) => (raw ? adaptIncidents(raw) : undefined),
     enabled: enabled && !isRestoring,
-    ...cacheConfig.completedRace,
+    staleTime: 86400000,
+    gcTime: 86400000,
   });
 }
 
 export function useDrs(year: number, round: number, enabled = true) {
   const isRestoring = useIsRestoring();
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.sessionData.byType(year, round, "drs"),
-    queryFn: () => getUnifiedDrs(year, round, "R"),
+    queryFn: () => fetchUnifiedDrs(year, round, "R", qc),
     enabled: enabled && !isRestoring,
-    ...resolveCacheConfig(year),
+    staleTime: 86400000,
+    gcTime: 86400000,
   });
 }
 
 export function useTrackStatus(year: number, round: number, enabled = true) {
   const isRestoring = useIsRestoring();
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.sessionData.byType(year, round, "track-status"),
-    queryFn: () => getUnifiedTrackStatus(year, round, "R"),
+    queryFn: () => fetchUnifiedTrackStatus(year, round, "R", qc),
     enabled: enabled && !isRestoring,
-    ...resolveCacheConfig(year),
+    staleTime: 86400000,
+    gcTime: 86400000,
   });
 }
 
 export function useFullSession(year: number, round: number, enabled = true) {
   const isRestoring = useIsRestoring();
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.fullSession.byRace(year, round),
-    queryFn: () => getFullSession(year, round, { include: [], session: "R" }),
+    queryFn: () => fetchFullSession(year, round, { include: [], session: "R" }, qc),
     enabled: enabled && !isRestoring,
-    ...resolveCacheConfig(year),
+    staleTime: 86400000,
+    gcTime: 86400000,
   });
 }
 
@@ -174,26 +200,30 @@ export function useReplayData(year: number, round: number, enabled: boolean) {
   const queries = [
     {
       queryKey: queryKeys.replayPositions(year, round),
-      queryFn: () => getUnifiedPositions(year, round, "R", 1),
-      ...cacheConfig.heavyOptIn,
+      queryFn: () => fetchUnifiedPositions(year, round, "R", 1, qc),
+      staleTime: 86400000,
+      gcTime: 86400000,
       enabled: enabled || alreadyCached(queryKeys.replayPositions(year, round)),
     },
     {
       queryKey: queryKeys.replayIncidents(year, round),
-      queryFn: () => getUnifiedIncidents(year, round, "R"),
-      ...cacheConfig.heavyOptIn,
+      queryFn: () => fetchUnifiedIncidents(year, round, "R", qc),
+      staleTime: 86400000,
+      gcTime: 86400000,
       enabled: enabled || alreadyCached(queryKeys.replayIncidents(year, round)),
     },
     {
       queryKey: queryKeys.replayPitStops(year, round),
-      queryFn: () => getUnifiedPitStops(year, round, "R"),
-      ...cacheConfig.heavyOptIn,
+      queryFn: () => fetchUnifiedPitStops(year, round, "R", qc),
+      staleTime: 86400000,
+      gcTime: 86400000,
       enabled: enabled || alreadyCached(queryKeys.replayPitStops(year, round)),
     },
     {
       queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", undefined),
-      queryFn: () => getLapsAnalysis(year, round, { session: "R" }),
-      ...cacheConfig.heavyOptIn,
+      queryFn: () => fetchLapsAnalysis(year, round, { session: "R" }, qc),
+      staleTime: 86400000,
+      gcTime: 86400000,
       enabled: enabled || alreadyCached(queryKeys.lapAnalysis.byType(year, round, "laps", undefined)),
     },
   ];

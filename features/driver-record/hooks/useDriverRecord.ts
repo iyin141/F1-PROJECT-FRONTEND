@@ -1,14 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { useIsRestoring } from "@/_Stores/QueryProvider";
-import { cacheConfig, queryKeys, resolveCacheConfig } from "@/Lib/queryKeys";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/Lib/queryKeys";
 import { adaptDriverCareer, adaptDriverSeason } from "@/Lib/adapters";
-import { getDriverCareer, getDriverSeason } from "@/Lib/api/services/drivers";
+import { fetchDriverCareer, fetchDriverSeason } from "@/Lib/queryFunctions";
 
 export function useDriverCareer(driverCode: string, enabled = true) {
   const isRestoring = useIsRestoring();
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.driverStandings.career(driverCode),
-    queryFn: () => getDriverCareer(driverCode),
+    queryFn: () => fetchDriverCareer(driverCode, qc),
     select: (raw?: import("@/types/endpoints/driverrecordtypes").DriverCareerResponse) =>
       raw
         ? adaptDriverCareer(raw)
@@ -21,7 +23,8 @@ export function useDriverCareer(driverCode: string, enabled = true) {
             readiness: { can_proceed: false, available_data: [], unavailable_data: [], message: null, warnings: [] },
           }),
     enabled: enabled && !!driverCode && !isRestoring,
-    ...cacheConfig.historical,
+    staleTime: 86400000,
+    gcTime: 86400000,
   });
 }
 
@@ -31,9 +34,10 @@ export function useDriverSeason(
   enabled = true,
 ) {
   const isRestoring = useIsRestoring();
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.driverStandings.season(driverCode, year ?? 0),
-    queryFn: () => getDriverSeason(driverCode, year!),
+    queryFn: () => fetchDriverSeason(driverCode, year!, qc),
     select: (raw?: import("@/types/endpoints/driverrecordtypes").DriverSeasonBreakdownResponse) =>
       raw
         ? adaptDriverSeason(raw)
@@ -47,7 +51,8 @@ export function useDriverSeason(
             readiness: { can_proceed: false, available_data: [], unavailable_data: [], message: null, warnings: [] },
           }),
     enabled: enabled && !!driverCode && year !== null && !isRestoring,
-    ...resolveCacheConfig(year!),
+    staleTime: 86400000,
+    gcTime: 86400000,
   });
 }
 

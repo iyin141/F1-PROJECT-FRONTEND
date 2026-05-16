@@ -49,7 +49,7 @@ export interface PrefetchQueryConfig {
  * Failed queries will have empty {} data, but won't crash the page.
  */
 export async function prefetchQueries(queries: PrefetchQueryConfig[]) {
-  const { serverGetJson } = await import("@/Lib/api");
+  const { serverGetJson } = await import("@/Lib/server-client");
 
   // Keep QueryClient default options empty — per-query cache control comes
   // from `queryKey` callers via their hooks or the optional `options` value.

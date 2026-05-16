@@ -2,8 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { cacheConfig, queryKeys } from "@/Lib/queryKeys";
 import type { AnalysisSessionName } from "@/types/api";
-import { getAnalysis, getTelemetry, getTelemetryOverlay, getTelemetrySummary } from "@/Lib/api/services/analysis";
-import { getUnifiedPositions } from "@/Lib/api/services/unified";
+import { useQueryClient } from "@tanstack/react-query";
+import { fetchLapsAnalysis, fetchDriverPace, fetchDriverStints, fetchTyreStrategy,
+         fetchSectorAnalysis, fetchTelemetry, fetchTelemetryOverlay,
+         fetchTelemetrySummary, fetchUnifiedPositions } from "@/Lib/queryFunctions";
 import type { UnifiedPositionsResponse, TelemetryResponse, TelemetryOverlayResponse, TelemetrySummaryResponse } from "@/types/endpoints";
 import {
   adaptRaceLapFrames,
@@ -40,10 +42,12 @@ export function useDriverLaps(
   round: number,
   driver: string | undefined,
 ) {
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", driver),
-    queryFn: () => getAnalysis(year, round, "laps", { session: "R", driver }),
-    ...cacheConfig.historical,
+    queryFn: () => fetchLapsAnalysis(year, round, { session: "R", driver }, qc),
+    staleTime: 86400000,
+    gcTime: 86400000,
     enabled: !!driver,
   });
 }
@@ -53,10 +57,12 @@ export function useDriverPace(
   round: number,
   driver: string | undefined,
 ) {
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.lapAnalysis.byType(year, round, "pace", driver),
-    queryFn: () => getAnalysis(year, round, "pace", { session: "R", driver }),
-    ...cacheConfig.historical,
+    queryFn: () => fetchDriverPace(year, round, driver!, qc),
+    staleTime: 86400000,
+    gcTime: 86400000,
     enabled: !!driver,
   });
 }
@@ -66,66 +72,80 @@ export function useDriverStints(
   round: number,
   driver: string | undefined,
 ) {
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.lapAnalysis.byType(year, round, "stints", driver),
-    queryFn: () => getAnalysis(year, round, "stints", { session: "R", driver }),
-    ...cacheConfig.historical,
+    queryFn: () => fetchDriverStints(year, round, driver, qc),
+    staleTime: 86400000,
+    gcTime: 86400000,
     enabled: !!driver,
   });
 }
 
 export function useAllLaps(year: number, round: number) {
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", undefined),
-    queryFn: () => getAnalysis(year, round, "laps", { session: "R" }),
-    ...cacheConfig.historical,
+    queryFn: () => fetchLapsAnalysis(year, round, { session: "R" }, qc),
+    staleTime: 86400000,
+    gcTime: 86400000,
   });
 }
 
 export function useAllStints(year: number, round: number) {
+  const qc = useQueryClient();
   return useQuery<Stint[] | undefined>({
     queryKey: queryKeys.lapAnalysis.byType(year, round, "stints", undefined),
-    queryFn: () => getAnalysis(year, round, "stints", { session: "R" }),
+    queryFn: () => fetchDriverStints(year, round, undefined, qc) as Promise<any>,
     select: (raw: any) => (raw ? adaptStints(raw) : undefined),
-    ...cacheConfig.historical,
+    staleTime: 86400000,
+    gcTime: 86400000,
   });
 }
 
 export function useRaceLapFrames(year: number, round: number, enabled = true) {
+  const qc = useQueryClient();
   return useQuery<RaceLapFrame[] | undefined>({
     queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", undefined),
-    queryFn: () => getAnalysis(year, round, "laps", { session: "R" }),
+    queryFn: () => fetchLapsAnalysis(year, round, { session: "R" }, qc) as Promise<any>,
     select: (raw: any) => (raw ? adaptRaceLapFrames(raw) : undefined),
-    ...cacheConfig.historical,
+    staleTime: 86400000,
+    gcTime: 86400000,
     enabled,
   });
 }
 
 export function useLapTimes(year: number, round: number, enabled = true) {
+  const qc = useQueryClient();
   return useQuery<LapTime[] | undefined>({
     queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", undefined),
-    queryFn: () => getAnalysis(year, round, "laps", { session: "R" }),
+    queryFn: () => fetchLapsAnalysis(year, round, { session: "R" }, qc) as Promise<any>,
     select: (raw: any) => (raw ? adaptLapTimes(raw) : undefined),
-    ...cacheConfig.historical,
+    staleTime: 86400000,
+    gcTime: 86400000,
     enabled,
   });
 }
 
 export function useTyreStrategy(year: number, round: number) {
+  const qc = useQueryClient();
   return useQuery<Stint[] | undefined>({
     queryKey: queryKeys.lapAnalysis.byType(year, round, "tyre"),
-    queryFn: () => getAnalysis(year, round, "tyre-strategy", { session: "R" }),
+    queryFn: () => fetchTyreStrategy(year, round, qc) as Promise<any>,
     select: (raw: any) => (raw ? adaptTyreStrategy(raw) : undefined),
-    ...cacheConfig.historical,
+    staleTime: 86400000,
+    gcTime: 86400000,
   });
 }
 
 export function useSectorAnalysis(year: number, round: number) {
+  const qc = useQueryClient();
   return useQuery<SectorAnalysis[] | undefined>({
     queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", undefined),
-    queryFn: () => getAnalysis(year, round, "laps", { session: "R" }),
+    queryFn: () => fetchLapsAnalysis(year, round, { session: "R" }, qc) as Promise<any>,
     select: (raw: any) => (raw ? adaptSectorAnalysis(raw) : undefined),
-    ...cacheConfig.historical,
+    staleTime: 86400000,
+    gcTime: 86400000,
   });
 }
 
@@ -162,10 +182,12 @@ export function useDriverSectors(
   round: number,
   driver: string | undefined,
 ) {
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.lapAnalysis.byType(year, round, "sectors", driver),
-    queryFn: () => getAnalysis(year, round, "sector-analysis", { session: "R", driver }),
-    ...cacheConfig.historical,
+    queryFn: () => fetchSectorAnalysis(year, round, driver, qc),
+    staleTime: 86400000,
+    gcTime: 86400000,
     enabled: !!driver,
   });
 }
@@ -181,6 +203,7 @@ export function useTelemetry(
   lap: number | null,
   session: AnalysisSessionName = "R",
 ) {
+  const qc = useQueryClient();
   return useQuery<TelemetryResponse>({
     queryKey: queryKeys.telemetry.single(
       year,
@@ -189,8 +212,9 @@ export function useTelemetry(
       lap ?? 0,
       session,
     ),
-    queryFn: () => getTelemetry(year, round, { driver: driver!, lap: lap!, session }),
-    ...cacheConfig.heavyOptIn,
+    queryFn: () => fetchTelemetry(year, round, driver!, lap!, session, qc),
+    staleTime: 86400000,
+    gcTime: 86400000,
     enabled: !!driver && lap !== null,
   });
 }
@@ -203,6 +227,7 @@ export function useTelemetryOverlay(
   lap: number | undefined,
   session: AnalysisSessionName = "R",
 ) {
+  const qc = useQueryClient();
   return useQuery<TelemetryOverlayResponse>({
     queryKey: queryKeys.telemetry.overlay(
       year,
@@ -211,12 +236,9 @@ export function useTelemetryOverlay(
       driverB ?? "",
       lap,
     ),
-    queryFn: () => {
-      const params: Record<string, string | number> = { driver_a: driverA!, driver_b: driverB!, session };
-      if (lap !== undefined) params.lap = lap;
-      return getTelemetryOverlay(year, round, params);
-    },
-    ...cacheConfig.heavyOptIn,
+    queryFn: () => fetchTelemetryOverlay(year, round, driverA!, driverB!, lap, qc, session),
+    staleTime: 86400000,
+    gcTime: 86400000,
     enabled: !!driverA && !!driverB,
   });
 }
@@ -228,6 +250,7 @@ export function useTelemetrySummary(
   lap: number | null,
   session: AnalysisSessionName = "R",
 ) {
+  const qc = useQueryClient();
   return useQuery<TelemetrySummaryResponse>({
     queryKey: queryKeys.telemetry.summary(
       year,
@@ -235,8 +258,9 @@ export function useTelemetrySummary(
       driver ?? "",
       lap ?? 0,
     ),
-    queryFn: () => getTelemetrySummary(year, round, { driver: driver!, lap: lap!, session }),
-    ...cacheConfig.heavyOptIn,
+    queryFn: () => fetchTelemetrySummary(year, round, driver!, lap!, session, qc),
+    staleTime: 86400000,
+    gcTime: 86400000,
     enabled: !!driver && lap !== null,
   });
 }
@@ -246,10 +270,12 @@ export function useTelemetrySummary(
 // ---------------------------------------------------------------------------
 
 export function useRacePositions(year: number, round: number, enabled = true) {
+  const qc = useQueryClient();
   return useQuery<UnifiedPositionsResponse>({
     queryKey: queryKeys.sessionData.byType(year, round, "positions"),
-    queryFn: () => getUnifiedPositions(year, round, "R"),
-    ...cacheConfig.historical,
+    queryFn: () => fetchUnifiedPositions(year, round, "R", undefined, qc),
+    staleTime: 86400000,
+    gcTime: 86400000,
     enabled,
   });
 }
