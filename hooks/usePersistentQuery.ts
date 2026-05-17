@@ -52,6 +52,7 @@ export function usePersistentTelemetryOverlay(
       driverA ?? "",
       driverB ?? "",
       lap,
+      session,
     ),
     queryFn: () => fetchTelemetryOverlay(year, round, driverA!, driverB!, lap, qc, session),
     staleTime: 86400000,

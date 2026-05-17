@@ -9,7 +9,7 @@ import { useAppTheme } from "@/hooks/useAppTheme";
 import { Panel } from "@/components/Panel";
 import { getCircuitSvgPathandciruitname } from "@/Lib/circuitSvg";
 import type { Race } from "@/types/ui";
-
+import { TrackLoadingSkeleton } from "@/components/animations/TrackLoadingSkeleton";
 
 type CalendarStripPanelProps = {
   calendar: Race[] | undefined;
@@ -22,7 +22,14 @@ export const CalendarStripPanel = ({ calendar, loading, year }: CalendarStripPan
   const theme = isDark ? "dark" : "light";
   const router = useRouter();
   const queryClient = useQueryClient();
-  void loading;
+
+  if (loading) {
+    return (
+      <Panel label="CALENDAR" title={`Season ${year ?? new Date().getFullYear()}`} className="mt-6">
+        <TrackLoadingSkeleton year={year} />
+      </Panel>
+    );
+  }
 
   return (
     <Panel label="CALENDAR" title={`Season ${year ?? new Date().getFullYear()}`} className="mt-6">

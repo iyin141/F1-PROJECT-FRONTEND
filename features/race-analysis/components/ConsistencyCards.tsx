@@ -126,8 +126,16 @@ function ConsistencyCardGrid({ scores }: { scores: ConsistencyScore[] }) {
 // Main export
 // ---------------------------------------------------------------------------
 
-export const ConsistencyCards = ({ year, round }: { year: number; round: number }) => {
-  const { data: byStint, isLoading } = useConsistencyByStint(year, round);
+export const ConsistencyCards = ({
+  year,
+  round,
+  session = "R",
+}: {
+  year: number;
+  round: number;
+  session?: string;
+}) => {
+  const { data: byStint, isLoading } = useConsistencyByStint(year, round, session);
 
   const stintKeys = useMemo(() => {
     if (!byStint) return [];

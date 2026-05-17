@@ -16,6 +16,7 @@ import { PodiumBlock } from "@/components/PodiumBlock";
 import { usePracticeResults } from "@/features/race-detail/hooks/useRaceDetail";
 import { getDriverFlagUrl } from "@/Lib/nationality";
 import { FlagImage } from "@/_Components/ui/FlagImage";
+import { TableSkeleton } from "@/components/animations/TableSkeleton";
 
 const buildColumns = (
   year: number,
@@ -108,6 +109,14 @@ export const PracticeTab = ({ year, round, upcoming, availableSessions }: Practi
   const p = { data: pData ?? undefined, loading: isLoading };
 
   if (upcoming) return <NotAvailable />;
+
+  if (isLoading) {
+    return (
+      <Panel label={`PRACTICE · ${session}`}>
+        <TableSkeleton rows={15} customTexts={[`Fetching ${session} lap times...`, `Retrieving practice telemetry...`]} />
+      </Panel>
+    );
+  }
 
   const allResults = p.data ?? [];
   const podiumResults = allResults.filter((r) => r.position === 1 || r.position === 2 || r.position === 3);

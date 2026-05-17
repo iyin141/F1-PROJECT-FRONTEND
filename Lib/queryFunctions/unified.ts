@@ -54,7 +54,7 @@ export async function fetchUnifiedPositions(
   sample: number | undefined,
   queryClient: QueryClient,
 ): Promise<UnifiedPositionsResponse> {
-  const key = queryKeys.replayPositions(year, round);
+  const key = queryKeys.replayPositions(year, round, session);
   const cached = queryClient.getQueryData<UnifiedPositionsResponse>(key);
   if (cached) return cached;
   const data = await getUnifiedPositions(year, round, session, sample);

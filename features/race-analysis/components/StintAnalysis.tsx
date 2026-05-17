@@ -24,12 +24,14 @@ export function StintAnalysis({
   year,
   round,
   drivers,
+  session = "R",
 }: {
   year: number;
   round: number;
   drivers: AnalysisDriverOption[];
+  session?: string;
 }) {
-  const { data, isLoading } = useAllStints(year, round);
+  const { data, isLoading } = useAllStints(year, round, session);
 
   const rows = useMemo(() => {
     const raw = (data ?? []) as Stint[];

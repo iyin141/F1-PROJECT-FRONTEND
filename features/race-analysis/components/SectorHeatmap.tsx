@@ -22,15 +22,17 @@ export const SectorHeatmap = ({
   year,
   round,
   driverId,
+  session = "R",
 }: {
   year: number;
   round: number;
   driverId?: string;
+  session?: string;
 }) => {
   // Use driver-specific sectors hook when driverId is provided
-  const driverSectorsQuery = useDriverSectors(year, round, driverId);
+  const driverSectorsQuery = useDriverSectors(year, round, driverId, session);
   // Fall back to all-driver sectors when no specific driver
-  const sectorQuery = useSectorAnalysis(year, round);
+  const sectorQuery = useSectorAnalysis(year, round, session);
 
   const isLoading = driverId ? driverSectorsQuery.isLoading : sectorQuery.isLoading;
   const data = driverId ? driverSectorsQuery.data : sectorQuery.data;

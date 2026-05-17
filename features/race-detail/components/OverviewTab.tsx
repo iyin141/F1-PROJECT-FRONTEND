@@ -11,6 +11,7 @@ import type { RaceTabProps } from "@/features/race-detail/components/tab-types";
 import type { ChampionshipImpact } from "@/types/ui";
 import { useRaceDetail, useRaceWeather, useRaceIncidents, useRaceResults } from "@/features/race-detail/hooks/useRaceDetail";
 import { useDriverStandings } from "@/features/season-hub/hooks/useSeasonHub";
+import { TableSkeleton } from "@/components/animations/TableSkeleton";
 
 export const OverviewTab = ({ year, round, upcoming }: RaceTabProps) => {
   const { data: raceData, isLoading: raceLoading } = useRaceDetail(year, round);
@@ -19,10 +20,6 @@ export const OverviewTab = ({ year, round, upcoming }: RaceTabProps) => {
   const { data: resultsData, isLoading: resultsLoading } = useRaceResults(year, round, !upcoming);
   const { data: standingsData, isLoading: standingsLoading } = useDriverStandings(year);
 
-  const race = { data: raceData ? raceData : undefined, loading: raceLoading };
-  const weather = { data: weatherData ?? undefined, loading: weatherLoading };
-  const incidents = { data: incidentsData ?? undefined, loading: incidentsLoading };
-  
   const impact: { data: ChampionshipImpact[] | undefined; loading: boolean } = useMemo(() => {
     if (!resultsData || !standingsData) {
       return { data: undefined, loading: resultsLoading || standingsLoading };
@@ -48,6 +45,25 @@ export const OverviewTab = ({ year, round, upcoming }: RaceTabProps) => {
     
     return { data: impact, loading: false };
   }, [resultsData, standingsData, resultsLoading, standingsLoading]);
+
+  const isTabLoading = raceLoading || weatherLoading || incidentsLoading || resultsLoading || standingsLoading;
+
+  if (isTabLoading) {
+    return (
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Panel label="RACE METADATA">
+          <TableSkeleton rows={8} customTexts={["Fetching race metadata...", "Loading weather reports..."]} />
+        </Panel>
+        <Panel label="CHAMPIONSHIP IMPACT">
+          <TableSkeleton rows={5} customTexts={["Calculating point swings...", "Updating standings impact..."]} />
+        </Panel>
+      </div>
+    );
+  }
+
+  const race = { data: raceData ? raceData : undefined, loading: raceLoading };
+  const weather = { data: weatherData ?? undefined, loading: weatherLoading };
+  const incidents = { data: incidentsData ?? undefined, loading: incidentsLoading };
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

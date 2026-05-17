@@ -41,11 +41,12 @@ export function useDriverLaps(
   year: number,
   round: number,
   driver: string | undefined,
+  session: string = "R",
 ) {
   const qc = useQueryClient();
   return useQuery({
-    queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", driver),
-    queryFn: () => fetchLapsAnalysis(year, round, { session: "R", driver }, qc),
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", driver, session),
+    queryFn: () => fetchLapsAnalysis(year, round, { session, driver }, qc),
     staleTime: 86400000,
     gcTime: 86400000,
     enabled: !!driver,
@@ -56,11 +57,12 @@ export function useDriverPace(
   year: number,
   round: number,
   driver: string | undefined,
+  session: string = "R",
 ) {
   const qc = useQueryClient();
   return useQuery({
-    queryKey: queryKeys.lapAnalysis.byType(year, round, "pace", driver),
-    queryFn: () => fetchDriverPace(year, round, driver!, qc),
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "pace", driver, session),
+    queryFn: () => fetchDriverPace(year, round, driver!, qc, session),
     staleTime: 86400000,
     gcTime: 86400000,
     enabled: !!driver,
@@ -71,43 +73,44 @@ export function useDriverStints(
   year: number,
   round: number,
   driver: string | undefined,
+  session: string = "R",
 ) {
   const qc = useQueryClient();
   return useQuery({
-    queryKey: queryKeys.lapAnalysis.byType(year, round, "stints", driver),
-    queryFn: () => fetchDriverStints(year, round, driver, qc),
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "stints", driver, session),
+    queryFn: () => fetchDriverStints(year, round, driver, qc, session),
     staleTime: 86400000,
     gcTime: 86400000,
     enabled: !!driver,
   });
 }
 
-export function useAllLaps(year: number, round: number) {
+export function useAllLaps(year: number, round: number, session: string = "R") {
   const qc = useQueryClient();
   return useQuery({
-    queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", undefined),
-    queryFn: () => fetchLapsAnalysis(year, round, { session: "R" }, qc),
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", undefined, session),
+    queryFn: () => fetchLapsAnalysis(year, round, { session }, qc),
     staleTime: 86400000,
     gcTime: 86400000,
   });
 }
 
-export function useAllStints(year: number, round: number) {
+export function useAllStints(year: number, round: number, session: string = "R") {
   const qc = useQueryClient();
   return useQuery<Stint[] | undefined>({
-    queryKey: queryKeys.lapAnalysis.byType(year, round, "stints", undefined),
-    queryFn: () => fetchDriverStints(year, round, undefined, qc) as Promise<any>,
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "stints", undefined, session),
+    queryFn: () => fetchDriverStints(year, round, undefined, qc, session) as Promise<any>,
     select: (raw: any) => (raw ? adaptStints(raw) : undefined),
     staleTime: 86400000,
     gcTime: 86400000,
   });
 }
 
-export function useRaceLapFrames(year: number, round: number, enabled = true) {
+export function useRaceLapFrames(year: number, round: number, session: string = "R", enabled = true) {
   const qc = useQueryClient();
   return useQuery<RaceLapFrame[] | undefined>({
-    queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", undefined),
-    queryFn: () => fetchLapsAnalysis(year, round, { session: "R" }, qc) as Promise<any>,
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", undefined, session),
+    queryFn: () => fetchLapsAnalysis(year, round, { session }, qc) as Promise<any>,
     select: (raw: any) => (raw ? adaptRaceLapFrames(raw) : undefined),
     staleTime: 86400000,
     gcTime: 86400000,
@@ -115,11 +118,11 @@ export function useRaceLapFrames(year: number, round: number, enabled = true) {
   });
 }
 
-export function useLapTimes(year: number, round: number, enabled = true) {
+export function useLapTimes(year: number, round: number, session: string = "R", enabled = true) {
   const qc = useQueryClient();
   return useQuery<LapTime[] | undefined>({
-    queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", undefined),
-    queryFn: () => fetchLapsAnalysis(year, round, { session: "R" }, qc) as Promise<any>,
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", undefined, session),
+    queryFn: () => fetchLapsAnalysis(year, round, { session }, qc) as Promise<any>,
     select: (raw: any) => (raw ? adaptLapTimes(raw) : undefined),
     staleTime: 86400000,
     gcTime: 86400000,
@@ -127,30 +130,30 @@ export function useLapTimes(year: number, round: number, enabled = true) {
   });
 }
 
-export function useTyreStrategy(year: number, round: number) {
+export function useTyreStrategy(year: number, round: number, session: string = "R") {
   const qc = useQueryClient();
   return useQuery<Stint[] | undefined>({
-    queryKey: queryKeys.lapAnalysis.byType(year, round, "tyre"),
-    queryFn: () => fetchTyreStrategy(year, round, qc) as Promise<any>,
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "tyre", undefined, session),
+    queryFn: () => fetchTyreStrategy(year, round, qc, session) as Promise<any>,
     select: (raw: any) => (raw ? adaptTyreStrategy(raw) : undefined),
     staleTime: 86400000,
     gcTime: 86400000,
   });
 }
 
-export function useSectorAnalysis(year: number, round: number) {
+export function useSectorAnalysis(year: number, round: number, session: string = "R") {
   const qc = useQueryClient();
   return useQuery<SectorAnalysis[] | undefined>({
-    queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", undefined),
-    queryFn: () => fetchLapsAnalysis(year, round, { session: "R" }, qc) as Promise<any>,
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", undefined, session),
+    queryFn: () => fetchLapsAnalysis(year, round, { session }, qc) as Promise<any>,
     select: (raw: any) => (raw ? adaptSectorAnalysis(raw) : undefined),
     staleTime: 86400000,
     gcTime: 86400000,
   });
 }
 
-export function useConsistencyByStint(year: number, round: number, enabled = true) {
-  const framesQuery = useRaceLapFrames(year, round, enabled);
+export function useConsistencyByStint(year: number, round: number, session: string = "R", enabled = true) {
+  const framesQuery = useRaceLapFrames(year, round, session, enabled);
   const frames = framesQuery.data ?? [];
   const data = useMemo(() => (frames.length ? adaptConsistencyByStint(frames, DRIVERS) : new Map<number | "overall", ConsistencyScore[]>()), [frames]);
   return { data, isLoading: framesQuery.isLoading, isError: framesQuery.isError } as {
@@ -160,8 +163,8 @@ export function useConsistencyByStint(year: number, round: number, enabled = tru
   };
 }
 
-export function useTeammateBattles(year: number, round: number, enabled = true) {
-  const framesQuery = useRaceLapFrames(year, round, enabled);
+export function useTeammateBattles(year: number, round: number, session: string = "R", enabled = true) {
+  const framesQuery = useRaceLapFrames(year, round, session, enabled);
   const frames = framesQuery.data ?? [];
   const data = useMemo(() => {
     if (!frames.length) return [] as TeammateBattle[];
@@ -181,11 +184,12 @@ export function useDriverSectors(
   year: number,
   round: number,
   driver: string | undefined,
+  session: string = "R",
 ) {
   const qc = useQueryClient();
   return useQuery({
-    queryKey: queryKeys.lapAnalysis.byType(year, round, "sectors", driver),
-    queryFn: () => fetchSectorAnalysis(year, round, driver, qc),
+    queryKey: queryKeys.lapAnalysis.byType(year, round, "sectors", driver, session),
+    queryFn: () => fetchSectorAnalysis(year, round, driver, qc, session),
     staleTime: 86400000,
     gcTime: 86400000,
     enabled: !!driver,
@@ -269,11 +273,11 @@ export function useTelemetrySummary(
 // Unified — Positions
 // ---------------------------------------------------------------------------
 
-export function useRacePositions(year: number, round: number, enabled = true) {
+export function useRacePositions(year: number, round: number, enabled = true, session = "R") {
   const qc = useQueryClient();
   return useQuery<UnifiedPositionsResponse>({
-    queryKey: queryKeys.sessionData.byType(year, round, "positions"),
-    queryFn: () => fetchUnifiedPositions(year, round, "R", undefined, qc),
+    queryKey: queryKeys.sessionData.byType(year, round, "positions", session),
+    queryFn: () => fetchUnifiedPositions(year, round, session, undefined, qc),
     staleTime: 86400000,
     gcTime: 86400000,
     enabled,

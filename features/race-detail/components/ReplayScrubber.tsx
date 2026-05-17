@@ -34,6 +34,103 @@ const INCIDENT_STYLE: Record<string, { bg: string; text: string }> = {
   DEFAULT:      { bg: "var(--surface2)",           text: "hsl(var(--text-dim))" },
 };
 
+const REPLAY_LOADING_MESSAGES = [
+  "Synchronizing replay frames...",
+  "Fetching lap-by-lap driver positions...",
+  "Loading tire stint telemetry...",
+  "Reconstructing safety car phases...",
+];
+
+const ReplayLoadingSkeleton = () => {
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setTick((t) => t + 1);
+    }, 2500);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const message = REPLAY_LOADING_MESSAGES[tick % REPLAY_LOADING_MESSAGES.length];
+
+  return (
+    <div className="space-y-4 animate-pulse">
+      {/* Rotating telemetry message banner */}
+      <div 
+        className="rounded-xl border p-4 flex items-center justify-between"
+        style={{ backgroundColor: "var(--surface)", borderColor: "hsl(var(--border-subtle))" }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="h-2 w-2 rounded-full bg-red animate-ping animate-duration-1000" style={{ backgroundColor: "hsl(var(--red))" }} />
+          <span className="font-mono text-xs text-text font-semibold uppercase tracking-wider">
+            {message}
+          </span>
+        </div>
+        <div className="h-4 w-24 rounded bg-panel-elev opacity-30" />
+      </div>
+
+      {/* Lap header skeleton */}
+      <div
+        className="rounded-xl border p-4"
+        style={{ backgroundColor: "var(--surface)", borderColor: "hsl(var(--border-subtle))" }}
+      >
+        <div className="mb-2 flex items-baseline justify-between">
+          <div className="h-8 w-28 rounded bg-panel-elev opacity-40" />
+          <div className="h-4 w-12 rounded bg-panel-elev opacity-40" />
+        </div>
+        <div className="h-1 w-full rounded bg-panel-elev opacity-30 mt-4" />
+      </div>
+
+      {/* Legend skeleton */}
+      <div
+        className="flex items-center gap-2 rounded-lg border p-3"
+        style={{ backgroundColor: "var(--surface2)", borderColor: "hsl(var(--border-subtle))" }}
+      >
+        <div className="h-3 w-16 rounded bg-panel-elev opacity-40" />
+        <div className="flex gap-2">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-6 w-16 rounded bg-panel-elev opacity-30" />
+          ))}
+        </div>
+      </div>
+
+      {/* Tower skeleton using TableSkeleton style */}
+      <div className="rounded-sm border border-border-subtle bg-panel p-4">
+        <div className="space-y-3">
+          {[...Array(10)].map((_, idx) => (
+            <div key={idx} className="flex items-center justify-between gap-4 py-2 border-b border-border-subtle last:border-b-0">
+              <div className="flex items-center gap-3">
+                <div className="h-4 w-6 rounded bg-panel-elev opacity-35" />
+                <div className="h-6 w-1 rounded bg-panel-elev opacity-45" />
+                <div className="h-4 w-8 rounded bg-panel-elev opacity-35" />
+                <div className="h-4 w-32 rounded bg-panel-elev opacity-45" />
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="h-4 w-16 rounded bg-panel-elev opacity-30" />
+                <div className="h-4 w-12 rounded bg-panel-elev opacity-30" />
+                <div className="h-4 w-16 rounded bg-panel-elev opacity-30" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Controls skeleton */}
+      <div
+        className="flex items-center gap-4 rounded-full border px-4 py-3"
+        style={{
+          backgroundColor: "var(--surface)",
+          borderColor: "hsl(var(--border-subtle))",
+        }}
+      >
+        <div className="h-9 w-9 shrink-0 rounded-full bg-panel-elev opacity-45" />
+        <div className="h-2 flex-1 rounded bg-panel-elev opacity-35" />
+        <div className="h-7 w-28 rounded-full bg-panel-elev opacity-35" />
+      </div>
+    </div>
+  );
+};
+
 // ─── Row variant resolver ─────────────────────────────────────────────────────
 
 const getRowVariant = (row: ReplayPosition): RowVariant => {
@@ -47,8 +144,9 @@ const getRowVariant = (row: ReplayPosition): RowVariant => {
 const columns: ColumnDef<ReplayPosition>[] = [
   {
     key: "pos",
-    width: "40px",
+    width: "50px",
     header: "POS",
+    align: "center",
     render: (_, idx) => (
       <span
         className="font-mono text-sm tabular-nums font-semibold"
@@ -60,7 +158,9 @@ const columns: ColumnDef<ReplayPosition>[] = [
   },
   {
     key: "strip",
-    width: "3px",
+    width: "10px",
+    header: " ",
+    align: "center",
     render: (row) => (
       <span
         aria-hidden
@@ -71,7 +171,8 @@ const columns: ColumnDef<ReplayPosition>[] = [
   },
   {
     key: "flag",
-    width: "32px",
+    width: "40px",
+    header: "NAT",
     align: "center",
     render: (row) => {
       const url = getDriverFlagUrl(row.driver, 40);
@@ -88,8 +189,9 @@ const columns: ColumnDef<ReplayPosition>[] = [
   },
   {
     key: "driver",
-    width: "1fr",
+    width: "1.2fr",
     header: "DRIVER",
+    align: "left",
     render: (row) => (
       <div className="min-w-0">
         <div className="flex items-center gap-2">
@@ -129,8 +231,9 @@ const columns: ColumnDef<ReplayPosition>[] = [
     key: "stints",
     width: "120px",
     header: "STINTS",
+    align: "center",
     render: (row) => (
-      <div className="flex flex-col gap-0.5">
+      <div className="flex flex-col items-center gap-0.5">
         <div className="flex items-center gap-0.5">
           {row.stints.map((compound, idx) => {
             const isCurrent = idx === row.stints.length - 1;
@@ -159,9 +262,9 @@ const columns: ColumnDef<ReplayPosition>[] = [
   },
   {
     key: "gap",
-    width: "80px",
+    width: "90px",
     header: "GAP",
-    align: "right",
+    align: "center",
     render: (row) => (
       <span
         className="font-mono text-xs tabular-nums"
@@ -173,9 +276,9 @@ const columns: ColumnDef<ReplayPosition>[] = [
   },
   {
     key: "interval",
-    width: "80px",
+    width: "90px",
     header: "INT",
-    align: "right",
+    align: "center",
     render: (row) => (
       <span
         className="font-mono text-xs tabular-nums"
@@ -187,9 +290,9 @@ const columns: ColumnDef<ReplayPosition>[] = [
   },
   {
     key: "delta",
-    width: "62px",
+    width: "80px",
     header: "DELTA",
-    align: "right",
+    align: "center",
     render: (row) => {
       const v = row.positionChange;
       const text = v == null ? "—" : v > 0 ? `+${v}` : `${v}`;
@@ -211,9 +314,9 @@ const columns: ColumnDef<ReplayPosition>[] = [
   },
   {
     key: "last",
-    width: "80px",
+    width: "90px",
     header: "LAST",
-    align: "right",
+    align: "center",
     render: (row) => (
       <span className="font-mono text-xs tabular-nums" style={{ color: "hsl(var(--text-dim))" }}>
         {row.lastLapTime ?? "—"}
@@ -222,10 +325,11 @@ const columns: ColumnDef<ReplayPosition>[] = [
   },
   {
     key: "tyre",
-    width: "80px",
+    width: "90px",
     header: "TYRE",
+    align: "center",
     render: (row) => (
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-center gap-1.5">
         <CompoundDot compound={row.tyre} />
         <span
           className="font-mono text-[10px] tabular-nums"
@@ -238,11 +342,11 @@ const columns: ColumnDef<ReplayPosition>[] = [
   },
   {
     key: "pit",
-    width: "140px",
+    width: "150px",
     header: "PIT",
-    align: "right",
+    align: "center",
     render: (row) => (
-      <div className="flex items-center justify-end gap-2 font-mono text-[10px] tabular-nums">
+      <div className="flex items-center justify-center gap-2 font-mono text-[10px] tabular-nums">
         <span
           className="font-bold tracking-[0.2em]"
           style={{ color: row.inPit ? "hsl(var(--amber))" : "hsl(var(--muted))" }}
@@ -290,7 +394,11 @@ export const ReplayScrubber = ({ year, round, enabled }: { year: number; round: 
     return () => window.clearInterval(timer);
   }, [r.frame?.lap, flagSequenceLength]);
 
-  if (!enabled || loading) return null;
+  if (!enabled) return null;
+
+  if (loading) {
+    return <ReplayLoadingSkeleton />;
+  }
 
   if (!frames.length || !r.frame) {
     return (

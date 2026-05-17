@@ -22,6 +22,7 @@ const COMPOUND_COLORS: Record<string, string> = {
 export const PaceComparison = ({
   year,
   round,
+  session = "R",
   mode = "compare",
   driverAId,
   driverBId,
@@ -29,12 +30,13 @@ export const PaceComparison = ({
 }: {
   year: number;
   round: number;
+  session?: string;
   mode?: "compare" | "all";
   driverAId?: string;
   driverBId?: string;
   driverCId?: string;
 }) => {
-  const { data: laps, isLoading } = useLapTimes(year, round);
+  const { data: laps, isLoading } = useLapTimes(year, round, session);
   const { ref, size } = useResizeObserver<HTMLDivElement>();
 
   const chart = useMemo(() => {

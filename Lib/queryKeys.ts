@@ -67,8 +67,8 @@ export type SessionDataType =
   | "track-status"
   | "drs";
 
-function sessionDataByType(year: number, round: number, type: SessionDataType) {
-  return ["sessionData", year, round, type] as const;
+function sessionDataByType(year: number, round: number, type: SessionDataType, session: string = "R") {
+  return ["sessionData", year, round, type, session] as const;
 }
 
 // ---------------------------------------------------------------------------
@@ -123,8 +123,8 @@ export const queryKeys = {
 
   // ── DriverLapAnalysis (pk: year, round, session, driver?) ──────────────
   lapAnalysis: {
-    byType: (year: number, round: number, type: LapAnalysisType, driver?: string) =>
-      ["lapAnalysis", year, round, type, driver] as const,
+    byType: (year: number, round: number, type: LapAnalysisType, driver?: string, session: string = "R") =>
+      ["lapAnalysis", year, round, type, driver, session] as const,
   },
 
   // ── DriverTelemetry (pk: year, round, session, driver?, lap?) ──────────
@@ -143,11 +143,13 @@ export const queryKeys = {
       driverA: string,
       driverB: string,
       lap?: number,
+      session: AnalysisSessionName = "R",
     ) =>
       [
         "telemetry",
         year,
         round,
+        session,
         "overlay",
         [driverA, driverB].sort().join("+"),
         lap,
@@ -160,18 +162,18 @@ export const queryKeys = {
   // ── SessionData (pk: year, round, session) ─────────────────────────────
   // Covers positions, incidents, pit-stops, weather, track-status, drs
   sessionData: {
-    byType: (year: number, round: number, type: SessionDataType) =>
-      sessionDataByType(year, round, type),
+    byType: (year: number, round: number, type: SessionDataType, session: string = "R") =>
+      sessionDataByType(year, round, type, session),
   },
 
   // Replay aliases — delegate to the sessionData key shape so multiple
   // replay consumers share the same underlying cache entry.
-  replayPositions: (year: number, round: number) =>
-    sessionDataByType(year, round, "positions"),
-  replayIncidents: (year: number, round: number) =>
-    sessionDataByType(year, round, "incidents"),
-  replayPitStops: (year: number, round: number) =>
-    sessionDataByType(year, round, "pit-stops"),
+  replayPositions: (year: number, round: number, session: string = "R") =>
+    sessionDataByType(year, round, "positions", session),
+  replayIncidents: (year: number, round: number, session: string = "R") =>
+    sessionDataByType(year, round, "incidents", session),
+  replayPitStops: (year: number, round: number, session: string = "R") =>
+    sessionDataByType(year, round, "pit-stops", session),
 
   // ── FullSessionData (pk: year, round) ──────────────────────────────────
   fullSession: {

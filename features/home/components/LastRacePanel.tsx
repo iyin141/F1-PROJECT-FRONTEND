@@ -10,6 +10,7 @@ import { Panel } from "@/components/Panel";
 import { GenericTable, type ColumnDef } from "@/components/ui/GenericTable";
 import { formatDate } from "@/Lib/format";
 import type { Incident, QualifyingResult, Race, RaceResult, WeatherSnapshot } from "@/types/ui";
+import { RaceResultsAnimation, QualifyingAnimation } from "@/components/animations/SectionLoadingAnimations";
 
 const raceColumns: ColumnDef<RaceResult>[] = [
   {
@@ -134,8 +135,18 @@ export const LastRacePanel = ({ race, results, qualiResults, incidents, weather,
   const visibleRaceResults = useMemo(() => results?.slice(0, 10) ?? [], [results]);
   const visibleQualifyingResults = useMemo(() => qualiResults?.slice(0, 10) ?? [], [qualiResults]);
 
+  if (loading) {
+    return (
+      <FadeInPanel>
+        <Panel label="LAST RACE" title="Loading Results...">
+          {activeView === "race" ? <RaceResultsAnimation /> : <QualifyingAnimation />}
+        </Panel>
+      </FadeInPanel>
+    );
+  }
+
   // When there are no results, show the upcoming race schedule
-  if (!loading && !hasResults && race && isUpcoming) {
+  if (!hasResults && race && isUpcoming) {
     return (
       <FadeInPanel>
         <Panel

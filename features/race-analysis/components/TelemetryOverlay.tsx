@@ -69,6 +69,7 @@ export function TelemetryOverlay({
   driverBId,
   onDriverAChange,
   onDriverBChange,
+  session = "R",
 }: {
   year: number;
   round: number;
@@ -77,6 +78,7 @@ export function TelemetryOverlay({
   driverBId: string | null;
   onDriverAChange: (id: string | null) => void;
   onDriverBChange: (id: string | null) => void;
+  session?: string;
 }) {
   const [lapInput, setLapInput] = useState<string>("");
   const lap = lapInput.trim() ? Number(lapInput) : undefined;
@@ -88,7 +90,7 @@ export function TelemetryOverlay({
     driverAId ?? undefined,
     driverBId ?? undefined,
     lapNum,
-    "R",
+    session as any,
   );
 
   const points = useMemo(

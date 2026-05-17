@@ -15,12 +15,14 @@ export function DriverTelemetryPanel({
   drivers,
   driverId,
   onDriverChange,
+  session = "R",
 }: {
   year: number;
   round: number;
   drivers: AnalysisDriverOption[];
   driverId: string | null;
   onDriverChange: (id: string | null) => void;
+  session?: string;
 }) {
   const [lapInput, setLapInput] = useState<string>("");
   const lap = lapInput.trim() ? Number(lapInput) : null;
@@ -31,7 +33,7 @@ export function DriverTelemetryPanel({
     round,
     driverId ?? undefined,
     lapNum,
-    "R",
+    session as any,
   );
 
   const points = useMemo(() => data?.data ?? [], [data?.data]);

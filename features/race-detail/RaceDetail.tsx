@@ -6,6 +6,8 @@ import { RaceTabs } from "@/features/race-detail/components/RaceTabs";
 import { useRaceDetail } from "@/features/race-detail/hooks/useRaceDetail";
 import { useNavStore } from "@/_Stores/navStore";
 import type { RaceDetailResponse } from "@/types/endpoints/racestypes";
+import { TableSkeleton } from "@/components/animations/TableSkeleton";
+import { Panel } from "@/components/Panel";
 
 type RaceDetailShellProps = {
   year: number;
@@ -39,7 +41,11 @@ export const RaceDetailShell = ({ year, round }: RaceDetailShellProps) => {
   return (
     <main className="page-shell w-full">
       <RaceHeader race={race.data} loading={race.loading} year={effectiveYear} round={effectiveRound} isSprint={isSprint} />
-      {race.data && (
+      {race.loading ? (
+        <Panel label="LOADING SESSION DATA">
+          <TableSkeleton rows={10} customTexts={["Synchronizing session data...", "Fetching track telemetry..."]} />
+        </Panel>
+      ) : race.data ? (
         <RaceTabs
           year={effectiveYear}
           round={effectiveRound}
@@ -47,7 +53,7 @@ export const RaceDetailShell = ({ year, round }: RaceDetailShellProps) => {
           isSprint={isSprint}
           practiceSessions={practiceSessions as ("FP1" | "FP2" | "FP3")[]}
         />
-      )}
+      ) : null}
     </main>
   );
 };

@@ -13,8 +13,16 @@ const CHART_H = 280;
 const MARGIN = { top: 14, right: 14, bottom: 32, left: 46 };
 const TOP_N = 10;
 
-export const PaceDistribution = ({ year, round }: { year: number; round: number }) => {
-  const { data: laps, isLoading } = useLapTimes(year, round);
+export const PaceDistribution = ({
+  year,
+  round,
+  session = "R",
+}: {
+  year: number;
+  round: number;
+  session?: string;
+}) => {
+  const { data: laps, isLoading } = useLapTimes(year, round, session);
   const { ref, size } = useResizeObserver<HTMLDivElement>();
 
   const chart = useMemo(() => {

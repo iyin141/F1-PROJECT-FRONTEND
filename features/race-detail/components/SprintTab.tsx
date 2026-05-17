@@ -12,6 +12,7 @@ import { getDriverFlagUrl } from "@/Lib/nationality";
 import { FlagImage } from "@/_Components/ui/FlagImage";
 import { PodiumBlock } from "@/components/PodiumBlock";
 import { useSprintResults, useSprintShootoutResults } from "@/features/race-detail/hooks/useRaceDetail";
+import { TableSkeleton } from "@/components/animations/TableSkeleton";
 
 // ---------------------------------------------------------------------------
 // Sprint Shootout (qualifying-style) columns
@@ -240,10 +241,27 @@ const sprintRaceColumns: ColumnDef<RaceResult>[] = [
 export const SprintTab = ({ year, round, upcoming }: RaceTabProps) => {
   const [view, setView] = useState<"shootout" | "race">("race");
   const [isPending, startTransition] = useTransition();
-  const { data: shootoutResults } = useSprintShootoutResults(year, round, !upcoming);
-  const { data: sprintResults } = useSprintResults(year, round, !upcoming);
+  const { data: shootoutResults, isLoading: shootoutLoading } = useSprintShootoutResults(year, round, !upcoming);
+  const { data: sprintResults, isLoading: sprintLoading } = useSprintResults(year, round, !upcoming);
 
   if (upcoming) return <NotAvailable />;
+
+  const loading = view === "shootout" ? shootoutLoading : sprintLoading;
+
+  if (loading) {
+    return (
+      <Panel label={`SPRINT · ${view === "shootout" ? "SHOOTOUT" : "RACE"}`}>
+        <TableSkeleton
+          rows={15}
+          customTexts={
+            view === "shootout"
+              ? ["Fetching Sprint Shootout times...", "Determining sprint grid..."]
+              : ["Retrieving sprint race classification...", "Updating sprint standings..."]
+          }
+        />
+      </Panel>
+    );
+  }
 
   return (
     <Panel

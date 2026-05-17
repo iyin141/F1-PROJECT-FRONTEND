@@ -12,6 +12,7 @@ import type { RaceResult } from "@/types/ui";
 import { getDriverFlagUrl } from "@/Lib/nationality";
 import { PodiumBlock } from "@/components/PodiumBlock";
 import { Skeleton } from "@/components/Skeleton";
+import { TableSkeleton } from "@/components/animations/TableSkeleton";
 import type { CSSProperties } from "react";
 import { useRaceResults } from "@/features/race-detail/hooks/useRaceDetail";
 
@@ -200,17 +201,7 @@ export const RaceTab = ({ year, round, upcoming }: RaceTabProps) => {
   if (loading) {
     return (
       <Panel label="RACE CLASSIFICATION">
-        <div className="space-y-4">
-          <div className="panel-scroll w-full">
-            <div className="space-y-2">
-              {Array.from({ length: 20 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-4 px-4 py-2">
-                  <Skeleton className="h-4 w-full" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <TableSkeleton rows={15} customTexts={["Retrieving final race order...", "Calculating championship points..."]} />
       </Panel>
     );
   }

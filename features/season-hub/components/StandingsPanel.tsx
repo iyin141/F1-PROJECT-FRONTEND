@@ -8,6 +8,7 @@ import { fetchDriverCareer, fetchDriverSeason } from "@/Lib/queryFunctions";
 import { teamColor } from "@/components/DriverCode";
 import { Panel } from "@/components/Panel";
 import { Skeleton } from "@/components/Skeleton";
+import { TableSkeleton } from "@/components/animations/TableSkeleton";
 import { GenericTable, type ColumnDef } from "@/components/ui/GenericTable";
 import type { ConstructorStanding, DriverStanding } from "@/types/ui";
 import { getDriverFlagUrl } from "@/Lib/nationality";
@@ -122,15 +123,7 @@ export const StandingsPanel = ({
         </Tabs.List>
         <Tabs.Content value="drivers">
           {driversLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 10 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3 px-3 py-2">
-                  <span className="w-8"><Skeleton className="h-4 w-8" /></span>
-                  <div className="flex-1"><Skeleton className="h-4 w-3/4" /></div>
-                  <span className="w-12"><Skeleton className="h-4 w-full" /></span>
-                </div>
-              ))}
-            </div>
+            <TableSkeleton rows={10} customTexts={["Updating driver standings...", "Calculating championship points..."]} />
           ) : (
             <GenericTable<DriverStanding>
               className="font-mono text-xs"
@@ -143,14 +136,7 @@ export const StandingsPanel = ({
         </Tabs.Content>
         <Tabs.Content value="constructors">
           {constructorsLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 10 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3 px-3 py-2">
-                  <div className="flex-1"><Skeleton className="h-4 w-3/4" /></div>
-                  <span className="w-12"><Skeleton className="h-4 w-full" /></span>
-                </div>
-              ))}
-            </div>
+            <TableSkeleton rows={10} customTexts={["Updating constructor standings...", "Calculating team points..."]} />
           ) : (
             <GenericTable<ConstructorStanding>
               className="font-mono text-xs"

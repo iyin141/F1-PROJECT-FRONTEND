@@ -88,10 +88,11 @@ interface RaceSummaryStatsProps {
   year: number;
   round: number;
   drivers: AnalysisDriverOption[];
+  session?: string;
 }
 
-export const RaceSummaryStats = ({ year, round, drivers }: RaceSummaryStatsProps) => {
-  const { data: frames, isLoading } = useRaceLapFrames(year, round);
+export const RaceSummaryStats = ({ year, round, drivers, session = "R" }: RaceSummaryStatsProps) => {
+  const { data: frames, isLoading } = useRaceLapFrames(year, round, session);
 
   const compoundFastest = useMemo(() => deriveCompoundFastest(frames ?? []), [frames]);
   const stintTop5 = useMemo(() => deriveStintTopFive(frames ?? []), [frames]);

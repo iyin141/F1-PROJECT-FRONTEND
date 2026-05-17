@@ -116,12 +116,14 @@ export const PositionTracker = ({
   year,
   round,
   drivers,
+  session = "R",
 }: {
   year: number;
   round: number;
   drivers: AnalysisDriverOption[];
+  session?: string;
 }) => {
-  const { data: positionsData, isLoading } = useRacePositions(year, round, true);
+  const { data: positionsData, isLoading } = useRacePositions(year, round, true, session);
   const { ref, size } = useResizeObserver<HTMLDivElement>();
   const tooltipRef = useRef<SVGGElement | null>(null);
 

@@ -6,9 +6,18 @@ import { EmptyState } from "@/components/EmptyState";
 import { DriverCode } from "@/components/DriverCode";
 import type { RaceTabProps } from "@/features/race-detail/components/tab-types";
 import { useRaceResults } from "@/features/race-detail/hooks/useRaceDetail";
+import { TableSkeleton } from "@/components/animations/TableSkeleton";
 
 export const DriverRecordTab = ({ year, round }: RaceTabProps) => {
   const { data: results = [], isLoading: resultsLoading } = useRaceResults(year, round);
+
+  if (resultsLoading) {
+    return (
+      <Panel label="DRIVER RECORD" title={`${year} · ROUND ${String(round).padStart(2, "0")}`}>
+        <TableSkeleton rows={10} customTexts={["Retrieving driver results...", "Calculating points..."]} />
+      </Panel>
+    );
+  }
 
   return (
     <Panel label="DRIVER RECORD" title={`${year} · ROUND ${String(round).padStart(2, "0")}`}>

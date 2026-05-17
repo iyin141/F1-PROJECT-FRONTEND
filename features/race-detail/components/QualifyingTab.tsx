@@ -17,6 +17,7 @@ import { getDriverFlagUrl } from "@/Lib/nationality";
 import { PodiumBlock } from "@/components/PodiumBlock";
 import { FlagImage } from "@/_Components/ui/FlagImage";
 import { Skeleton } from "@/components/Skeleton";
+import { TableSkeleton } from "@/components/animations/TableSkeleton";
 
 // Derive which segment is the driver's "best" (i.e., the latest they competed in)
 const bestSegment = (r: QualifyingResult): "Q1" | "Q2" | "Q3" =>
@@ -194,17 +195,7 @@ export const QualifyingTab = ({ year, round, upcoming }: RaceTabProps) => {
   if (loading) {
     return (
       <Panel label="QUALIFYING · Q1 / Q2 / Q3">
-        <div className="space-y-4">
-          <div className="panel-scroll w-full">
-            <div className="space-y-2">
-              {Array.from({ length: 20 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-4 px-4 py-2">
-                  <Skeleton className="h-4 w-full" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <TableSkeleton rows={15} customTexts={["Fetching Q1/Q2/Q3 split times...", "Determining pole position..."]} />
       </Panel>
     );
   }

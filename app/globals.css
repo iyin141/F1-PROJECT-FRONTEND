@@ -27,20 +27,30 @@
 @layer base {
   :root {
     /* Surfaces */
-    --bg: 0 0% 98%; /* #FAFAFA */
-    --panel: 0 0% 100%; /* #FFFFFF */
-    --panel-elev: 0 0% 96%; /* #F5F5F5 */
-    --border-subtle: 0 0% 87%; /* #DEDEDE */
-    --border: 0 0% 78%; /* #C7C7C7 */
+    --bg: 0 0% 98%;
+    /* #FAFAFA */
+    --panel: 0 0% 100%;
+    /* #FFFFFF */
+    --panel-elev: 0 0% 96%;
+    /* #F5F5F5 */
+    --border-subtle: 0 0% 87%;
+    /* #DEDEDE */
+    --border: 0 0% 78%;
+    /* #C7C7C7 */
 
     /* Text */
-    --text: 0 0% 8%; /* #141414 */
-    --text-dim: 0 0% 32%; /* #525252 */
-    --muted: 0 0% 46%; /* #757575 */
-    --muted-2: 0 0% 58%; /* #949494 */
+    --text: 0 0% 8%;
+    /* #141414 */
+    --text-dim: 0 0% 32%;
+    /* #525252 */
+    --muted: 0 0% 46%;
+    /* #757575 */
+    --muted-2: 0 0% 58%;
+    /* #949494 */
 
     /* Brand / signal */
-    --red: 351 100% 45%; /* #E8002D */
+    --red: 351 100% 45%;
+    /* #E8002D */
     --red-dim: 351 100% 45%;
     --green: 142 71% 45%;
     --amber: 38 92% 50%;
@@ -77,9 +87,12 @@
     --tyre-wet: 211 100% 50%;
 
     /* Position tints */
-    --pos-p1: 48 96% 53%; /* gold */
-    --pos-p2: 0 0% 75%; /* silver */
-    --pos-p3: 28 67% 47%; /* bronze */
+    --pos-p1: 48 96% 53%;
+    /* gold */
+    --pos-p2: 0 0% 75%;
+    /* silver */
+    --pos-p3: 28 67% 47%;
+    /* bronze */
     --pos-points: 0 0% 40%;
     --pos-rest: 0 0% 55%;
 
@@ -132,17 +145,26 @@
 
   :root.dark {
     /* Surfaces */
-    --bg: 0 0% 4%; /* #0A0A0A */
-    --panel: 0 0% 7%; /* #121212 */
-    --panel-elev: 0 0% 10%; /* #1A1A1A */
-    --border-subtle: 0 0% 16%; /* #2A2A2A */
-    --border: 0 0% 20%; /* #333 */
+    --bg: 0 0% 4%;
+    /* #0A0A0A */
+    --panel: 0 0% 7%;
+    /* #121212 */
+    --panel-elev: 0 0% 10%;
+    /* #1A1A1A */
+    --border-subtle: 0 0% 16%;
+    /* #2A2A2A */
+    --border: 0 0% 20%;
+    /* #333 */
 
     /* Text */
-    --text: 0 0% 96%; /* #F5F5F5 */
-    --text-dim: 0 0% 67%; /* #AAA */
-    --muted: 0 0% 40%; /* #666 */
-    --muted-2: 0 0% 33%; /* #555 */
+    --text: 0 0% 96%;
+    /* #F5F5F5 */
+    --text-dim: 0 0% 67%;
+    /* #AAA */
+    --muted: 0 0% 40%;
+    /* #666 */
+    --muted-2: 0 0% 33%;
+    /* #555 */
 
     /* Compatibility color aliases */
     --surface: #111111;
@@ -166,6 +188,7 @@
   * {
     border-color: hsl(var(--border));
   }
+
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
@@ -174,6 +197,7 @@
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
+
   ::selection {
     background: hsl(var(--red) / 0.4);
   }
@@ -182,10 +206,12 @@
   ::-webkit-scrollbar-track {
     background: hsl(var(--bg));
   }
+
   ::-webkit-scrollbar-thumb {
     background: hsl(var(--border));
     border-radius: 0;
   }
+
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted));
   }
@@ -222,31 +248,31 @@
     display: none;
   }
 
-  .data-grid {
-  }
+  .data-grid {}
 
   .font-mono {
     font-family: var(--font-mono);
   }
+
   .font-display {
     font-family: var(--font-display);
   }
 
   /* Shimmer skeleton */
   .skeleton {
-    background: linear-gradient(
-      90deg,
-      hsl(var(--panel-elev)) 0%,
-      hsl(var(--border)) 50%,
-      hsl(var(--panel-elev)) 100%
-    );
+    background: linear-gradient(90deg,
+        hsl(var(--panel-elev)) 0%,
+        hsl(var(--border)) 50%,
+        hsl(var(--panel-elev)) 100%);
     background-size: 200% 100%;
     animation: shimmer 1.4s ease-in-out infinite;
   }
+
   @keyframes shimmer {
     0% {
       background-position: 200% 0;
     }
+
     100% {
       background-position: -200% 0;
     }
@@ -348,11 +374,9 @@
 .points-bar,
 .pin-dot {
   border-radius: 0.2rem;
-  background: linear-gradient(
-    90deg,
-    var(--color-skeleton-from),
-    var(--color-skeleton-to)
-  );
+  background: linear-gradient(90deg,
+      var(--color-skeleton-from),
+      var(--color-skeleton-to));
 }
 
 .grid-slot {
@@ -398,12 +422,10 @@
 .telemetry-line {
   height: 0.7rem;
   border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--color-green),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      var(--color-green),
+      transparent);
   background-size: 200% 100%;
   animation: telemetry-wave 1.2s linear infinite;
 }
@@ -421,11 +443,9 @@
   height: 4.2rem;
   border: 2px solid hsl(var(--border));
   border-radius: 1.9rem 1.9rem 1.2rem 1.2rem;
-  background: linear-gradient(
-    160deg,
-    hsl(var(--panel-elev)),
-    hsl(var(--panel))
-  );
+  background: linear-gradient(160deg,
+      hsl(var(--panel-elev)),
+      hsl(var(--panel)));
   overflow: hidden;
   position: relative;
 }
@@ -442,11 +462,13 @@
 }
 
 @keyframes slot-fill {
+
   0%,
   100% {
     opacity: 0.5;
     transform: scaleY(0.9);
   }
+
   50% {
     opacity: 1;
     transform: scaleY(1);
@@ -454,10 +476,12 @@
 }
 
 @keyframes flicker {
+
   0%,
   100% {
     opacity: 0.4;
   }
+
   50% {
     opacity: 1;
   }
@@ -468,10 +492,12 @@
     transform: scaleX(0.25);
     opacity: 0.4;
   }
+
   50% {
     transform: scaleX(1);
     opacity: 1;
   }
+
   100% {
     transform: scaleX(0.35);
     opacity: 0.5;
@@ -482,9 +508,11 @@
   0% {
     stroke-dashoffset: 320;
   }
+
   45% {
     stroke-dashoffset: 0;
   }
+
   100% {
     stroke-dashoffset: -320;
   }
@@ -495,9 +523,11 @@
     background-position: 100% 0;
     opacity: 0.45;
   }
+
   50% {
     opacity: 1;
   }
+
   100% {
     background-position: -100% 0;
     opacity: 0.45;
@@ -509,10 +539,12 @@
     transform: translateY(-0.75rem);
     opacity: 0;
   }
+
   35% {
     transform: translateY(0);
     opacity: 1;
   }
+
   100% {
     transform: translateY(0);
     opacity: 0.65;
@@ -524,9 +556,11 @@
     left: -35%;
     opacity: 0.2;
   }
+
   45% {
     opacity: 1;
   }
+
   100% {
     left: 110%;
     opacity: 0.2;
@@ -543,6 +577,7 @@
     opacity: 0;
     transform: translateY(6px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -551,6 +586,7 @@
 
 /* Respect reduced motion preferences globally for animations used here */
 @media (prefers-reduced-motion: reduce) {
+
   .skeleton,
   .animate-fade-in,
   .trace-line,

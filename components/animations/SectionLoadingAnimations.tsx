@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import type { ReactNode } from "react";
 import Skeleton from "./Skeleton";
+import { TableSkeleton } from "./TableSkeleton";
 
 type ShellProps = {
   title: string;
@@ -11,14 +12,8 @@ type ShellProps = {
 };
 
 function LoadingShell({ title, className, children }: ShellProps) {
-  useEffect(() => {
-    console.log(`[section-loading] mount ${title}`);
-    return () => console.log(`[section-loading] unmount ${title}`);
-  }, [title]);
-
   return (
     <section className={`section-loading ${className ?? ""}`} aria-live="polite" aria-label={title}>
-      <div className="section-loading__label">{title}</div>
       {children ?? null}
     </section>
   );
@@ -27,12 +22,7 @@ function LoadingShell({ title, className, children }: ShellProps) {
 export function RaceResultsAnimation() {
   return (
     <LoadingShell title="Loading race results" className="race-results-loading">
-      <div className="grid-slots">
-        <Skeleton height={36} />
-        <Skeleton height={36} />
-        <Skeleton height={36} />
-        <Skeleton height={36} />
-      </div>
+      <TableSkeleton rows={10} customTexts={["Retrieving final race order...", "Calculating championship points..."]} />
     </LoadingShell>
   );
 }
@@ -40,12 +30,7 @@ export function RaceResultsAnimation() {
 export function QualifyingAnimation() {
   return (
     <LoadingShell title="Loading qualifying" className="qualifying-loading">
-      <div className="grid-slots">
-        <Skeleton height={28} />
-        <Skeleton height={28} />
-        <Skeleton height={28} />
-        <Skeleton height={28} />
-      </div>
+      <TableSkeleton rows={10} customTexts={["Fetching Q1/Q2/Q3 split times...", "Determining pole position..."]} />
     </LoadingShell>
   );
 }
@@ -53,12 +38,15 @@ export function QualifyingAnimation() {
 export function StandingsAnimation() {
   return (
     <LoadingShell title="Loading standings" className="standings-loading">
-      <div className="points-bars">
-        <Skeleton height={12} style={{ width: "90%" }} />
-        <Skeleton height={12} style={{ width: "70%" }} />
-        <Skeleton height={12} style={{ width: "55%" }} />
-        <Skeleton height={12} style={{ width: "40%" }} />
-      </div>
+      <TableSkeleton rows={5} customTexts={["Updating driver points...", "Updating constructor rankings..."]} />
+    </LoadingShell>
+  );
+}
+
+export function ScheduleAnimation() {
+  return (
+    <LoadingShell title="Loading schedule" className="schedule-loading">
+      <TableSkeleton rows={8} customTexts={["Syncing season calendar...", "Checking session start times..."]} />
     </LoadingShell>
   );
 }
@@ -85,19 +73,6 @@ export function TelemetryAnimation() {
         <Skeleton height={8} />
         <Skeleton height={8} />
         <Skeleton height={8} />
-      </div>
-    </LoadingShell>
-  );
-}
-
-export function ScheduleAnimation() {
-  return (
-    <LoadingShell title="Loading schedule" className="schedule-loading">
-      <div className="grid-slots">
-        <Skeleton height={18} />
-        <Skeleton height={18} />
-        <Skeleton height={18} />
-        <Skeleton height={18} />
       </div>
     </LoadingShell>
   );

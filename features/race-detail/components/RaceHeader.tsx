@@ -20,7 +20,18 @@ type RaceHeaderProps = {
 export const RaceHeader = ({ race, loading, year, round, isSprint }: RaceHeaderProps) => {
   const { isDark } = useAppTheme();
   const theme = isDark ? "dark" : "light";
-  void loading;
+  if (loading) {
+    return (
+      <header className="mb-6 h-37.5 rounded-sm border border-border-subtle bg-panel p-4 sm:px-4 sm:py-2 animate-pulse">
+        <div className="flex h-full flex-col justify-center gap-2">
+          <div className="h-4 w-32 rounded bg-panel-elev opacity-45" />
+          <div className="h-8 w-64 rounded bg-panel-elev opacity-45" />
+          <div className="h-4 w-48 rounded bg-panel-elev opacity-45" />
+        </div>
+      </header>
+    );
+  }
+
   const getnameandpath = race ? getCircuitSvgPathandciruitname(race.circuit.id, race.year, theme) : null;
   const circuitSvg = getnameandpath?.url ?? null;
   const name = getnameandpath?.entry?.name;

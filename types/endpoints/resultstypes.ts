@@ -32,9 +32,11 @@ export type RaceResultRow = {
 export type RaceResultsResponse = {
   year: number;
   round: number;
-  results: {
+  results?: {
     qualifying: QualifyingResultRow[];
     race: RaceResultRow[];
   };
+  qualifying?: QualifyingResultRow[];
+  race?: RaceResultRow[];
   readiness: ReadinessChecklist;
 };

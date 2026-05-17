@@ -189,10 +189,11 @@ interface TeammateBattlesProps {
   year: number;
   round: number;
   drivers: AnalysisDriverOption[];
+  session?: string;
 }
 
-export const TeammateBattles = ({ year, round, drivers }: TeammateBattlesProps) => {
-  const { data: battles, isLoading } = useTeammateBattles(year, round);
+export const TeammateBattles = ({ year, round, drivers, session = "R" }: TeammateBattlesProps) => {
+  const { data: battles, isLoading } = useTeammateBattles(year, round, session);
   void drivers;
 
   if (isLoading) return <Skeleton height={200} />;

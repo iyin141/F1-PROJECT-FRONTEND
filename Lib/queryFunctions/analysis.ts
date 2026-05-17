@@ -22,7 +22,8 @@ export async function fetchLapsAnalysis(
   queryClient: QueryClient,
 ): Promise<LapsAnalysisResponse> {
   const driver = params?.driver as string | undefined;
-  const key = queryKeys.lapAnalysis.byType(year, round, "laps", driver);
+  const session = (params?.session as string) || "R";
+  const key = queryKeys.lapAnalysis.byType(year, round, "laps", driver, session);
   const cached = queryClient.getQueryData<LapsAnalysisResponse>(key);
   if (cached) return cached;
   const data = await getLapsAnalysis(year, round, params);
@@ -35,11 +36,12 @@ export async function fetchDriverPace(
   round: number,
   driver: string,
   queryClient: QueryClient,
+  session: string = "R",
 ): Promise<any> {
-  const key = queryKeys.lapAnalysis.byType(year, round, "pace", driver);
+  const key = queryKeys.lapAnalysis.byType(year, round, "pace", driver, session);
   const cached = queryClient.getQueryData(key);
   if (cached) return cached;
-  const data = await getAnalysis(year, round, "pace", { session: "R", driver });
+  const data = await getAnalysis(year, round, "pace", { session, driver });
   queryClient.setQueryData(key, data, { updatedAt: Date.now() });
   return data;
 }
@@ -49,11 +51,12 @@ export async function fetchDriverStints(
   round: number,
   driver: string | undefined,
   queryClient: QueryClient,
+  session: string = "R",
 ): Promise<any> {
-  const key = queryKeys.lapAnalysis.byType(year, round, "stints", driver);
+  const key = queryKeys.lapAnalysis.byType(year, round, "stints", driver, session);
   const cached = queryClient.getQueryData(key);
   if (cached) return cached;
-  const data = await getAnalysis(year, round, "stints", { session: "R", driver });
+  const data = await getAnalysis(year, round, "stints", { session, driver });
   queryClient.setQueryData(key, data, { updatedAt: Date.now() });
   return data;
 }
@@ -62,11 +65,12 @@ export async function fetchTyreStrategy(
   year: number,
   round: number,
   queryClient: QueryClient,
+  session: string = "R",
 ): Promise<any> {
-  const key = queryKeys.lapAnalysis.byType(year, round, "tyre");
+  const key = queryKeys.lapAnalysis.byType(year, round, "tyre", undefined, session);
   const cached = queryClient.getQueryData(key);
   if (cached) return cached;
-  const data = await getAnalysis(year, round, "tyre-strategy", { session: "R" });
+  const data = await getAnalysis(year, round, "tyre-strategy", { session });
   queryClient.setQueryData(key, data, { updatedAt: Date.now() });
   return data;
 }
@@ -76,11 +80,12 @@ export async function fetchSectorAnalysis(
   round: number,
   driver: string | undefined,
   queryClient: QueryClient,
+  session: string = "R",
 ): Promise<any> {
-  const key = queryKeys.lapAnalysis.byType(year, round, "sectors", driver);
+  const key = queryKeys.lapAnalysis.byType(year, round, "sectors", driver, session);
   const cached = queryClient.getQueryData(key);
   if (cached) return cached;
-  const data = await getAnalysis(year, round, "sector-analysis", { session: "R", driver });
+  const data = await getAnalysis(year, round, "sector-analysis", { session, driver });
   queryClient.setQueryData(key, data, { updatedAt: Date.now() });
   return data;
 }

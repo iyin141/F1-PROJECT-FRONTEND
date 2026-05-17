@@ -526,7 +526,7 @@ export function adaptRaceDetail(res: RaceDetailResponse, year: number): Race {
 // ---------------------------------------------------------------------------
 
 export function adaptRaceResults(res: RaceResultsResponse): RaceResult[] {
-  return (res?.results?.race ?? []).map((r) => {
+  return (res?.results?.race ?? res?.race ?? []).map((r) => {
     const constructor = r.constructor ?? r.team ?? "";
     const driver = findDriver(r.driver_name) ?? stubDriver(r.driver_name, constructor);
     return {
@@ -545,7 +545,7 @@ export function adaptRaceResults(res: RaceResultsResponse): RaceResult[] {
 }
 
 export function adaptBundledQualifyingResults(res: RaceResultsResponse): QualifyingResult[] {
-  return (res?.results?.qualifying ?? []).map((r) => {
+  return (res?.results?.qualifying ?? res?.qualifying ?? []).map((r) => {
     const constructor = r.constructor ?? r.team ?? "";
     const driver = findDriver(r.driver_name) ?? stubDriver(r.driver_name, constructor);
     return {

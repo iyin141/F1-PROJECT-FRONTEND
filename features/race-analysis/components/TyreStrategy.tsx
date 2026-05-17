@@ -14,8 +14,16 @@ const ROW_H = 18;
 const ROW_GAP = 3;
 const MARGIN = { top: 10, right: 16, bottom: 32, left: 52 };
 
-export const TyreStrategy = ({ year, round }: { year: number; round: number }) => {
-  const { data: stints, isLoading } = useTyreStrategy(year, round);
+export const TyreStrategy = ({
+  year,
+  round,
+  session = "R",
+}: {
+  year: number;
+  round: number;
+  session?: string;
+}) => {
+  const { data: stints, isLoading } = useTyreStrategy(year, round, session);
   const { ref, size } = useResizeObserver<HTMLDivElement>();
 
   const chart = useMemo(() => {

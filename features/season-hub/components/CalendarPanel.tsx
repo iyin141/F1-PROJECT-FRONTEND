@@ -12,6 +12,10 @@ import { Skeleton } from "@/components/Skeleton";
 import { GenericTable, type ColumnDef } from "@/components/ui/GenericTable";
 import { formatDate } from "@/Lib/format";
 import type { Driver, Race } from "@/types/ui";
+import { TrackLoadingSkeleton } from "@/components/animations/TrackLoadingSkeleton";
+import { TableSkeleton } from "@/components/animations/TableSkeleton";
+import { useAppTheme } from "@/hooks/useAppTheme";
+import { getCircuitSvgPathandciruitname } from "@/Lib/circuitSvg";
 
 type CalendarRow = {
   race: Race;
@@ -24,6 +28,38 @@ type CalendarRow = {
   showAnalysis: boolean;
 };
 
+const TrackNameCell = ({ race }: { race: Race }) => {
+  const { isDark } = useAppTheme();
+  const theme = isDark ? "dark" : "light";
+  const cleanName = getCircuitSvgPathandciruitname(race.circuit.id, race.year, theme)?.entry?.name ?? race.circuit.name;
+  return <span className="text-text-dim truncate">{cleanName}</span>;
+};
+
+const ActionCell = ({ row }: { row: CalendarRow }) => {
+  return (
+    <span className="flex items-center justify-end gap-3">
+      {row.showLinks && (
+        <Link
+          href={`/race/${row.race.year}/${row.race.round}`}
+          onClick={(event) => event.stopPropagation()}
+          className="text-[10px] text-red hover:underline uppercase tracking-wider font-semibold"
+        >
+          RACE DETAIL
+        </Link>
+      )}
+      {row.showAnalysis && (
+        <Link
+          href={`/race/${row.race.year}/${row.race.round}/analysis`}
+          onClick={(event) => event.stopPropagation()}
+          className="text-[10px] text-red hover:underline uppercase tracking-wider font-semibold"
+        >
+          ANALYSIS
+        </Link>
+      )}
+    </span>
+  );
+};
+
 const columns: ColumnDef<CalendarRow>[] = [
   {
     key: "round",
@@ -33,7 +69,7 @@ const columns: ColumnDef<CalendarRow>[] = [
   },
   {
     key: "date",
-    width: "2fr",
+    width: "2.5fr",
     header: "DATE",
     render: row => <span className="text-text-dim">{formatDate(row.race.date)}</span>,
   },
@@ -44,45 +80,17 @@ const columns: ColumnDef<CalendarRow>[] = [
     render: row => <span className="text-text">{row.race.shortName}</span>,
   },
   {
-    key: "winner",
-    width: "2fr",
-    header: "WINNER",
-    render: row => (
-      row.completed
-        ? row.winner ? <DriverCode driver={row.winner} /> : null
-        : <span className="text-muted">—</span>
-    ),
+    key: "track",
+    width: "4fr",
+    header: "TRACK",
+    render: row => <TrackNameCell race={row.race} />,
   },
   {
-    key: "podium",
-    width: "3fr",
-    header: "PODIUM",
-    render: row => (
-      <span className="flex gap-2">
-        {row.completed
-          ? row.podium.map(driver => <DriverCode key={driver.id} driver={driver} className="text-text-dim" />)
-          : <span className="text-muted">UPCOMING</span>}
-      </span>
-    ),
-  },
-  {
-    key: "analysis",
-    width: "84px",
+    key: "actions",
+    width: "180px",
     header: " ",
     align: "right",
-    render: row => (
-      <span className="flex items-center justify-end gap-2">
-        {row.showAnalysis && (
-          <Link
-            href={`/race/${row.race.year}/${row.race.round}/analysis`}
-            onClick={(event) => event.stopPropagation()}
-            className="text-[10px] text-red hover:underline"
-          >
-            ANALYSIS
-          </Link>
-        )}
-      </span>
-    ),
+    render: row => <ActionCell row={row} />,
   },
   {
     key: "go",
@@ -106,6 +114,8 @@ const SpotlightCard = ({
 }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { isDark } = useAppTheme();
+  const theme = isDark ? "dark" : "light";
 
   if (!race) {
     return (
@@ -115,6 +125,8 @@ const SpotlightCard = ({
       </div>
     );
   }
+
+  const cleanCircuitName = getCircuitSvgPathandciruitname(race.circuit.id, race.year, theme)?.entry?.name ?? race.circuit.name;
 
   const content = (
     <>
@@ -126,7 +138,7 @@ const SpotlightCard = ({
             R{String(race.round).padStart(2, "0")} · {formatDate(race.date)}
           </div>
           <div className="mt-1 truncate font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
-            {race.circuit.name}
+            {cleanCircuitName}
           </div>
         </div>
         {winner ? <DriverCode driver={winner} /> : null}
@@ -182,25 +194,9 @@ export const CalendarPanel = ({ year, calendar, loading, view }: CalendarPanelPr
   return (
     <Panel label={view === "list" ? "RACE CALENDAR · LIST" : "RACE CALENDAR · GRID"} title={`${calendar?.length ?? "—"} rounds`}>
       {loading ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <div className="rounded-xs border border-border-subtle bg-panel-elev px-4 py-3">
-              <Skeleton className="h-6 w-3/4" />
-            </div>
-            <div className="rounded-xs border border-border-subtle bg-panel-elev px-4 py-3">
-              <Skeleton className="h-6 w-3/4" />
-            </div>
-          </div>
-
-          <div className="panel-scroll w-full">
-            <div className="space-y-2">
-              {Array.from({ length: 12 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-4 px-4 py-2">
-                  <Skeleton className="h-4 w-full" />
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="space-y-6">
+          <TrackLoadingSkeleton year={year} minHeight={260} />
+          <TableSkeleton rows={12} customTexts={["Syncing season calendar...", "Checking session start times..."]} />
         </div>
       ) : !calendar?.length ? (
         <EmptyState message={`NO RACE DATA FOR ${year}`} description="No fixtures available for this season." />
