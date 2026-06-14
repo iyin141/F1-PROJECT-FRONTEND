@@ -11,6 +11,9 @@ export type DriverStandingRow = {
 
 export type DriverStandingsResponse = {
   year: number;
-  standings: DriverStandingRow[];
+  /** Primary key per API docs (some backends return `standings`, others `drivers`) */
+  standings?: DriverStandingRow[];
+  /** Alternative key actually returned by some live endpoints */
+  drivers?: DriverStandingRow[];
   readiness: ReadinessChecklist;
 };

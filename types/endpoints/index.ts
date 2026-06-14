@@ -2,8 +2,10 @@ export * from "@/types/endpoints/racestypes";
 export * from "@/types/endpoints/resultstypes";
 export * from "@/types/endpoints/qualifyingtypes";
 export * from "@/types/endpoints/practicetypes";
+export * from "@/types/endpoints/sprinttypes";
 export * from "@/types/endpoints/driverstandingstypes";
 export * from "@/types/endpoints/constructorstandingstypes";
+export * from "@/types/endpoints/driverrecordtypes";
 
 export * from "@/types/endpoints/lapstypes";
 export * from "@/types/endpoints/stintstypes";
@@ -21,4 +23,3 @@ export * from "@/types/endpoints/incidentstypes";
 export * from "@/types/endpoints/positionstypes";
 export * from "@/types/endpoints/drstypes";
 export * from "@/types/endpoints/trackstatustypes";
-export * from "@/types/endpoints/coveragetypes";

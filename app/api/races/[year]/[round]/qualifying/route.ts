@@ -1,9 +1,16 @@
-import { proxyBackendGet } from "@/app/api/_lib/backend";
-import type { YearRoundParams } from "@/types/mvp-api";
+import { BACKEND_API_URL } from "@/Lib/api/config";
+import { proxyToBackend } from "@/Lib/api/proxy";
 
-export const dynamic = "force-dynamic";
-
-export async function GET(_request: Request, context: { params: Promise<YearRoundParams> }) {
-  const { year, round } = await context.params;
-  return proxyBackendGet(`/races/${year}/${round}/qualifying/`);
+export async function GET(
+  request: Request,
+  { params: _params }: { params: Promise<{ year: string; round: string }> },
+) {
+  const params = await _params;
+  const url = new URL(request.url);
+  const search = url.search || "";
+  const backendUrl = `${BACKEND_API_URL}/api/races/${params.year}/${params.round}/qualifying/${search}`;
+  const res = await proxyToBackend(request, backendUrl);
+  const headers = new Headers(res.headers);
+  headers.delete("content-encoding");
+  return new Response(res.body, { status: res.status, headers });
 }

@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, DM_Mono, DM_Sans } from "next/font/google";
+import { ThemeProvider } from "next-themes";
 
 import { QueryProvider } from "@/_Stores/QueryProvider";
+import { Sidebar } from "@/components/Sidebar";
+import { NavigationProgress } from "@/components/NavigationProgress";
+import RouteTransition from "@/components/animations/RouteTransition";
 
 import "./globals.css";
 
@@ -39,8 +43,20 @@ export default function RootLayout({
       className={`${bebasNeue.variable} ${dmSans.variable} ${dmMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full bg-background text-foreground">
-        <QueryProvider>{children}</QueryProvider>
+      <body className="min-h-full bg-bg text-text" suppressHydrationWarning>
+        <NavigationProgress />
+        <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
+          <QueryProvider>
+            <div className="flex min-h-screen">
+              <Sidebar />
+              <div className="flex-1 min-w-0 md:pl-[15%]">
+                <RouteTransition>
+                  {children}
+                </RouteTransition>
+              </div>
+            </div>
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

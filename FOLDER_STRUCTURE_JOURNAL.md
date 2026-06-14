@@ -21,7 +21,7 @@ f1-project-frontend/
 ├── app/
 ├── _Components/
 ├── _Stores/
-├── Api_services/
+├── actions/
 ├── Hooks/
 ├── icons/
 ├── Lib/
@@ -98,7 +98,7 @@ Use `features/` as the default implementation layer for each product section. Th
 1. Create or use the section folder in `features/`.
 2. Build section UI and local logic in that folder.
 3. Keep route files in `app/` focused on orchestration only.
-4. Keep API access in `Api_services/` and import results into the feature layer.
+4. Keep API access in `actions/` and import results into the feature layer.
 5. Promote files out of the feature folder only when they are reused by other sections.
 
 ### What stays inside a feature folder
@@ -168,20 +168,20 @@ Rules:
 - Keep providers minimal and composable.
 - Put global concerns here, not page-specific state.
 
-### `Api_services/`
+### `actions/`
 
-Frontend service functions that call API routes or backend endpoints.
+Server-side action functions and service helpers that call backend endpoints (via `Lib/server-client`).
 
 Use this folder for:
 
-- typed fetch helpers
-- feature-specific service modules
+- typed server helpers
+- feature-specific action modules
 - request wrappers and query builders
-- service exports grouped by domain
+- action exports grouped by domain
 
 Rules:
 
-- Keep services free of UI logic.
+- Keep action helpers free of UI logic.
 - Keep data access separate from components.
 - Prefer one module per feature or endpoint family.
 
@@ -305,7 +305,7 @@ Rules:
 
 ### If you are adding data fetching
 
-- Put request logic in `Api_services/`.
+- Put request logic in `actions/`.
 - Put type contracts in `types/`.
 - Keep the page and components focused on composition and rendering.
 
@@ -324,7 +324,7 @@ Rules:
 - Follow the existing layout language instead of inventing a second one.
 - Reuse the shared theme, typography, spacing, and card patterns.
 - Keep route files thin and move section UI into `features/<section>/`.
-- Keep data contracts in `types/` and data access in `Api_services/`.
+- Keep data contracts in `types/` and data access in `actions/`.
 - If a page needs loading, error, or empty states, build them at the route level first.
 - Favor additive changes that fit the current structure rather than reshaping the project.
 
@@ -334,7 +334,7 @@ Rules:
 - `features/` = section modules (primary)
 - `_Components/` = shared UI blocks (cross-feature)
 - `_Stores/` = providers and global state
-- `Api_services/` = API access
+- `actions/` = API access
 - `Hooks/` = reusable React logic
 - `Lib/` = shared helpers and config
 - `types/` = contracts
@@ -351,7 +351,7 @@ When a new page is added, the safest pattern is:
 3. Build section UI in `features/<section>/`.
 4. Move repeatable UI blocks into `_Components/` only when shared.
 5. Keep types in `types/`.
-6. Keep request logic in `Api_services/`.
+6. Keep request logic in `actions/`.
 7. Keep helper logic in `Lib/`.
 8. Add loading and error states alongside the route.
 
@@ -373,8 +373,8 @@ Files created:
 - [features/season-hub/components/SeasonOverview.tsx](features/season-hub/components/SeasonOverview.tsx)
 - [features/season-hub/types.ts](features/season-hub/types.ts)
 - [features/season-hub/api.ts](features/season-hub/api.ts)
-- [_Components/ui/Button.tsx](_Components/ui/Button.tsx)
-- [_Components/ui/README.md](_Components/ui/README.md)
+- [\_Components/ui/Button.tsx](_Components/ui/Button.tsx)
+- [\_Components/ui/README.md](_Components/ui/README.md)
 
 How to use the scaffolding:
 
@@ -382,17 +382,16 @@ How to use the scaffolding:
 2. Implement UI inside `features/<your-feature>/components` and local hooks in `features/<your-feature>/hooks`.
 3. Export a single entry from `features/<your-feature>/index.ts` (for example `export { default } from './page'`).
 4. In `app/` route files, import the feature entry and pass route params/data into it:
+   - Example (app route):
+     ```
+     import FeatureEntry from 'features/your-feature';
+     export default function Page({ params }) {
+     	 const data = await fetchSomething(params);
+     	 return <FeatureEntry initialData={data} />;
+     }
+     ```
 
-	 - Example (app route):
-		 ```
-		 import FeatureEntry from 'features/your-feature';
-		 export default function Page({ params }) {
-			 const data = await fetchSomething(params);
-			 return <FeatureEntry initialData={data} />;
-		 }
-		 ```
-
-5. Keep API calls in `Api_services/` and shared types in `types/`.
+5. Keep API calls in `actions/` and shared types in `types/`.
 
 Quick commands:
 

@@ -1,18 +1,24 @@
-import type { PracticeSessionName, ReadinessChecklist } from "@/types/api";
+import type { ReadinessChecklist } from "@/types/api";
 
 // Endpoint 5: GET /api/races/<year>/<round>/practice/<session_name>/
+// Backend view returns { year, round, session, practice: [...], readiness }
 export type PracticeResultRow = {
   position: number;
-  driver_name: string;
-  constructor: string;
-  laps: number;
-  best_lap: string | null;
+  driver_name?: string;
+  driver_code?: string;
+  constructor?: string;
+  team?: string;
+  laps?: number;
+  best_lap?: string | null;
+  lap_time?: string | null;
+  lap_number?: number | null;
 };
 
-export type PracticeResultsResponse = {
+export type PracticeResultsResponse = PracticeResultRow[] | {
   year: number;
   round: number;
-  session: PracticeSessionName;
-  results: PracticeResultRow[];
+  session: string;
+  practice?: PracticeResultRow[];
+  results?: PracticeResultRow[];
   readiness: ReadinessChecklist;
 };
