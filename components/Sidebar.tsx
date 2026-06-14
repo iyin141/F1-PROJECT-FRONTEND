@@ -75,7 +75,18 @@ export const Sidebar = () => {
         </div>
 
         <div className="px-4 mt-6 mb-2 label-mono">External</div>
-        <a href={process.env.NEXT_PUBLIC_API_DOCS_URL} target="_blank" rel="noopener noreferrer" className={cn(linkBase, linkInactive)}>
+        <a
+          href={(() => {
+            const url = process.env.NEXT_PUBLIC_API_DOCS_URL;
+            if (!url) return "#";
+            return url.startsWith("http://") || url.startsWith("https://")
+              ? url
+              : `http://${url}`;
+          })()}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(linkBase, linkInactive)}
+        >
           <FileText size={14} /> API DOCS
         </a>
       </nav>
