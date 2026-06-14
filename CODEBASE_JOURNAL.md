@@ -1,6 +1,6 @@
 # F1 Control Room Codebase Journal
 
-Last updated: 2026-04-29
+Last updated: 2026-05-23
 Scope: [f1-project-frontend/](.)
 
 This journal is a living technical map of the workspace. It complements [FOLDER_STRUCTURE_JOURNAL.md](FOLDER_STRUCTURE_JOURNAL.md) by documenting how the code actually behaves today: runtime setup, data flow, feature boundaries, conventions, risks, and suggested next evolutions.
@@ -398,6 +398,16 @@ Data + app state:
 UI primitives & animation:
 
 - `@radix-ui/*` (dialog, select, slider, switch, tabs, tooltip) — accessible primitives used across UI.
+
+## 20) Recent Changes (Phase 3 — 2026-05-23)
+
+- Phase 3: Prefetch-on-hover (minimal, low-risk rollout)
+  - Added `Lib/prefetch.ts` — helper `prefetchDriver()` which best-effort calls `router.prefetch()` and warms the `react-query` cache via `fetchDriverCareer` and `fetchDriverSeason`.
+  - Wired hover prefetch handlers in analysis UI components to warm driver caches: `features/race-analysis/components/TeammateCard.tsx`, `PaceComparison.tsx`, `PaceDistribution.tsx`, and `DrsPanel.tsx`.
+  - Completed TypeScript checks and a production `npm run build` locally; build compiled successfully and static pages were generated.
+
+Notes: Prefetching is intentionally best-effort and non-blocking; it improves UX by warming cache when users hover driver identifiers.
+
 - `lucide-react` ^1.14.0 — icon set used for controls (chevrons, etc.).
 - `framer-motion` ^12.38.0, `gsap` ^3.15.0 — motion/animation libraries used in heavy interactions (replay, telemetry).
 - `d3` ^7.9.0 — data visualization utilities used by analysis/telemetry.

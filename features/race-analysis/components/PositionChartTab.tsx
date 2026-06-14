@@ -3,9 +3,11 @@
 import { Panel } from "@/components/Panel";
 import { PositionTracker } from "./PositionTracker";
 import type { AnalysisDriverOption } from "./DriverSelect";
-import { useAllLaps } from "../hooks/useRaceAnalysis";
+import { useAllLaps, useRaceLapFrames } from "../hooks/useRaceAnalysis";
 import Skeleton from "@/components/animations/Skeleton";
 import { motion } from "framer-motion";
+import type { RaceLapFrame } from "@/types/ui";
+import type { UnifiedPositionRow } from "@/types/endpoints";
 
 function PanelEntry({ children, delay }: { children: React.ReactNode; delay: number }) {
   return (
@@ -20,6 +22,37 @@ function PanelEntry({ children, delay }: { children: React.ReactNode; delay: num
   );
 }
 
+/** Derive approximate lap-by-lap positions from frames using cumulative race time. */
+function derivePositionsFromFrames(frames: RaceLapFrame[]): UnifiedPositionRow[] {
+  const cumulative = new Map<string, number>();
+  const rows: UnifiedPositionRow[] = [];
+
+  for (const frame of frames) {
+    // Update cumulative times
+    for (const [code, entry] of Object.entries(frame.drivers)) {
+      if (entry.lapTimeMs != null && entry.lapTimeMs > 0) {
+        cumulative.set(code, (cumulative.get(code) ?? 0) + entry.lapTimeMs);
+      }
+    }
+
+    // Rank drivers by cumulative elapsed time this lap
+    const ranked = [...cumulative.entries()]
+      .sort(([, a], [, b]) => a - b)
+      .map(([code], i) => ({ code, pos: i + 1 }));
+
+    for (const { code, pos } of ranked) {
+      rows.push({
+        driver_code: code,
+        driver: code,
+        lap_number: frame.lap,
+        position: pos,
+        track_status: null,
+      } as UnifiedPositionRow);
+    }
+  }
+  return rows;
+}
+
 export function PositionChartTab({
   year,
   round,
@@ -32,7 +65,9 @@ export function PositionChartTab({
   drivers: AnalysisDriverOption[];
 }) {
   const { data: lapsData, isLoading } = useAllLaps(year, round, session);
+  const { data: frames } = useRaceLapFrames(year, round, session);
   const sessionCovered = lapsData?.meta?.can_proceed ?? (!!lapsData && lapsData.data.length > 0);
+  const fallbackRows = frames && frames.length > 0 ? derivePositionsFromFrames(frames) : undefined;
 
   if (isLoading) {
     return <Skeleton height={320} />;
@@ -63,7 +98,7 @@ export function PositionChartTab({
   return (
     <PanelEntry delay={0.04}>
       <Panel label="PANEL 1 · POSITION TRACKER" title="Driver Positions — Lap by Lap">
-        <PositionTracker year={year} round={round} session={session} drivers={drivers} />
+        <PositionTracker year={year} round={round} session={session} drivers={drivers} fallbackRows={fallbackRows} />
       </Panel>
     </PanelEntry>
   );

@@ -1,10 +1,8 @@
 'use client';
 
 import * as Tabs from "@radix-ui/react-tabs";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
-import { fetchDriverCareer, fetchDriverSeason } from "@/Lib/queryFunctions";
+import { DriverLink } from "@/components/ui/DriverLink";
+import { useDriverStandings, useConstructorStandings } from "@/features/season-hub/hooks/useSeasonHub";
 import { teamColor } from "@/components/DriverCode";
 import { Panel } from "@/components/Panel";
 import { Skeleton } from "@/components/Skeleton";
@@ -16,7 +14,6 @@ import { FlagImage } from "@/_Components/ui/FlagImage";
 
 const getDriverColumns = (
   year: number,
-  prefetchDriverRoute: (driverCode: string) => void,
 ): ColumnDef<DriverStanding>[] => [
   {
     key: "position",
@@ -38,13 +35,7 @@ const getDriverColumns = (
           style={{ backgroundColor: teamColor(standing.driver.team) }}
         />
         {flag ? <FlagImage src={flag} /> : null}
-        <Link
-          href={`/drivers/${standing.driver.code}/${year}`}
-          onMouseEnter={() => prefetchDriverRoute(standing.driver.code)}
-          className="font-semibold transition-colors hover:text-blue"
-        >
-          {standing.driver.code}
-        </Link>
+        <DriverLink driver={standing.driver} year={year} />
         <span className="truncate text-text-dim">{standing.driver.lastName}</span>
       </span>
       );
@@ -96,16 +87,20 @@ export const StandingsPanel = ({
   constructors,
   constructorsLoading,
 }: StandingsPanelProps) => {
-  const router = useRouter();
-  const queryClient = useQueryClient();
 
-  const prefetchDriverRoute = (driverCode: string) => {
-    router.prefetch(`/drivers/${driverCode}/${year}`);
-    void fetchDriverCareer(driverCode, queryClient);
-    if (year !== undefined) void fetchDriverSeason(driverCode, year, queryClient);
-  };
 
-  const driverColumns = getDriverColumns(year, prefetchDriverRoute);
+  // Fallback hooks: if parent doesn't supply props, these hooks will
+  // provide the canonical standings and trigger the client fetch.
+  const driverStandingsQuery = useDriverStandings(year);
+  const constructorStandingsQuery = useConstructorStandings(year);
+
+  const driversData = drivers ?? driverStandingsQuery.data;
+  const driversIsLoading = driversLoading || driverStandingsQuery.isLoading;
+
+  const constructorsData = constructors ?? constructorStandingsQuery.data;
+  const constructorsIsLoading = constructorsLoading || constructorStandingsQuery.isLoading;
+
+  const driverColumns = getDriverColumns(year);
 
   return (
     <Panel label="STANDINGS" title={`${year} Championship`}>
@@ -122,26 +117,26 @@ export const StandingsPanel = ({
           ))}
         </Tabs.List>
         <Tabs.Content value="drivers">
-          {driversLoading ? (
+          {driversIsLoading ? (
             <TableSkeleton rows={10} customTexts={["Updating driver standings...", "Calculating championship points..."]} />
           ) : (
             <GenericTable<DriverStanding>
               className="font-mono text-xs"
               columns={driverColumns}
-              data={drivers ?? []}
+              data={driversData ?? []}
               getRowKey={standing => standing.driver.id}
               striped
             />
           )}
         </Tabs.Content>
         <Tabs.Content value="constructors">
-          {constructorsLoading ? (
+          {constructorsIsLoading ? (
             <TableSkeleton rows={10} customTexts={["Updating constructor standings...", "Calculating team points..."]} />
           ) : (
             <GenericTable<ConstructorStanding>
               className="font-mono text-xs"
               columns={constructorColumns}
-              data={constructors ?? []}
+              data={constructorsData ?? []}
               getRowKey={standing => standing.team.id}
               striped
             />

@@ -36,10 +36,16 @@ export async function getUnifiedWeather(
   year: number,
   round: number,
   session = "R",
+  perLap?: boolean,
 ): Promise<UnifiedWeatherResponse> {
-  console.log("[getUnifiedWeather] → Fetching:", year, round, session);
+  console.log("[getUnifiedWeather] → Fetching:", year, round, session, { perLap });
 
-  const res = await fetch(`/api/unified/races/${year}/${round}/weather/?session=${session}`, {
+  const qs = new URLSearchParams();
+  qs.set("session", session);
+  if (perLap) qs.set("per_lap", "true");
+  const qstr = qs.toString();
+
+  const res = await fetch(`/api/unified/races/${year}/${round}/weather/${qstr ? `?${qstr}` : ""}`, {
     method: "GET",
     headers: { Accept: "application/json" },
     credentials: "include",
@@ -108,11 +114,16 @@ export async function getUnifiedPositions(
   round: number,
   session = "R",
   sample?: number,
+  limit?: number,
 ): Promise<UnifiedPositionsResponse> {
-  console.log("[getUnifiedPositions] → Fetching:", year, round, session, sample);
+  console.log("[getUnifiedPositions] → Fetching:", year, round, session, { sample, limit });
 
-  const qs = sample !== undefined ? `&sample_interval=${sample}` : "";
-  const res = await fetch(`/api/unified/races/${year}/${round}/positions/?session=${session}${qs}`, {
+  const qs = new URLSearchParams();
+  qs.set("session", session);
+  if (sample !== undefined) qs.set("sample_interval", String(sample));
+  if (limit !== undefined) qs.set("limit", String(limit));
+
+  const res = await fetch(`/api/unified/races/${year}/${round}/positions/?${qs.toString()}`, {
     method: "GET",
     headers: { Accept: "application/json" },
     credentials: "include",

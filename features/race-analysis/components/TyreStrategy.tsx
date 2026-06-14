@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo } from "react";
-import * as d3 from "d3";
 import { useResizeObserver } from "@/hooks/use-resize-observer";
 import Skeleton from "@/components/animations/Skeleton";
 import { compoundColor } from "@/components/CompoundDot";
@@ -36,13 +35,25 @@ export const TyreStrategy = ({
         .sort((a, b) => a.startLap - b.startLap),
     })).filter((d) => d.stints.length > 0);
 
-    const totalLaps = d3.max(stints, (s) => s.endLap) ?? 57;
+    const totalLaps = Math.max(...(stints.map((s) => s.endLap)), 57);
     const innerW = Math.max(0, size.width - MARGIN.left - MARGIN.right);
-    const height =
-      MARGIN.top + MARGIN.bottom + byDriver.length * (ROW_H + ROW_GAP);
-    const x = d3.scaleLinear().domain([1, totalLaps]).range([0, innerW]);
+    const height = MARGIN.top + MARGIN.bottom + byDriver.length * (ROW_H + ROW_GAP);
 
-    return { byDriver, x, xTicks: x.ticks(8), totalLaps, innerW, height };
+    const x = (lap: number) => {
+      if (totalLaps <= 1) return 0;
+      const t = (lap - 1) / (totalLaps - 1);
+      return t * innerW;
+    };
+
+    // generate 8 ticks across the lap domain
+    const tickCount = 8;
+    const xTicks: number[] = [];
+    for (let i = 0; i < tickCount; i++) {
+      const v = Math.round(1 + (i * (totalLaps - 1)) / (tickCount - 1));
+      if (!xTicks.includes(v)) xTicks.push(v);
+    }
+
+    return { byDriver, x, xTicks, totalLaps, innerW, height };
   }, [stints, size.width]);
 
   if (isLoading) return <Skeleton height={200} />;

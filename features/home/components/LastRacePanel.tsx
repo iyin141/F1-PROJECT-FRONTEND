@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Panel } from "@/components/Panel";
 import { GenericTable, type ColumnDef } from "@/components/ui/GenericTable";
 import { formatDate } from "@/Lib/format";
+import { mapSessionIdToApiCode, formatSessionLabel } from "@/Lib/sessionCodes";
 import type { Incident, QualifyingResult, Race, RaceResult, WeatherSnapshot } from "@/types/ui";
 import { RaceResultsAnimation, QualifyingAnimation } from "@/components/animations/SectionLoadingAnimations";
 
@@ -177,10 +178,11 @@ export const LastRacePanel = ({ race, results, qualiResults, incidents, weather,
               <div className="space-y-1">
                 <div className="label-mono mb-2">SESSION SCHEDULE</div>
                 {race.sessions.map((session, idx) => {
-                  const sessionLabel = session.id.toUpperCase().replace("FP", "PRACTICE ").replace("QUALIFYING", "QUALIFYING").replace("RACE", "RACE");
+                  const code = mapSessionIdToApiCode(String(session.id));
+                  const sessionLabel = formatSessionLabel(code) || String(session.id).toUpperCase();
                   return (
                     <div
-                      key={idx}
+                      key={session.id ?? idx}
                       className="flex items-center justify-between rounded-sm border border-border-subtle/50 px-3 py-2 font-mono text-xs"
                     >
                       <span

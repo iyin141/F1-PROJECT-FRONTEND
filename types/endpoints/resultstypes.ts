@@ -29,14 +29,22 @@ export type RaceResultRow = {
   fastest_lap_of_race?: boolean | null;
 };
 
-export type RaceResultsResponse = {
-  year: number;
-  round: number;
+export type RaceResultsResponse = RaceResultRow[] | {
+  meta?: {
+    year: number;
+    round: number;
+    session: string;
+    row_count: number;
+  };
+  data?: RaceResultRow[];
+  qualifying?: QualifyingResultRow[];
+  // Legacy
+  year?: number;
+  round?: number;
   results?: {
     qualifying: QualifyingResultRow[];
     race: RaceResultRow[];
   };
-  qualifying?: QualifyingResultRow[];
   race?: RaceResultRow[];
-  readiness: ReadinessChecklist;
+  readiness?: ReadinessChecklist;
 };

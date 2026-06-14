@@ -30,7 +30,15 @@ export interface Team {
   colorVar: string;
 }
 
-export type SessionId = "fp1" | "fp2" | "fp3" | "qualifying" | "race";
+export type SessionId =
+  | "fp1"
+  | "fp2"
+  | "fp3"
+  | "qualifying"
+  | "race"
+  | "sprint"
+  | "sprint-qualifying"
+  | "sprint-shootout";
 
 export interface Circuit {
   id: string;
@@ -110,6 +118,9 @@ export interface QualifyingResult {
   q1?: string;
   q2?: string;
   q3?: string;
+  q1Ms?: number;
+  q2Ms?: number;
+  q3Ms?: number;
   bestSector1?: number;
   bestSector2?: number;
   bestSector3?: number;
@@ -119,6 +130,7 @@ export interface PracticeResult {
   position: number;
   driver: Driver;
   bestLap: string;
+  bestLapMs?: number;
   laps: number;
   gap?: string;
   compound?: Compound;
@@ -199,6 +211,9 @@ export interface LapTime {
   lap: number;
   driverId: string;
   timeMs: number;
+  sector1Ms?: number;
+  sector2Ms?: number;
+  sector3Ms?: number;
   position: number;
   compound: Compound;
   pit?: boolean;
@@ -211,6 +226,8 @@ export interface Stint {
   endLap: number;
   compound: Compound;
   avgPaceMs: number;
+  bestLapMs?: number | null;
+  degradationMs?: number | null;
 }
 
 export interface SectorAnalysis {

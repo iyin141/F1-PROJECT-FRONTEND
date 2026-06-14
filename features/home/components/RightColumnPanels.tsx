@@ -7,10 +7,12 @@ import { EmptyState } from "@/components/EmptyState";
 import { DriverCode, teamColor } from "@/components/DriverCode";
 import { GenericTable, type ColumnDef } from "@/components/ui/GenericTable";
 import { formatDate, countdownTo } from "@/Lib/format";
+import { mapSessionIdToApiCode, formatSessionLabel } from "@/Lib/sessionCodes";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import FadeInPanel from "@/components/animations/FadeInPanel";
 import type { ConstructorStanding, DriverStanding, Race, SessionSchedule } from "@/types/ui";
+import { useDriverStandings, useConstructorStandings } from "@/features/season-hub/hooks/useSeasonHub";
 import {
   ScheduleAnimation,
   StandingsAnimation,
@@ -21,7 +23,10 @@ const scheduleColumns: ColumnDef<SessionSchedule>[] = [
     key: "session",
     width: "1fr",
     header: "SESSION",
-    render: session => <span className="uppercase text-text-dim">{session.id}</span>,
+    render: session => {
+      const code = mapSessionIdToApiCode(String(session.id));
+      return <span className="uppercase text-text-dim">{formatSessionLabel(code) || String(session.id).toUpperCase()}</span>;
+    },
   },
   {
     key: "starts",
@@ -132,6 +137,16 @@ export const RightColumnPanels = ({
   constructors,
   constructorsLoading,
 }: RightColumnPanelsProps) => {
+  // Always call the canonical standings hooks so a missing prop still triggers
+  // the client-side fetch. React Query will dedupe identical queries.
+  const driversQuery = useDriverStandings(year);
+  const constructorsQuery = useConstructorStandings(year);
+
+  const driversData = standings ?? driversQuery.data;
+  const driversIsLoading = standingsLoading || driversQuery.isLoading;
+
+  const constructorsData = constructors ?? constructorsQuery.data;
+  const constructorsIsLoading = constructorsLoading || constructorsQuery.isLoading;
   const [championshipView, setChampionshipView] = useState<"drivers" | "constructors">("drivers");
   const [showAll, setShowAll] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -142,14 +157,14 @@ export const RightColumnPanels = ({
 
   const championshipContent =
     championshipView === "drivers"
-      ? standingsLoading
+      ? driversIsLoading
         ? <StandingsAnimation />
         : (
           <GenericTable<DriverStanding>
             className="font-mono text-xs"
             columns={standingsColumns}
-            data={showAll ? (standings ?? []) : (standings?.slice(0, 5) ?? [])}
-            getRowKey={standing => standing.driver.id}
+            data={showAll ? (driversData ?? []) : (driversData?.slice(0, 5) ?? [])}
+            getRowKey={(standing, idx) => `${standing.driver.id}-${standing.position}`}
             striped
           />
         )
@@ -159,8 +174,8 @@ export const RightColumnPanels = ({
           <GenericTable<ConstructorStanding>
             className="font-mono text-xs"
             columns={constructorColumns}
-            data={showAll ? (constructors ?? []) : (constructors?.slice(0, 5) ?? [])}
-            getRowKey={standing => standing.team.id}
+            data={showAll ? (constructorsData ?? []) : (constructorsData?.slice(0, 5) ?? [])}
+            getRowKey={(standing, idx) => `${standing.team.id}-${standing.position}`}
             striped
           />
         );

@@ -23,7 +23,7 @@ const VARIANT_CONFIG: Record<RowVariant, VariantConfig> = {
 const VARIANT_BADGE: Partial<Record<RowVariant, ReactNode>> = {
   fastlap: (
     <span
-      className="rounded-sm px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-[0.15em]"
+      className="px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-[0.15em]"
       style={{
         backgroundColor: "color-mix(in srgb, #a855f7 25%, transparent)",
         color: "#a855f7",
@@ -34,7 +34,7 @@ const VARIANT_BADGE: Partial<Record<RowVariant, ReactNode>> = {
   ),
   pole: (
     <span
-      className="rounded-sm px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-[0.15em]"
+      className="px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-[0.15em]"
       style={{
         backgroundColor: "color-mix(in srgb, hsl(var(--amber)) 30%, transparent)",
         color: "hsl(var(--amber))",
@@ -103,7 +103,7 @@ export function GenericTable<T>({
   };
 
   return (
-    <div className={cn("overflow-hidden rounded-xs border border-border-subtle bg-panel", className)}>
+    <div className={cn("overflow-hidden border border-border-subtle bg-panel", className)}>
       {showHeaders && (
         <div
           className="grid items-center border-b border-border-subtle bg-panel-elev px-3 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-text-dim"

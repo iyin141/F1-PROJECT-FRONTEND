@@ -17,7 +17,7 @@ export const DriverCode = ({ driver, className, showName, showFlag = true }: Pro
   <span className={cn("inline-flex min-w-0 items-center gap-2 font-mono text-xs tracking-wider", className)}>
     <span
       aria-hidden
-      className="inline-block w-[3px] h-[14px] rounded-sm"
+      className="inline-block w-[3px] h-[14px]"
       style={{ background: teamColor(driver.team) }}
     />
     {showFlag && <DriverFlag driverCode={driver.code} />}

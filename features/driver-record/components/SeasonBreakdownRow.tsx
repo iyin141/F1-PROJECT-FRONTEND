@@ -16,25 +16,30 @@ function isDnfStatus(status: string) {
 export function SeasonBreakdownRow({ race, showQualifying }: SeasonBreakdownRowProps) {
   const dnf = isDnfStatus(race.status) || race.finishPosition === null;
   const finish = formatFinish(race.finishPosition, race.status);
+  const win = race.finishPosition === 1;
 
   return (
-    <tr className="border-b border-border-subtle odd:bg-surface even:bg-surface2" style={{ opacity: dnf ? 0.65 : 1 }}>
-      <td className="px-2 py-3 font-mono text-[12px] text-text-dim">{race.round}</td>
-      <td className="px-2 py-3 font-sans text-[13px] text-text">{race.raceName}</td>
-      <td className="hidden px-2 py-3 font-mono text-[11px] text-text-dim md:table-cell">{formatDate(race.raceDate)}</td>
-      <td className="hidden px-2 py-3 font-mono text-[12px] text-text-dim md:table-cell">{race.gridPosition ?? "-"}</td>
-      <td className="px-2 py-3 font-display text-xl md:text-2xl leading-none" style={{ color: dnf ? "hsl(var(--red))" : "hsl(var(--text))" }}>
+    <tr className="hover:bg-white/5" style={{ opacity: dnf ? 0.5 : 1 }}>
+      <td className="px-4 py-[10px] font-mono text-[11px] text-white/40">{race.round}</td>
+      <td className="px-2 py-[10px] font-mono text-[11px] uppercase tracking-wider text-white">
+        {win ? <span className="text-[hsl(var(--amber))]">{race.raceName}</span> : race.raceName}
+      </td>
+      <td className="hidden px-2 py-[10px] font-mono text-[10px] text-white/40 md:table-cell">{formatDate(race.raceDate)}</td>
+      <td className="hidden px-2 py-[10px] font-mono text-[11px] text-white/40 md:table-cell">{race.gridPosition ?? "-"}</td>
+      <td className="px-2 py-[10px] text-right font-mono text-[11px] font-bold" style={{ color: dnf ? "hsl(var(--red))" : win ? "hsl(var(--amber))" : "hsl(var(--text))" }}>
         {finish}
       </td>
-      <td className="px-2 py-3 text-right font-mono text-[1.1rem] tabular-nums text-text">{race.points}</td>
+      <td className="px-4 py-[10px] text-right font-mono text-[11px] tabular-nums text-white/70">{race.points}</td>
       {showQualifying && (
         <>
-          <td className="hidden px-2 py-3 font-mono text-[12px] text-text-dim lg:table-cell">{race.qualifyingPosition ?? "-"}</td>
-          <td className="hidden px-2 py-3 font-mono text-[12px] text-text-dim lg:table-cell">{race.qualifyingTime ?? "-"}</td>
+          <td className="hidden px-2 py-[10px] text-right font-mono text-[11px] text-white/40 lg:table-cell">{race.qualifyingPosition ?? "-"}</td>
+          <td className="hidden px-2 py-[10px] text-right font-mono text-[11px] text-white/40 lg:table-cell">{race.qualifyingTime ?? "-"}</td>
         </>
       )}
-      <td className="px-2 py-3 text-center"><TyreCompound active={race.fastestLap} /></td>
-      <td className="px-2 py-3 font-sans text-[12px]" style={{ color: dnf ? "hsl(var(--red))" : "hsl(var(--muted))" }}>{race.status}</td>
+      <td className="px-2 py-[10px] text-center">{race.fastestLap ? <span className="text-[hsl(var(--purple))]">FL</span> : <span className="text-white/20">-</span>}</td>
+      <td className="px-4 py-[10px] text-right font-mono text-[10px] uppercase tracking-wider" style={{ color: dnf ? "hsl(var(--red))" : "rgba(255,255,255,0.4)" }}>
+        {race.status}
+      </td>
     </tr>
   );
 }

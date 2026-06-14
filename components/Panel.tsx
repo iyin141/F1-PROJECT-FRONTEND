@@ -10,12 +10,29 @@ interface PanelProps {
 }
 
 export const Panel = ({ label, title, action, className, children }: PanelProps) => (
-  <section className={cn("w-full min-w-0 overflow-hidden rounded-sm border border-border-subtle bg-panel", className)}>
+  <section className={cn("w-full min-w-0 overflow-hidden border border-border-subtle bg-panel", className)}>
     {(label || title || action) && (
-      <header className="flex flex-col gap-3 border-b border-border-subtle px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 flex-wrap items-baseline gap-3">
-          {label && <span className="label-mono">{label}</span>}
-          {title && <h2 className="font-display text-sm font-semibold tracking-tight text-text">{title}</h2>}
+      <header
+        className="flex items-center justify-between border-b border-border-subtle px-4"
+        style={{ height: 40, minHeight: 40 }}
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          {label && (
+            <span
+              className="font-mono text-[11px] uppercase tracking-wide"
+              style={{ color: "rgba(255,255,255,0.40)" }}
+            >
+              {label}
+            </span>
+          )}
+          {title && (
+            <span
+              className="font-mono text-[11px] uppercase tracking-wide"
+              style={{ color: "rgba(255,255,255,0.40)" }}
+            >
+              {title}
+            </span>
+          )}
         </div>
         {action && <div className="min-w-0 text-xs">{action}</div>}
       </header>

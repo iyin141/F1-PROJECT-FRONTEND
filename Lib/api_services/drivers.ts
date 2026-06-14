@@ -73,3 +73,57 @@ export async function getDriverSeason(driverCode: string, year: number): Promise
   console.log("[getDriverSeason] ✅ Fetched:", driverCode, year);
   return data as DriverSeasonBreakdownResponse;
 }
+
+/**
+ * Fetch drivers available for a given season (useful for season grid/search pages).
+ *
+ * @param year - F1 season year
+ */
+export async function getDriversForSeason(year: number): Promise<any> {
+  console.log("[getDriversForSeason] → Fetching:", year);
+
+  const res = await fetch(`/api/drivers/search/?year=${year}`, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+    credentials: "include",
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    const message = extractErrorMessage(data);
+    console.error("[getDriversForSeason] ❌ Failed:", message);
+    throw new Error(message);
+  }
+
+  console.log("[getDriversForSeason] ✅ Fetched:", year);
+  return data;
+}
+
+/**
+ * Search drivers by free-text name query, optional year to restrict results.
+ *
+ * @param q - Search query string
+ * @param year - Optional season year to restrict search
+ */
+export async function searchDriversByName(q: string, year?: number): Promise<any> {
+  console.log("[searchDriversByName] → Fetching:", q, year);
+  const qs = `?q=${encodeURIComponent(q)}${year ? `&year=${year}` : ""}`;
+
+  const res = await fetch(`/api/drivers/search-by-name/${qs}`, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+    credentials: "include",
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    const message = extractErrorMessage(data);
+    console.error("[searchDriversByName] ❌ Failed:", message);
+    throw new Error(message);
+  }
+
+  console.log("[searchDriversByName] ✅ Fetched:", q, year);
+  return data;
+}

@@ -1,6 +1,5 @@
-import type { QueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/Lib/queryKeys";
 import type { AnalysisSessionName } from "@/types/api";
+import { normalizeSessionForApi } from "@/Lib/sessionCodes";
 
 import {
   getAnalysis,
@@ -19,110 +18,85 @@ export async function fetchLapsAnalysis(
   year: number,
   round: number,
   params: Record<string, string | number | undefined> | undefined,
-  queryClient: QueryClient,
 ): Promise<LapsAnalysisResponse> {
-  const driver = params?.driver as string | undefined;
-  const session = (params?.session as string) || "R";
-  const key = queryKeys.lapAnalysis.byType(year, round, "laps", driver, session);
-  const cached = queryClient.getQueryData<LapsAnalysisResponse>(key);
-  if (cached) return cached;
-  const data = await getLapsAnalysis(year, round, params);
-  queryClient.setQueryData(key, data, { updatedAt: Date.now() });
-  return data;
+  // Normalize session in params if present
+  let outParams = params;
+  if (params && Object.prototype.hasOwnProperty.call(params, 'session')) {
+    const raw = String(params.session ?? '').trim() || undefined;
+    const norm = normalizeSessionForApi(raw) ?? raw;
+    outParams = { ...params, session: norm };
+  }
+  return getLapsAnalysis(year, round, outParams);
 }
 
 export async function fetchDriverPace(
   year: number,
   round: number,
   driver: string,
-  queryClient: QueryClient,
   session: string = "R",
 ): Promise<any> {
-  const key = queryKeys.lapAnalysis.byType(year, round, "pace", driver, session);
-  const cached = queryClient.getQueryData(key);
-  if (cached) return cached;
-  const data = await getAnalysis(year, round, "pace", { session, driver });
-  queryClient.setQueryData(key, data, { updatedAt: Date.now() });
-  return data;
+  const norm = normalizeSessionForApi(session) ?? session;
+  return getAnalysis(year, round, "pace", { session: norm, driver });
 }
 
 export async function fetchDriverStints(
   year: number,
   round: number,
   driver: string | undefined,
-  queryClient: QueryClient,
   session: string = "R",
 ): Promise<any> {
-  const key = queryKeys.lapAnalysis.byType(year, round, "stints", driver, session);
-  const cached = queryClient.getQueryData(key);
-  if (cached) return cached;
-  const data = await getAnalysis(year, round, "stints", { session, driver });
-  queryClient.setQueryData(key, data, { updatedAt: Date.now() });
-  return data;
+  const norm = normalizeSessionForApi(session) ?? session;
+  return getAnalysis(year, round, "stints", { session: norm, driver });
 }
 
 export async function fetchTyreStrategy(
   year: number,
   round: number,
-  queryClient: QueryClient,
   session: string = "R",
 ): Promise<any> {
-  const key = queryKeys.lapAnalysis.byType(year, round, "tyre", undefined, session);
-  const cached = queryClient.getQueryData(key);
-  if (cached) return cached;
-  const data = await getAnalysis(year, round, "tyre-strategy", { session });
-  queryClient.setQueryData(key, data, { updatedAt: Date.now() });
-  return data;
+  const norm = normalizeSessionForApi(session) ?? session;
+  return getAnalysis(year, round, "tyre-strategy", { session: norm });
 }
 
 export async function fetchSectorAnalysis(
   year: number,
   round: number,
   driver: string | undefined,
-  queryClient: QueryClient,
   session: string = "R",
 ): Promise<any> {
-  const key = queryKeys.lapAnalysis.byType(year, round, "sectors", driver, session);
-  const cached = queryClient.getQueryData(key);
-  if (cached) return cached;
-  const data = await getAnalysis(year, round, "sector-analysis", { session, driver });
-  queryClient.setQueryData(key, data, { updatedAt: Date.now() });
-  return data;
+  const norm = normalizeSessionForApi(session) ?? session;
+  return getAnalysis(year, round, "sector-analysis", { session: norm, driver });
 }
 
-export async function fetchTelemetry(
-  year: number,
-  round: number,
-  driver: string,
-  lap: number,
-  session: AnalysisSessionName,
-  queryClient: QueryClient,
-): Promise<TelemetryResponse> {
-  const key = queryKeys.telemetry.single(year, round, driver, lap, session);
-  const cached = queryClient.getQueryData<TelemetryResponse>(key);
-  if (cached) return cached;
-  const data = await getTelemetry(year, round, { driver, lap, session });
-  queryClient.setQueryData(key, data, { updatedAt: Date.now() });
-  return data;
-}
+
+export type TelemetryOverlayOptions = {
+  limit_points?: number;
+  stride?: number;
+  sector_start?: number;
+  sector_end?: number;
+};
 
 export async function fetchTelemetryOverlay(
   year: number,
   round: number,
   driverA: string,
   driverB: string,
-  lap: number | undefined,
-  queryClient: QueryClient,
+  lapA: number | undefined,
+  lapB: number | undefined,
   session: AnalysisSessionName = "R",
+  options?: TelemetryOverlayOptions
 ): Promise<TelemetryOverlayResponse> {
-  const key = queryKeys.telemetry.overlay(year, round, driverA, driverB, lap);
-  const cached = queryClient.getQueryData<TelemetryOverlayResponse>(key);
-  if (cached) return cached;
-  const params: Record<string, string | number> = { driver_a: driverA, driver_b: driverB, session };
-  if (lap !== undefined) params.lap = lap;
-  const data = await getTelemetryOverlay(year, round, params);
-  queryClient.setQueryData(key, data, { updatedAt: Date.now() });
-  return data;
+  const norm = normalizeSessionForApi(session) ?? session;
+  const params: Record<string, string | number> = { driver_a: driverA, driver_b: driverB, session: norm };
+  if (lapA !== undefined && lapA !== null) params.lap_a = lapA;
+  if (lapB !== undefined && lapB !== null) params.lap_b = lapB;
+  if (options) {
+    if (options.limit_points !== undefined) params.limit_points = options.limit_points;
+    if (options.stride !== undefined) params.stride = options.stride;
+    if (options.sector_start !== undefined) params.sector_start = options.sector_start;
+    if (options.sector_end !== undefined) params.sector_end = options.sector_end;
+  }
+  return getTelemetryOverlay(year, round, params);
 }
 
 export async function fetchTelemetrySummary(
@@ -131,12 +105,7 @@ export async function fetchTelemetrySummary(
   driver: string,
   lap: number,
   session: AnalysisSessionName,
-  queryClient: QueryClient,
 ): Promise<TelemetrySummaryResponse> {
-  const key = queryKeys.telemetry.summary(year, round, driver, lap);
-  const cached = queryClient.getQueryData<TelemetrySummaryResponse>(key);
-  if (cached) return cached;
-  const data = await getTelemetrySummary(year, round, { driver, lap, session });
-  queryClient.setQueryData(key, data, { updatedAt: Date.now() });
-  return data;
+  const norm = normalizeSessionForApi(session) ?? session;
+  return getTelemetrySummary(year, round, { driver, lap, session: norm });
 }

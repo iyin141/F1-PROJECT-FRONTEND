@@ -12,6 +12,13 @@ export const formatLapMs = (ms: number) => {
 
 export const formatGap = (ms: number) => `+${(ms / 1000).toFixed(3)}`;
 
+export const formatDeltaMs = (ms?: number | null) => {
+  if (ms == null) return "—";
+  const sign = ms >= 0 ? "+" : "-";
+  const absSeconds = Math.abs(ms) / 1000;
+  return `${sign}${absSeconds.toFixed(3)}s`;
+};
+
 import type { AnalysisSessionCode, AnalysisSessionName } from "@/types/api";
 
 /** Maps AnalysisSessionName (including long-form aliases) to the short API session code. */

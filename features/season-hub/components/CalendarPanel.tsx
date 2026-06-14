@@ -151,7 +151,7 @@ const SpotlightCard = ({
       href={`/race/${race.year}/${race.round}`}
       onMouseEnter={() => {
         router.prefetch(`/race/${race.year}/${race.round}`);
-        fetchRaceResults(race.year, race.round, queryClient).catch(() => {});
+        fetchRaceResults(race.year, race.round, queryClient).catch(() => { });
       }}
       className="block rounded-xs border border-border-subtle bg-panel-elev px-4 py-3 transition-colors hover:border-border"
     >
@@ -222,6 +222,11 @@ export const CalendarPanel = ({ year, calendar, loading, view }: CalendarPanelPr
               getRowKey={row => `${row.race.year}-${row.race.round}`}
               onRowClick={(row) => {
                 if (row.showLinks) {
+                  const bar = document.getElementById("nav-progress");
+                  if (bar) {
+                    bar.classList.remove("nav-progress--done");
+                    bar.classList.add("nav-progress--active");
+                  }
                   router.push(`/race/${row.race.year}/${row.race.round}`);
                 }
               }}

@@ -10,5 +10,5 @@ export const API_BASE_URL = normalizeUrl(
 );
 
 export const BACKEND_API_URL = normalizeUrl(
-  process.env.BACKEND_API_URL ?? DEFAULT_BACKEND_API_URL,
+  process.env.BACKEND_URL ?? process.env.BACKEND_API_URL ?? DEFAULT_BACKEND_API_URL,
 );

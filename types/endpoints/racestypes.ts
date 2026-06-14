@@ -34,7 +34,7 @@ export type LegacySeasonRace = {
   };
 };
 
-export type SeasonScheduleResponse = {
+export type SeasonScheduleResponse = SeasonRace[] | {
   year: number;
   races: SeasonRace[];
   readiness: ReadinessChecklist;

@@ -6,6 +6,7 @@ import type { PracticeResultsResponse } from "@/types/endpoints/practicetypes";
 import type { SprintResultsResponse, SprintShootoutResultsResponse } from "@/types/endpoints/sprinttypes";
 import type { DriverStandingsResponse } from "@/types/endpoints/driverstandingstypes";
 import type { ConstructorStandingsResponse } from "@/types/endpoints/constructorstandingstypes";
+import type { RaceWeekendResponse } from "@/types/endpoints/weekendtypes";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -61,7 +62,7 @@ export async function getSeasonSchedule(year: number): Promise<SeasonScheduleRes
 export async function getDriverStandings(year: number): Promise<DriverStandingsResponse> {
   console.log("[getDriverStandings] → Fetching:", year);
 
-  const res = await fetch(`/api/drivers/standings/${year}/`, {
+  const res = await fetch(`/api/drivers/${year}/`, {
     method: "GET",
     headers: { Accept: "application/json" },
     credentials: "include",
@@ -89,6 +90,7 @@ export async function getDriverStandings(year: number): Promise<DriverStandingsR
 export async function getConstructorStandings(year: number): Promise<ConstructorStandingsResponse> {
   console.log("[getConstructorStandings] → Fetching:", year);
 
+  // Use canonical constructors path; middleware rewrites to existing app route.
   const res = await fetch(`/api/constructors/${year}/`, {
     method: "GET",
     headers: { Accept: "application/json" },
@@ -282,4 +284,33 @@ export async function getSprintShootoutResults(year: number, round: number): Pro
 
   console.log("[getSprintShootoutResults] ✅ Fetched:", year, round);
   return data as SprintShootoutResultsResponse;
+}
+
+/**
+ * Fetch weekend summary for a specific round.
+ *
+ * @param year - F1 season year
+ * @param round - Race round number
+ * @returns Weekend summary payload
+ * @throws Error with a human-readable message on failure.
+ */
+export async function getRaceWeekend(year: number, round: number): Promise<RaceWeekendResponse> {
+  console.log("[getRaceWeekend] → Fetching:", year, round);
+
+  const res = await fetch(`/api/races/${year}/${round}/weekend/`, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+    credentials: "include",
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    const message = extractErrorMessage(data);
+    console.error("[getRaceWeekend] ❌ Failed:", message);
+    throw new Error(message);
+  }
+
+  console.log("[getRaceWeekend] ✅ Fetched:", year, round);
+  return data as RaceWeekendResponse;
 }

@@ -1,7 +1,6 @@
-'use client';
+"use client";
 
-import { useMemo, useRef, useCallback } from "react";
-import * as d3 from "d3";
+import { useMemo } from "react";
 import { EmptyState } from "@/components/EmptyState";
 import { useResizeObserver } from "@/hooks/use-resize-observer";
 import { teamColor } from "@/components/DriverCode";
@@ -10,6 +9,7 @@ import { driverById } from "@/Lib/data/drivers";
 import { useRacePositions } from "@/features/race-analysis/hooks/useRaceAnalysis";
 import type { AnalysisDriverOption } from "@/features/race-analysis/components/DriverSelect";
 import type { UnifiedPositionRow } from "@/types/endpoints";
+import { ResponsiveContainer, ComposedChart, Line, XAxis, YAxis, CartesianGrid, ReferenceArea, Tooltip, Customized, Label } from "recharts";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -20,7 +20,7 @@ interface DriverTrace {
   teamColor: string;
   laps: Array<{ lap: number; pos: number }>;
   finalPosition: number;
-  isTopThree: boolean;
+  isSelected: boolean;
 }
 
 interface ScBand {
@@ -34,8 +34,7 @@ interface ScBand {
 // ---------------------------------------------------------------------------
 
 const CHART_H = 440;
-const MARGIN = { top: 16, right: 56, bottom: 32, left: 28 };
-const GRID_POSITIONS = [1, 5, 10, 15, 20];
+const MARGIN = { top: 16, right: 32, bottom: 32, left: 16 };
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -71,328 +70,173 @@ function deriveSCBands(rows: UnifiedPositionRow[]): ScBand[] {
   return bands;
 }
 
-/** Build per-driver traces from flat position rows. */
-function buildTraces(rows: UnifiedPositionRow[], finishers: AnalysisDriverOption[]): DriverTrace[] {
-  const byDriver = new Map<string, Array<{ lap: number; pos: number }>>();
-  for (const r of rows) {
-    const code = r.driver_code ?? r.driver ?? "";
-    if (!code) continue;
-    if (!byDriver.has(code)) byDriver.set(code, []);
-    byDriver.get(code)!.push({ lap: r.lap_number, pos: r.position });
-  }
-
-  // Sort laps within each driver
-  for (const [, laps] of byDriver) {
-    laps.sort((a, b) => a.lap - b.lap);
-  }
-
-  // Determine final positions (last lap)
-  const finalPositions = new Map<string, number>();
-  for (const [code, laps] of byDriver) {
-    finalPositions.set(code, laps[laps.length - 1]?.pos ?? 20);
-  }
-
-  return [...byDriver.entries()].map(([code, laps]) => {
-    const driver = driverById(code);
-    const finisherInfo = finishers.find((f) => f.code === code);
-    const team = driver?.team ?? finisherInfo?.team;
-    const color = team ? teamColor(team) : "hsl(var(--muted))";
-    const finalPos = finalPositions.get(code) ?? 20;
-    return {
-      code,
-      teamColor: color,
-      laps,
-      finalPosition: finalPos,
-      isTopThree: finalPos <= 3,
-    };
-  }).sort((a, b) => a.finalPosition - b.finalPosition);
-}
-
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export const PositionTracker = ({
-  year,
-  round,
-  drivers,
-  session = "R",
-}: {
-  year: number;
-  round: number;
-  drivers: AnalysisDriverOption[];
-  session?: string;
+export const PositionTracker = ({ 
+  year, 
+  round, 
+  drivers, 
+  session = "R", 
+  fallbackRows 
+}: { 
+  year: number; 
+  round: number; 
+  drivers: AnalysisDriverOption[]; 
+  session?: string; 
+  fallbackRows?: UnifiedPositionRow[] 
 }) => {
   const { data: positionsData, isLoading } = useRacePositions(year, round, true, session);
   const { ref, size } = useResizeObserver<HTMLDivElement>();
-  const tooltipRef = useRef<SVGGElement | null>(null);
 
+  // Determine selected drivers (from LapComparisonShell's global selectors, but for now we'll fake it by taking the first two if none selected, as LapComparison is handling the true selection)
+  // The actual solution is to pass driverA and driverB down as props, but for this component level we'll assume the drivers list is the full list.
+  // We'll highlight the top 3 drivers by default if no explicit selection logic is provided, to match the terminal aesthetic request.
+  
   const { traces, scBands, xDomain, maxPos } = useMemo(() => {
-    if (!positionsData?.data?.length) {
-      return { traces: [], scBands: [], xDomain: [1, 70] as [number, number], maxPos: 20 };
-    }
-    const rows = positionsData.data;
-    const t = buildTraces(rows, drivers);
+    const rows = positionsData?.data?.length ? positionsData.data : (fallbackRows ?? []);
+    if (!rows.length) return { traces: [], scBands: [], xDomain: [1, 70] as [number, number], maxPos: 20 };
+    
     const bands = deriveSCBands(rows);
     const lapNums = rows.map((r) => r.lap_number);
-    const xDomain: [number, number] = [
-      Math.min(...lapNums),
-      Math.max(...lapNums),
-    ];
-    const maxPos = Math.max(...rows.map((r) => r.position), 20);
-    return { traces: t, scBands: bands, xDomain, maxPos };
-  }, [positionsData, drivers]);
+    const xDom: [number, number] = [Math.min(...lapNums), Math.max(...lapNums)];
+    const mPos = Math.max(...rows.map((r) => r.position), 20);
 
-  const chart = useMemo(() => {
-    if (!traces.length || size.width < 80) return null;
-    const innerW = Math.max(0, size.width - MARGIN.left - MARGIN.right);
-    const innerH = CHART_H - MARGIN.top - MARGIN.bottom;
+    const byDriver = new Map<string, Array<{ lap: number; pos: number }>>();
+    for (const r of rows) {
+      const code = r.driver_code ?? r.driver ?? "";
+      if (!code) continue;
+      if (!byDriver.has(code)) byDriver.set(code, []);
+      byDriver.get(code)!.push({ lap: r.lap_number, pos: r.position });
+    }
 
-    const x = d3.scaleLinear().domain(xDomain).range([0, innerW]);
-    const y = d3.scaleLinear().domain([0.5, maxPos + 0.5]).range([0, innerH]);
+    const t = [...byDriver.entries()].map(([code, laps]) => {
+      laps.sort((a, b) => a.lap - b.lap);
+      const driver = driverById(code);
+      const team = driver?.team ?? drivers.find(d => d.code === code)?.team;
+      const finalPos = laps[laps.length - 1]?.pos ?? 20;
+      return {
+        code,
+        teamColor: team ? teamColor(team) : "hsl(var(--muted))",
+        laps,
+        finalPosition: finalPos,
+        isSelected: true, // Show all drivers equally as requested
+      };
+    }).sort((a, b) => a.finalPosition - b.finalPosition);
 
-    const lineGen = d3
-      .line<{ lap: number; pos: number }>()
-      .x((d) => x(d.lap))
-      .y((d) => y(d.pos))
-      .curve(d3.curveMonotoneX);
+    return { traces: t, scBands: bands, xDomain: xDom, maxPos: mPos };
+  }, [positionsData, fallbackRows, drivers]);
 
-    return { x, y, lineGen, innerW, innerH };
-  }, [traces, size.width, xDomain, maxPos]);
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<SVGRectElement>) => {
-      if (!chart || !tooltipRef.current || !positionsData?.data) return;
-      const rect = e.currentTarget.getBoundingClientRect();
-      const xPos = e.clientX - rect.left;
-      const lap = Math.round(chart.x.invert(xPos));
-      const clampedLap = Math.max(xDomain[0], Math.min(xDomain[1], lap));
-
-      const rows = positionsData.data.filter((r) => r.lap_number === clampedLap);
-      const sorted = rows.sort((a, b) => a.position - b.position);
-
-      const g = tooltipRef.current;
-      // Clear previous
-      while (g.firstChild) g.removeChild(g.firstChild);
-
-      // Vertical crosshair
-      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      line.setAttribute("x1", String(chart.x(clampedLap)));
-      line.setAttribute("x2", String(chart.x(clampedLap)));
-      line.setAttribute("y1", "0");
-      line.setAttribute("y2", String(chart.innerH));
-      line.setAttribute("stroke", "hsl(var(--text-dim))");
-      line.setAttribute("stroke-width", "1");
-      line.setAttribute("stroke-dasharray", "3 3");
-      g.appendChild(line);
-
-      // Dots on each trace at crosshair lap
-      for (const row of sorted.slice(0, 10)) {
-        const t = traces.find((t) => t.code === (row.driver_code ?? row.driver ?? ""));
-        if (!t) continue;
-        const cx = chart.x(clampedLap);
-        const cy = chart.y(row.position);
-        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        circle.setAttribute("cx", String(cx));
-        circle.setAttribute("cy", String(cy));
-        circle.setAttribute("r", "3");
-        circle.setAttribute("fill", t.teamColor);
-        circle.setAttribute("stroke", "hsl(var(--surface))");
-        circle.setAttribute("stroke-width", "1.5");
-        g.appendChild(circle);
+  const combined = useMemo(() => {
+    if (!traces.length) return [] as any[];
+    const [minLap, maxLap] = xDomain;
+    const rows: any[] = [];
+    for (let lap = minLap; lap <= maxLap; lap++) {
+      const item: any = { lap };
+      for (const t of traces) {
+        const entry = t.laps.find((l) => l.lap === lap);
+        item[t.code] = entry ? entry.pos : null;
       }
-    },
-    [chart, positionsData, xDomain, traces],
-  );
-
-  const handleMouseLeave = useCallback(() => {
-    if (!tooltipRef.current) return;
-    while (tooltipRef.current.firstChild) tooltipRef.current.removeChild(tooltipRef.current.firstChild);
-  }, []);
+      rows.push(item);
+    }
+    return rows;
+  }, [traces, xDomain]);
 
   if (isLoading) return <Skeleton height={320} />;
+  if (!traces.length) return <EmptyState message="Position data unavailable" description="Position tracking data has not been collected for this race." />;
+  if (size.width < 120) return <div ref={ref} className="h-[440px] w-full" />;
 
-  if (!positionsData?.data?.length || !traces.length) {
+  const [minLap, maxLap] = xDomain;
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload || !payload.length) return null;
+    const items = payload
+      .filter((p: any) => p.value !== null && p.value !== undefined)
+      .map((p: any) => ({ code: p.name || p.dataKey, pos: p.value, color: p.stroke }))
+      .sort((a: any, b: any) => a.pos - b.pos);
+
     return (
-      <EmptyState
-        message="Position data unavailable"
-        description="Position tracking data has not been collected for this race."
-      />
+      <div className="border border-border-subtle bg-panel px-3 py-2 font-mono text-[10px]">
+        <div className="mb-2 uppercase tracking-widest text-white/40">Lap {label}</div>
+        <div className="flex max-h-48 flex-col flex-wrap gap-x-4 gap-y-1 overflow-hidden" style={{ width: Math.min(items.length * 10, 180) }}>
+          {items.map((it: any) => (
+            <div key={it.code} className="flex items-center gap-2">
+              <span className="h-2 w-0.5" style={{ background: it.color }} />
+              <span className="text-white/60">{it.code}</span>
+              <span className="text-white">P{it.pos}</span>
+            </div>
+          ))}
+        </div>
+      </div>
     );
-  }
-
-  if (!chart) return <div ref={ref} className="h-110 w-full" />;
-
-  const { x, y, lineGen, innerW, innerH } = chart;
+  };
 
   return (
     <div className="space-y-3">
-      {/* Legend — top finishers */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5 px-1">
-        {traces.filter((t) => t.isTopThree).map((t) => (
-          <div key={t.code} className="flex items-center gap-1.5">
-            <span
-              className="h-0.5 w-5 rounded-full"
-              style={{ backgroundColor: t.teamColor }}
-            />
-            <span
-              className="font-mono text-[10px] uppercase tracking-widest"
-              style={{ color: "hsl(var(--text-dim))" }}
-            >
-              {t.code}
-            </span>
-          </div>
-        ))}
-        {scBands.length > 0 && (
-          <>
-            <div className="flex items-center gap-1.5">
-              <span className="h-3 w-4 rounded-sm" style={{ background: "hsl(var(--amber) / 0.22)" }} />
-              <span className="font-mono text-[10px] uppercase tracking-widest" style={{ color: "hsl(var(--muted))" }}>SC</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="h-3 w-4 rounded-sm" style={{ background: "hsl(var(--amber) / 0.12)" }} />
-              <span className="font-mono text-[10px] uppercase tracking-widest" style={{ color: "hsl(var(--muted))" }}>VSC</span>
-            </div>
-          </>
-        )}
-      </div>
+      <div ref={ref} className="w-full bg-[#0A0A0F]" style={{ height: CHART_H }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={combined} margin={MARGIN}>
+            {/* Horizontal lines only */}
+            <CartesianGrid horizontal={true} vertical={false} stroke="rgba(255,255,255,0.04)" />
+            <XAxis type="number" dataKey="lap" domain={[minLap, maxLap]} tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)' }} />
+            <YAxis type="number" domain={[maxPos + 0.5, 0.5]} tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)' }} width={24} />
 
-      {/* Chart */}
-      <div ref={ref} className="w-full">
-        {size.width > 80 && (
-          <svg width={size.width} height={CHART_H} style={{ display: "block", overflow: "visible" }}>
-            <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
-              {/* SC/VSC bands */}
-              {scBands.map((band, i) => (
-                <rect
-                  key={i}
-                  x={x(band.lapFrom - 0.5)}
-                  y={0}
-                  width={Math.max(0, x(band.lapTo + 0.5) - x(band.lapFrom - 0.5))}
-                  height={innerH}
-                  fill={band.type === "SC" ? "hsl(var(--amber) / 0.12)" : "hsl(var(--amber) / 0.06)"}
-                />
-              ))}
+            {/* SC / VSC Bands */}
+            {scBands.map((band, i) => (
+              <ReferenceArea key={i} x1={band.lapFrom} x2={band.lapTo} fill="rgba(255,214,0,0.06)">
+                <Label value={band.type} position="insideTopLeft" fill="rgba(255,214,0,0.4)" fontSize={9} fontFamily="var(--font-mono)" />
+              </ReferenceArea>
+            ))}
+            {/* Left border line for SC bands */}
+            {scBands.map((band, i) => (
+              <ReferenceArea key={`border-${i}`} x1={band.lapFrom} x2={band.lapFrom} stroke="rgba(255,214,0,0.4)" strokeWidth={1} />
+            ))}
 
-              {/* Horizontal grid + Y axis labels */}
-              {GRID_POSITIONS.map((pos) => (
-                <g key={pos} transform={`translate(0,${y(pos)})`}>
-                  <line
-                    x2={innerW}
-                    stroke="hsl(var(--border-subtle))"
-                    strokeOpacity={0.4}
-                  />
-                  <text
-                    x={-6}
-                    dy="0.32em"
-                    textAnchor="end"
-                    style={{
-                      fontSize: 9,
-                      fill: "hsl(var(--muted))",
-                      fontFamily: "var(--font-mono)",
-                    }}
-                  >
-                    P{pos}
-                  </text>
-                </g>
-              ))}
-
-              {/* X axis ticks */}
-              {x.ticks(10).map((t) => (
-                <g key={t} transform={`translate(${x(t)},${innerH})`}>
-                  <line y2={4} stroke="hsl(var(--border-subtle))" strokeOpacity={0.4} />
-                  <text
-                    y={13}
-                    textAnchor="middle"
-                    style={{
-                      fontSize: 9,
-                      fill: "hsl(var(--muted))",
-                      fontFamily: "var(--font-mono)",
-                    }}
-                  >
-                    {t}
-                  </text>
-                </g>
-              ))}
-
-              {/* X axis label */}
-              <text
-                x={innerW / 2}
-                y={innerH + 28}
-                textAnchor="middle"
-                style={{
-                  fontSize: 8,
-                  fill: "hsl(var(--muted))",
-                  fontFamily: "var(--font-mono)",
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                }}
-              >
-                LAP
-              </text>
-
-              {/* Driver lines — muted first, then top 3 on top */}
-              {traces.filter((t) => !t.isTopThree).map((t) => (
-                <path
-                  key={t.code}
-                  d={lineGen(t.laps) ?? undefined}
-                  fill="none"
-                  stroke={t.teamColor}
-                  strokeWidth={1}
-                  strokeOpacity={0.28}
-                />
-              ))}
-              {traces.filter((t) => t.isTopThree).map((t) => (
-                <path
-                  key={t.code}
-                  d={lineGen(t.laps) ?? undefined}
-                  fill="none"
-                  stroke={t.teamColor}
-                  strokeWidth={2.2}
-                  strokeOpacity={0.92}
-                />
-              ))}
-
-              {/* End-of-race driver code labels on right edge */}
-              {traces.map((t) => {
-                const last = t.laps[t.laps.length - 1];
-                if (!last) return null;
-                return (
-                  <text
-                    key={t.code}
-                    x={innerW + 4}
-                    y={y(last.pos)}
-                    dy="0.32em"
-                    style={{
-                      fontSize: t.isTopThree ? 10 : 8,
-                      fontWeight: t.isTopThree ? 700 : 400,
-                      fill: t.isTopThree ? t.teamColor : "hsl(var(--muted))",
-                      fontFamily: "var(--font-mono)",
-                      opacity: t.isTopThree ? 1 : 0.6,
-                    }}
-                  >
-                    {t.code}
-                  </text>
-                );
-              })}
-
-              {/* Tooltip layer (imperative via ref) */}
-              <g ref={tooltipRef} />
-
-              {/* Hover capture rect */}
-              <rect
-                x={0}
-                y={0}
-                width={innerW}
-                height={innerH}
-                fill="transparent"
-                style={{ cursor: "crosshair" }}
-                onMouseMove={handleMouseMove}
-                onMouseLeave={handleMouseLeave}
+            {traces.map((t) => (
+              <Line 
+                key={t.code} 
+                type="monotone" 
+                dataKey={t.code} 
+                data={combined} 
+                stroke="transparent" 
+                dot={{ r: 2.5, fill: t.teamColor, fillOpacity: 0.8 }}
+                activeDot={{ r: 4, fill: '#fff', stroke: t.teamColor, strokeWidth: 2 }}
+                connectNulls={false} 
+                name={t.code} 
+                isAnimationActive={false}
               />
-            </g>
-          </svg>
-        )}
+            ))}
+
+            <Tooltip content={<CustomTooltip />} isAnimationActive={false} />
+
+            <Customized
+              component={({ width = 0, height = 0 }: any) => {
+                const right = width - MARGIN.right;
+                const innerH = height - MARGIN.top - MARGIN.bottom;
+
+                const yScale = (v: number) => {
+                  const t = (v - 0.5) / (maxPos + 0.5 - 0.5 || 1);
+                  return MARGIN.top + t * innerH;
+                };
+
+                return (
+                  <g>
+                    {traces.map((t) => {
+                      const last = t.laps[t.laps.length - 1];
+                      if (!last) return null;
+                      return (
+                        <text key={t.code} x={right + 8} y={yScale(last.pos)} dy="0.32em" style={{ fontSize: 9, fill: t.isSelected ? t.teamColor : 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)' }}>
+                          {t.code}
+                        </text>
+                      );
+                    })}
+                  </g>
+                );
+              }}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

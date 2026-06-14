@@ -4,6 +4,9 @@ import { useMemo } from "react";
 import Skeleton from "@/components/animations/Skeleton";
 import { useDrs } from "@/features/race-detail/hooks/useRaceDetail";
 import { driverById } from "@/Lib/data/drivers";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+
 
 export const DrsPanel = ({
   year,
@@ -13,6 +16,8 @@ export const DrsPanel = ({
   round: number;
 }) => {
   const { data, isLoading } = useDrs(year, round);
+  const queryClient = useQueryClient();
+  const router = useRouter();
 
   const stats = useMemo(() => {
     if (!data || !data.data || data.data.length === 0) return null;

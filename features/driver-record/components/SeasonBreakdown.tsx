@@ -36,40 +36,40 @@ export function SeasonBreakdown({
           transition={{ duration: 0.3, ease: "easeOut" }}
           className="overflow-hidden"
         >
-          <div className="rounded-lg border border-border-subtle bg-surface2 p-3 md:p-4">
-            <div className="mb-3 flex items-start justify-between gap-3">
-                <div>
-                <h3 className="font-display text-3xl text-text">{year}</h3>
-                <p className="font-sans text-[13px] text-text-dim">
-                  {season ? `${season.totalRaces} races` : "Season breakdown"}
-                </p>
+          <div className="border border-border-subtle bg-panel mt-4">
+            <header className="flex items-center justify-between border-b border-border-subtle px-4 h-[40px]">
+              <div className="flex items-baseline gap-3">
+                <h3 className="font-mono text-sm tracking-widest text-white">{year} SEASON</h3>
+                <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
+                  {season ? `${season.totalRaces} races` : "Breakdown"}
+                </span>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="font-mono text-[10px] uppercase tracking-[0.15em] text-text-dim"
+                className="font-mono text-[10px] uppercase tracking-widest text-white/40 transition-colors hover:text-white"
               >
-                Close
+                [ CLOSE ]
               </button>
-            </div>
+            </header>
 
             {loading && (
-              <div className="space-y-2">
+              <div className="p-4 space-y-2">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-13" />
+                  <div key={i} className="h-8 bg-white/5 animate-pulse" />
                 ))}
               </div>
             )}
 
             {!loading && isError && (
-              <div className="space-y-3 py-6 text-center">
-                <p className="font-mono text-[12px] text-text-dim">Could not load {year} season data</p>
+              <div className="flex flex-col items-center justify-center gap-3 p-12">
+                <p className="font-mono text-xs uppercase tracking-widest text-white/40">Could not load {year} season data</p>
                 <button
                   type="button"
                   onClick={onRetry}
-                  className="font-mono text-[10px] uppercase tracking-[0.15em] text-text-dim"
+                  className="font-mono text-[10px] uppercase tracking-widest text-white/60 hover:text-white"
                 >
-                  Retry
+                  [ RETRY ]
                 </button>
               </div>
             )}
@@ -79,24 +79,24 @@ export function SeasonBreakdown({
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-2xl border-collapse">
                     <thead>
-                      <tr className="border-b border-border-subtle text-left font-mono text-[10px] tracking-[0.15em] text-text-dim">
-                        <th className="px-2 py-2">RD</th>
+                      <tr className="border-b border-border-subtle bg-white/5 text-left font-mono text-[9px] uppercase tracking-widest text-white/40">
+                        <th className="px-4 py-2 w-12">RD</th>
                         <th className="px-2 py-2">RACE</th>
                         <th className="hidden px-2 py-2 md:table-cell">DATE</th>
-                        <th className="hidden px-2 py-2 md:table-cell">GRID</th>
-                        <th className="px-2 py-2">FINISH</th>
-                        <th className="px-2 py-2 text-right">PTS</th>
+                        <th className="hidden px-2 py-2 md:table-cell w-16">GRID</th>
+                        <th className="px-2 py-2 w-16 text-right">FINISH</th>
+                        <th className="px-4 py-2 w-16 text-right">PTS</th>
                         {seasonHasQualifyingData(season.races) && (
                           <>
-                            <th className="hidden px-2 py-2 lg:table-cell">QUAL POS</th>
-                            <th className="hidden px-2 py-2 lg:table-cell">QUAL TIME</th>
+                            <th className="hidden px-2 py-2 lg:table-cell w-20 text-right">QUAL POS</th>
+                            <th className="hidden px-2 py-2 lg:table-cell text-right">QUAL TIME</th>
                           </>
                         )}
-                        <th className="px-2 py-2 text-center">FL</th>
-                        <th className="px-2 py-2">STATUS</th>
+                        <th className="px-2 py-2 w-12 text-center">FL</th>
+                        <th className="px-4 py-2 w-32 text-right">STATUS</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-white/5 text-white/70">
                       {season.races.map((race) => (
                         <SeasonBreakdownRow
                           key={`${race.year}-${race.round}`}
@@ -108,7 +108,7 @@ export function SeasonBreakdown({
                   </table>
                 </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-2 rounded-md border border-border-subtle bg-surface p-2 md:grid-cols-4 xl:grid-cols-7">
+                <div className="grid grid-cols-2 gap-px border-t border-border-subtle bg-border-subtle md:grid-cols-4 xl:grid-cols-7">
                   {(() => {
                     const races = season.races.length;
                     const wins = season.races.filter((r) => r.finishPosition === 1).length;
@@ -130,9 +130,9 @@ export function SeasonBreakdown({
                     ] as const;
 
                     return items.map(([label, value]) => (
-                      <div key={label} className="text-center">
-                        <div className="font-display text-xl md:text-2xl leading-none text-text">{value}</div>
-                        <div className="font-mono text-[9px] tracking-[0.15em] text-text-dim">{label}</div>
+                      <div key={label} className="bg-panel px-4 py-3 flex items-center justify-between">
+                        <div className="font-mono text-[9px] uppercase tracking-widest text-white/40">{label}</div>
+                        <div className="font-mono text-sm font-semibold text-white">{value}</div>
                       </div>
                     ));
                   })()}

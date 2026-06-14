@@ -40,16 +40,16 @@ export function CareerTimeline({
 
     const tween = gsap.fromTo(
       rows,
-      { y: 8, opacity: 0 },
+      { y: 4, opacity: 0 },
       {
         y: 0,
         opacity: 1,
-        duration: 0.2,
-        stagger: 0.02,
-        ease: "power1.out",
+        duration: 0.15,
+        stagger: 0.015,
+        ease: "power2.out",
         scrollTrigger: {
           trigger: container,
-          start: "top 85%",
+          start: "top 90%",
         },
       },
     );
@@ -61,21 +61,21 @@ export function CareerTimeline({
   }, [seasons]);
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border-subtle bg-surface">
-      <table className="w-full min-w-3xl border-collapse">
+    <div className="overflow-x-auto bg-[#0A0A0F] pb-12">
+      <table className="w-full min-w-3xl border-collapse text-left">
         <thead>
-          <tr className="border-b border-border-subtle font-mono text-[10px] tracking-[0.15em] text-text-dim">
-            <th className="w-0.75 p-0" />
-            <th className="px-3 py-2 text-left">YEAR</th>
-            <th className="px-2 py-2 text-right">W</th>
-            <th className="px-2 py-2 text-right">POD</th>
-            <th className="px-2 py-2 text-right">POLE</th>
-            <th className="hidden px-2 py-2 text-right lg:table-cell">FL</th>
-            <th className="px-2 py-2 text-right">RACES</th>
-            <th className="px-2 py-2 text-right">TITLE</th>
+          <tr className="border-b border-border-subtle font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">
+            <th className="w-0.5 p-0" />
+            <th className="px-4 py-3">YEAR</th>
+            <th className="px-3 py-3 text-right">W</th>
+            <th className="px-3 py-3 text-right">POD</th>
+            <th className="px-3 py-3 text-right">POLE</th>
+            <th className="hidden px-3 py-3 text-right lg:table-cell">FL</th>
+            <th className="px-3 py-3 text-right">RACES</th>
+            <th className="px-4 py-3 text-right">TITLE</th>
           </tr>
         </thead>
-        <tbody ref={bodyRef}>
+        <tbody ref={bodyRef} className="divide-y divide-white/5">
           {seasons.map((season) => {
             const selected = selectedYear === season.year;
             return (
@@ -86,9 +86,9 @@ export function CareerTimeline({
                   teamId={teamId}
                   onSelect={(year) => onSelectYear(selected ? null : year)}
                 />
-                <tr>
-                  <td colSpan={8} className="p-0">
-                    {selected && (
+                {selected && (
+                  <tr>
+                    <td colSpan={8} className="p-0 border-b border-border-subtle pb-6 bg-[#0A0A0F]">
                       <SeasonBreakdown
                         year={selectedYear}
                         season={seasonData}
@@ -97,9 +97,9 @@ export function CareerTimeline({
                         onRetry={onRetrySeason}
                         onClose={() => onSelectYear(null)}
                       />
-                    )}
-                  </td>
-                </tr>
+                    </td>
+                  </tr>
+                )}
               </Fragment>
             );
           })}

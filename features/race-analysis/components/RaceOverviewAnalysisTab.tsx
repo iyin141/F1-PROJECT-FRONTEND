@@ -4,6 +4,9 @@ import { Panel } from "@/components/Panel";
 import { RaceSummaryStats } from "./RaceSummaryStats";
 import { ConsistencyCards } from "./ConsistencyCards";
 import { TeammateBattles } from "./TeammateBattles";
+import RangeTopPerformers from "./RangeTopPerformers";
+import RangeConsistencyCards from "./RangeConsistencyCards";
+import { useRaceOverviewData } from "../hooks/useRaceAnalysis";
 import type { AnalysisDriverOption } from "./DriverSelect";
 import { useAllLaps } from "../hooks/useRaceAnalysis";
 import Skeleton from "@/components/animations/Skeleton";
@@ -34,6 +37,7 @@ export function RaceOverviewAnalysisTab({
   drivers: AnalysisDriverOption[];
 }) {
   const { data: lapsData, isLoading } = useAllLaps(year, round, session);
+  const overview = useRaceOverviewData(year, round, session);
   const sessionCovered = lapsData?.meta?.can_proceed ?? (!!lapsData && lapsData.data.length > 0);
 
   if (isLoading) {
@@ -78,7 +82,23 @@ export function RaceOverviewAnalysisTab({
 
       <PanelEntry delay={0.07}>
         <Panel label="PANEL 2 · CONSISTENCY" title="Driver Consistency Score">
-          <ConsistencyCards year={year} round={round} session={session} />
+          {overview.isLoading ? (
+            <Skeleton height={140} />
+          ) : (
+            <div className="space-y-4">
+              {/** Feature flag: enable 4-range overview UI */}
+              {true ? (
+                overview.data ? (
+                  <div className="space-y-4">
+                    {overview.data.rangeTopPerformers ? <RangeTopPerformers data={overview.data.rangeTopPerformers} /> : null}
+                    <RangeConsistencyCards ranges={overview.data.ranges} consistency={overview.data.consistency} metrics={overview.data.metrics} />
+                  </div>
+                ) : null
+              ) : (
+                <ConsistencyCards year={year} round={round} session={session} />
+              )}
+            </div>
+          )}
         </Panel>
       </PanelEntry>
 

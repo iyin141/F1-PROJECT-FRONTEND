@@ -46,14 +46,14 @@ export function YearNavigator({
   );
 
   return (
-    <div className="flex items-center gap-2 rounded-sm border border-border-subtle bg-panel px-2 py-1.5">
+    <div className="flex items-center gap-2 border border-border-subtle bg-panel px-2 py-1.5">
       <span className="label-mono whitespace-nowrap">{label}</span>
       <button
         type="button"
         onClick={() => navigateToYear(year - 1)}
         disabled={year <= minYear}
         data-nav-trigger="true"
-        className="nav-arrow nav-arrow--prev inline-flex h-7 w-7 items-center justify-center rounded-sm border border-border-subtle text-text transition-colors hover:bg-surface2 disabled:cursor-not-allowed disabled:opacity-40"
+        className="nav-arrow nav-arrow--prev inline-flex h-7 w-7 items-center justify-center border border-border-subtle text-text transition-colors hover:bg-surface2 disabled:cursor-not-allowed disabled:opacity-40"
         aria-label="Previous year"
       >
         <ChevronLeft size={14} />
@@ -66,7 +66,7 @@ export function YearNavigator({
         onClick={() => navigateToYear(year + 1)}
         disabled={year >= maxYear}
         data-nav-trigger="true"
-        className="nav-arrow nav-arrow--next inline-flex h-7 w-7 items-center justify-center rounded-sm border border-border-subtle text-text transition-colors hover:bg-surface2 disabled:cursor-not-allowed disabled:opacity-40"
+        className="nav-arrow nav-arrow--next inline-flex h-7 w-7 items-center justify-center border border-border-subtle text-text transition-colors hover:bg-surface2 disabled:cursor-not-allowed disabled:opacity-40"
         aria-label="Next year"
       >
         <ChevronRight size={14} />

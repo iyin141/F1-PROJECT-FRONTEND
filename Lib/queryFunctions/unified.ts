@@ -10,6 +10,7 @@ import {
   getUnifiedTrackStatus,
   getFullSession,
 } from "@/Lib/api_services/unified";
+import { normalizeSessionForApi } from "@/Lib/sessionCodes";
 
 import type { UnifiedWeatherResponse } from "@/types/endpoints/weathertypes";
 import type { UnifiedIncidentsResponse } from "@/types/endpoints/incidentstypes";
@@ -24,12 +25,15 @@ export async function fetchUnifiedWeather(
   round: number,
   session: string,
   queryClient: QueryClient,
+  perLap?: boolean,
 ): Promise<UnifiedWeatherResponse> {
-  const key = queryKeys.sessionData.byType(year, round, "weather");
-  const cached = queryClient.getQueryData<UnifiedWeatherResponse>(key);
+  const norm = normalizeSessionForApi(session) ?? session;
+  const baseKey = queryKeys.sessionData.byType(year, round, "weather", norm);
+  const key = perLap ? ([...baseKey, "per_lap"] as const) : baseKey;
+  const cached = queryClient.getQueryData<UnifiedWeatherResponse>(key as any);
   if (cached) return cached;
-  const data = await getUnifiedWeather(year, round, session);
-  queryClient.setQueryData(key, data, { updatedAt: Date.now() });
+  const data = await getUnifiedWeather(year, round, norm, perLap);
+  queryClient.setQueryData(key as any, data, { updatedAt: Date.now() });
   return data;
 }
 
@@ -39,10 +43,11 @@ export async function fetchUnifiedIncidents(
   session: string,
   queryClient: QueryClient,
 ): Promise<UnifiedIncidentsResponse> {
-  const key = queryKeys.sessionData.byType(year, round, "incidents");
+  const norm = normalizeSessionForApi(session) ?? session;
+  const key = queryKeys.sessionData.byType(year, round, "incidents", norm);
   const cached = queryClient.getQueryData<UnifiedIncidentsResponse>(key);
   if (cached) return cached;
-  const data = await getUnifiedIncidents(year, round, session);
+  const data = await getUnifiedIncidents(year, round, norm);
   queryClient.setQueryData(key, data, { updatedAt: Date.now() });
   return data;
 }
@@ -52,12 +57,14 @@ export async function fetchUnifiedPositions(
   round: number,
   session: string,
   sample: number | undefined,
+  limit: number | undefined,
   queryClient: QueryClient,
 ): Promise<UnifiedPositionsResponse> {
-  const key = queryKeys.replayPositions(year, round, session);
+  const norm = normalizeSessionForApi(session) ?? session;
+  const key = queryKeys.replayPositions(year, round, norm);
   const cached = queryClient.getQueryData<UnifiedPositionsResponse>(key);
   if (cached) return cached;
-  const data = await getUnifiedPositions(year, round, session, sample);
+  const data = await getUnifiedPositions(year, round, norm, sample, limit);
   queryClient.setQueryData(key, data, { updatedAt: Date.now() });
   return data;
 }
@@ -68,10 +75,11 @@ export async function fetchUnifiedPitStops(
   session: string,
   queryClient: QueryClient,
 ): Promise<UnifiedPitStopsResponse> {
-  const key = queryKeys.replayPitStops(year, round);
+  const norm = normalizeSessionForApi(session) ?? session;
+  const key = queryKeys.replayPitStops(year, round, norm);
   const cached = queryClient.getQueryData<UnifiedPitStopsResponse>(key);
   if (cached) return cached;
-  const data = await getUnifiedPitStops(year, round, session);
+  const data = await getUnifiedPitStops(year, round, norm);
   queryClient.setQueryData(key, data, { updatedAt: Date.now() });
   return data;
 }
@@ -82,10 +90,11 @@ export async function fetchUnifiedDrs(
   session: string,
   queryClient: QueryClient,
 ): Promise<UnifiedDrsResponse> {
-  const key = queryKeys.sessionData.byType(year, round, "drs");
+  const norm = normalizeSessionForApi(session) ?? session;
+  const key = queryKeys.sessionData.byType(year, round, "drs", norm);
   const cached = queryClient.getQueryData<UnifiedDrsResponse>(key);
   if (cached) return cached;
-  const data = await getUnifiedDrs(year, round, session);
+  const data = await getUnifiedDrs(year, round, norm);
   queryClient.setQueryData(key, data, { updatedAt: Date.now() });
   return data;
 }
@@ -96,10 +105,11 @@ export async function fetchUnifiedTrackStatus(
   session: string,
   queryClient: QueryClient,
 ): Promise<UnifiedTrackStatusResponse> {
-  const key = queryKeys.sessionData.byType(year, round, "track-status");
+  const norm = normalizeSessionForApi(session) ?? session;
+  const key = queryKeys.sessionData.byType(year, round, "track-status", norm);
   const cached = queryClient.getQueryData<UnifiedTrackStatusResponse>(key);
   if (cached) return cached;
-  const data = await getUnifiedTrackStatus(year, round, session);
+  const data = await getUnifiedTrackStatus(year, round, norm);
   queryClient.setQueryData(key, data, { updatedAt: Date.now() });
   return data;
 }
@@ -113,7 +123,8 @@ export async function fetchFullSession(
   const key = queryKeys.fullSession.byRace(year, round);
   const cached = queryClient.getQueryData<FullSessionResponse>(key);
   if (cached) return cached;
-  const data = await getFullSession(year, round, params);
+  const safeParams = params ? { ...params, session: params.session ? normalizeSessionForApi(params.session) ?? params.session : undefined } : undefined;
+  const data = await getFullSession(year, round, safeParams);
   queryClient.setQueryData(key, data, { updatedAt: Date.now() });
   return data;
 }

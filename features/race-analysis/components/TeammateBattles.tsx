@@ -3,7 +3,7 @@
 // (no direct React imports required in this file)
 import { teamColor } from "@/components/DriverCode";
 import { formatLapMs } from "@/Lib/format";
-import { useTeammateBattles } from "@/features/race-analysis/hooks/useRaceAnalysis";
+import { useTeammateBattles, useRaceLapFrames } from "@/features/race-analysis/hooks/useRaceAnalysis";
 import Skeleton from "@/components/animations/Skeleton";
 import type { TeammateBattle, PhaseBattle, RacePhase } from "@/types/ui";
 import type { AnalysisDriverOption } from "./DriverSelect";
@@ -128,8 +128,38 @@ function PhaseCell({
   );
 }
 
-function BattleCard({ battle }: { battle: TeammateBattle }) {
+function BattleCard({ battle, lastLapPerDriver, totalLaps, framesByLap }: { battle: TeammateBattle; lastLapPerDriver: Map<string, number>; totalLaps: number; framesByLap: Map<number, any> }) {
   const color = teamColor(battle.teamId);
+
+  const lastA = lastLapPerDriver.get(battle.driverA.code) ?? 0;
+  const lastB = lastLapPerDriver.get(battle.driverB.code) ?? 0;
+  const lastCommon = Math.min(lastA, lastB);
+  const retiredDriver = lastA !== lastB ? (lastA < lastB ? battle.driverA.code : battle.driverB.code) : null;
+  let dnfMessage: string | null = null;
+  if (retiredDriver && Math.max(lastA, lastB) !== totalLaps) {
+    // compute which driver was faster up to the last common lap
+    let sumA = 0;
+    let sumB = 0;
+    let countA = 0;
+    let countB = 0;
+    for (let lap = 1; lap <= lastCommon; lap++) {
+      const f = framesByLap.get(lap);
+      if (!f) continue;
+      const a = f.drivers[battle.driverA.code];
+      const b = f.drivers[battle.driverB.code];
+      if (a && a.lapTimeMs != null) { sumA += a.lapTimeMs; countA++; }
+      if (b && b.lapTimeMs != null) { sumB += b.lapTimeMs; countB++; }
+    }
+    const avgA = countA ? sumA / countA : null;
+    const avgB = countB ? sumB / countB : null;
+    const faster = (avgA != null && avgB != null) ? (avgA < avgB ? battle.driverA.code : battle.driverB.code) : null;
+    if (faster) {
+      const other = faster === battle.driverA.code ? battle.driverB.code : battle.driverA.code;
+      dnfMessage = `${faster} was faster than ${other} until lap ${lastCommon} when ${retiredDriver} retired (DNF).`;
+    } else {
+      dnfMessage = `${retiredDriver} retired at lap ${Math.max(lastA, lastB)} (DNF).`;
+    }
+  }
 
   return (
     <div
@@ -165,6 +195,11 @@ function BattleCard({ battle }: { battle: TeammateBattle }) {
       </div>
 
       {/* Phase breakdown */}
+      {dnfMessage ? (
+        <div className="px-4 py-2">
+          <span className="font-mono text-[11px]" style={{ color: 'hsl(var(--muted))' }}>{dnfMessage}</span>
+        </div>
+      ) : null}
       <div className="divide-y divide-border-subtle">
         {battle.phases.map((phase) => (
           <PhaseCell
@@ -194,6 +229,11 @@ interface TeammateBattlesProps {
 
 export const TeammateBattles = ({ year, round, drivers, session = "R" }: TeammateBattlesProps) => {
   const { data: battles, isLoading } = useTeammateBattles(year, round, session);
+  const framesQuery = useRaceLapFrames(year, round, session, true);
+  const frames = framesQuery.data ?? [];
+  const framesByLap = new Map<number, any>(frames.map((f) => [f.lap, f]));
+  const lastLapPerDriver = new Map<string, number>();
+  for (const f of frames) for (const code of Object.keys(f.drivers)) lastLapPerDriver.set(code, f.lap);
   void drivers;
 
   if (isLoading) return <Skeleton height={200} />;
@@ -211,7 +251,7 @@ export const TeammateBattles = ({ year, round, drivers, session = "R" }: Teammat
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {battles.map((b) => (
-        <BattleCard key={b.teamId} battle={b} />
+        <BattleCard key={b.teamId} battle={b} lastLapPerDriver={lastLapPerDriver} totalLaps={frames.length ? frames[frames.length - 1].lap : 0} framesByLap={framesByLap} />
       ))}
     </div>
   );

@@ -3,6 +3,7 @@
 import { DriverCode } from "@/components/DriverCode";
 import { ErrorPanel } from "@/components/EmptyState";
 import type { DriverStanding, Race } from "@/types/ui";
+import { useDriverStandings } from "@/features/season-hub/hooks/useSeasonHub";
 
 type StatusStripProps = {
   calendar: Race[] | undefined;
@@ -13,6 +14,10 @@ type StatusStripProps = {
 };
 
 export const StatusStrip = ({ calendar, leader, hasError, onRetry, year }: StatusStripProps) => {
+  const currentYear = year ?? new Date().getFullYear();
+  const driverStandingsQuery = useDriverStandings(currentYear);
+  const leaderFromQuery = driverStandingsQuery.data?.[0];
+  const leaderData = leader ?? leaderFromQuery;
   return (
     <header className="mb-6 flex flex-col gap-4 rounded-sm border border-border-subtle bg-panel px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
       <div className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-2">
@@ -23,9 +28,9 @@ export const StatusStrip = ({ calendar, leader, hasError, onRetry, year }: Statu
             <span className="text-muted">/{calendar.length}</span>
           </span>
         )}
-        {leader && (
+        {leaderData && (
           <span className="font-mono text-xs">
-            LEADER <DriverCode driver={leader.driver} className="text-text" /> · {leader.points} PTS
+            LEADER <DriverCode driver={leaderData.driver} className="text-text" /> · {leaderData.points} PTS
           </span>
         )}
       </div>

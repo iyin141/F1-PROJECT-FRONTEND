@@ -1,6 +1,4 @@
 import { notFound } from "next/navigation";
-import { HydrationBoundary, prefetchQueries } from "@/Lib/prefetch";
-import { queryKeys } from "@/Lib/queryKeys";
 import { RaceAnalysisShell } from "@/features/race-analysis/RaceAnalysis";
 import type { Metadata } from "next";
 
@@ -24,26 +22,5 @@ export default async function AnalysisPage({ params }: AnalysisPageProps) {
     notFound();
   }
 
-  console.log("[prefetch] RaceAnalysisPage: starting prefetch", { year, round });
-  const { dehydratedState } = await prefetchQueries([
-    {
-      queryKey: queryKeys.lapAnalysis.byType(year, round, "laps"),
-      pathname: `/analysis/races/${year}/${round}/laps/`,
-    },
-    {
-      queryKey: queryKeys.lapAnalysis.byType(year, round, "stints"),
-      pathname: `/analysis/races/${year}/${round}/stints/`,
-    },
-    {
-      queryKey: queryKeys.lapAnalysis.byType(year, round, "tyre"),
-      pathname: `/analysis/races/${year}/${round}/tyre-strategy/`,
-    },
-  ]);
-  console.log("[prefetch] RaceAnalysisPage: prefetch complete", { year, round });
-
-  return (
-    <HydrationBoundary state={dehydratedState}>
-      <RaceAnalysisShell year={year} round={round} />
-    </HydrationBoundary>
-  );
+  return <RaceAnalysisShell year={year} round={round} />;
 }

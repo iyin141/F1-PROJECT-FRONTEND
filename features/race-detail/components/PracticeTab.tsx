@@ -1,9 +1,6 @@
 'use client';
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
-import { fetchDriverCareer, fetchDriverSeason } from "@/Lib/queryFunctions";
+import { DriverLink } from "@/components/ui/DriverLink";
 import { useMemo, useState, useTransition } from "react";
 import { Panel } from "@/components/Panel";
 import { teamColor } from "@/components/DriverCode";
@@ -20,7 +17,6 @@ import { TableSkeleton } from "@/components/animations/TableSkeleton";
 
 const buildColumns = (
   year: number,
-  prefetchDriverRoute: (driverCode: string) => void,
 ): ColumnDef<PracticeResult>[] => [
   {
     key: "pos",
@@ -42,13 +38,7 @@ const buildColumns = (
             style={{ backgroundColor: teamColor(r.driver.team) }}
           />
           {flag ? <FlagImage src={flag} /> : null}
-          <Link
-            href={`/drivers/${r.driver.code}/${year}`}
-            onMouseEnter={() => prefetchDriverRoute(r.driver.code)}
-            className="font-semibold transition-colors hover:text-blue"
-          >
-            {r.driver.code}
-          </Link>
+          <DriverLink driver={r.driver} year={year} />
           <span className="truncate text-text-dim">{r.driver.lastName}</span>
         </div>
       );
@@ -85,23 +75,13 @@ type PracticeTabProps = RaceTabProps & {
 };
 
 export const PracticeTab = ({ year, round, upcoming, availableSessions }: PracticeTabProps) => {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   // Use the available sessions from the race schedule, defaulting to all three
   const sessions = availableSessions?.length ? availableSessions : (["FP1", "FP2", "FP3"] as const);
   const [session, setSession] = useState<"FP1" | "FP2" | "FP3">(sessions[0]);
 
-  const queryClient = useQueryClient();
-
-  // call both next route prefetch and react-query data prefetch (cache-first)
-  const prefetchDriverRouteAndData = (driverCode: string) => {
-    router.prefetch(`/drivers/${driverCode}/${year}`);
-    void fetchDriverCareer(driverCode, queryClient);
-    if (year !== undefined) void fetchDriverSeason(driverCode, year, queryClient);
-  };
-
   const columns = useMemo(
-    () => buildColumns(year, prefetchDriverRouteAndData),
+    () => buildColumns(year),
     [year],
   );
 

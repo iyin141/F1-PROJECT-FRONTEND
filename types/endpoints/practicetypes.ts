@@ -14,7 +14,7 @@ export type PracticeResultRow = {
   lap_number?: number | null;
 };
 
-export type PracticeResultsResponse = {
+export type PracticeResultsResponse = PracticeResultRow[] | {
   year: number;
   round: number;
   session: string;

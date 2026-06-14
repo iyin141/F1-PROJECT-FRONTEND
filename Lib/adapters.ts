@@ -44,6 +44,7 @@ import type {
 
 import type {
   SeasonScheduleResponse,
+  SeasonRace,
   RaceDetailResponse,
   LegacySeasonRace,
   LegacyRaceDetailResponse,
@@ -68,14 +69,23 @@ import type { DriverCareerResponse, DriverSeasonBreakdownResponse } from "@/type
 // ---------------------------------------------------------------------------
 
 /** Match an API "First Last" string against the DRIVERS static list. */
-function findDriver(name: string): Driver | undefined {
+function findDriver(name: string, constructor?: string): Driver | undefined {
   const lower = name.toLowerCase().trim();
-  return DRIVERS.find(
+  const found = DRIVERS.find(
     (d) =>
       `${d.firstName} ${d.lastName}`.toLowerCase() === lower ||
       d.lastName.toLowerCase() === lower ||
       d.code.toLowerCase() === lower,
   );
+  
+  if (!found) return undefined;
+  
+  const driver = { ...found };
+  if (constructor) {
+    const historicalTeam = findTeam(constructor) ?? stubTeam(constructor);
+    driver.team = historicalTeam.id;
+  }
+  return driver;
 }
 
 /** Build a minimal fallback Driver when the name doesn't match the static list.
@@ -293,7 +303,7 @@ function stringOrEmpty(value: unknown): string {
 }
 
 function normalizeSeasonRaceRow(
-  row: SeasonScheduleResponse["races"][number] | LegacySeasonRace | Record<string, unknown>,
+  row: SeasonRace | LegacySeasonRace | Record<string, unknown>,
   index: number,
 ): NormalizedSeasonRace {
   const roundValue = "round" in row ? (row.round as number) : index + 1;
@@ -384,6 +394,12 @@ const SESSION_NAME_TO_ID: Record<string, SessionId> = {
   "practice 3": "fp3",
   "qualifying": "qualifying",
   "race": "race",
+  // Sprint variants
+  "sprint": "sprint",
+  "sprint qualifying": "sprint-qualifying",
+  "sprint-qualifying": "sprint-qualifying",
+  "sprint shootout": "sprint-shootout",
+  "sprint-shootout": "sprint-shootout",
 };
 
 /**
@@ -469,13 +485,15 @@ export function getRawSessionList(
 // Season / Race adapters
 // ---------------------------------------------------------------------------
 
-export function adaptSeasonSchedule(res: SeasonScheduleResponse): Race[] {
-  return (res?.races ?? []).map((r, index) => {
-    const row = normalizeSeasonRaceRow(r as SeasonScheduleResponse["races"][number], index);
+export function adaptSeasonSchedule(res: SeasonScheduleResponse, fallbackYear: number): Race[] {
+  const races = Array.isArray(res) ? res : (res?.races ?? []);
+  const year = Array.isArray(res) ? fallbackYear : (res?.year ?? fallbackYear);
+  return races.map((r, index) => {
+    const row = normalizeSeasonRaceRow(r as SeasonRace, index);
     const countryCode = resolveCountryCode(row.country, row.location);
     const sessions = parseSessionSchedule(r as unknown as Record<string, unknown>);
     return {
-      year: res.year,
+      year,
       round: row.round,
       name: row.name,
       shortName: row.name.replace(/\s*Grand Prix\s*/i, " GP").trim(),
@@ -526,9 +544,10 @@ export function adaptRaceDetail(res: RaceDetailResponse, year: number): Race {
 // ---------------------------------------------------------------------------
 
 export function adaptRaceResults(res: RaceResultsResponse): RaceResult[] {
-  return (res?.results?.race ?? res?.race ?? []).map((r) => {
+  const results = Array.isArray(res) ? res : (res?.data ?? res?.results?.race ?? res?.race ?? []);
+  return results.map((r) => {
     const constructor = r.constructor ?? r.team ?? "";
-    const driver = findDriver(r.driver_name) ?? stubDriver(r.driver_name, constructor);
+    const driver = findDriver(r.driver_name, constructor) ?? stubDriver(r.driver_name, constructor);
     return {
       position: r.position === 0 || r.position === null ? "DNF" : r.position,
       driver,
@@ -545,37 +564,60 @@ export function adaptRaceResults(res: RaceResultsResponse): RaceResult[] {
 }
 
 export function adaptBundledQualifyingResults(res: RaceResultsResponse): QualifyingResult[] {
-  return (res?.results?.qualifying ?? res?.qualifying ?? []).map((r) => {
+  const results = Array.isArray(res) ? [] : (res?.qualifying ?? res?.results?.qualifying ?? []);
+  return results.map((r) => {
     const constructor = r.constructor ?? r.team ?? "";
-    const driver = findDriver(r.driver_name) ?? stubDriver(r.driver_name, constructor);
+    const driver = findDriver(r.driver_name, constructor) ?? stubDriver(r.driver_name, constructor);
+    const q1Ms = parseTimeMs(r.q1_time ?? null);
+    const q2Ms = parseTimeMs(r.q2_time ?? null);
+    const q3Ms = parseTimeMs(r.q3_time ?? null);
     return {
       position: r.position ?? 0,
       driver,
       q1: r.q1_time ?? undefined,
       q2: r.q2_time ?? undefined,
       q3: r.q3_time ?? undefined,
+      q1Ms: q1Ms ?? undefined,
+      q2Ms: q2Ms ?? undefined,
+      q3Ms: q3Ms ?? undefined,
     };
   });
 }
 
 export function adaptQualifyingResults(res: QualifyingResultsResponse): QualifyingResult[] {
-  const rows = res?.results ?? res?.qualifying ?? [];
+  const rows = Array.isArray(res) ? res : (res?.data ?? res?.results ?? res?.qualifying ?? []);
   return rows.map((r) => {
     const constructor = r.constructor ?? r.team ?? "";
-    const driver = findDriver(r.driver_name) ?? stubDriver(r.driver_name, constructor);
-    return { position: r.position ?? 0, driver, q1: r.q1_time ?? undefined, q2: r.q2_time ?? undefined, q3: r.q3_time ?? undefined };
+    const driver = findDriver(r.driver_name, constructor) ?? stubDriver(r.driver_name, constructor);
+    const q1Ms = parseTimeMs(r.q1_time ?? null);
+    const q2Ms = parseTimeMs(r.q2_time ?? null);
+    const q3Ms = parseTimeMs(r.q3_time ?? null);
+    return {
+      position: r.position ?? 0,
+      driver,
+      q1: r.q1_time ?? undefined,
+      q2: r.q2_time ?? undefined,
+      q3: r.q3_time ?? undefined,
+      q1Ms: q1Ms ?? undefined,
+      q2Ms: q2Ms ?? undefined,
+      q3Ms: q3Ms ?? undefined,
+    };
   });
 }
 
 export function adaptPracticeResults(res: PracticeResultsResponse): PracticeResult[] {
-  return (res?.practice ?? res?.results ?? []).map((r) => {
+  const results = Array.isArray(res) ? res : (res?.practice ?? res?.results ?? []);
+  return results.map((r) => {
     const driverName = r.driver_name ?? r.driver_code ?? "";
     const constructor = r.constructor ?? r.team ?? "";
-    const driver = findDriver(driverName) ?? stubDriver(driverName, constructor);
+    const driver = findDriver(driverName, constructor) ?? stubDriver(driverName, constructor);
+    const bestRaw = r.best_lap ?? r.lap_time ?? null;
+    const bestLapMs = parseTimeMs(bestRaw);
     return {
       position: r.position,
       driver,
       bestLap: r.best_lap ?? r.lap_time ?? "—",
+      bestLapMs: bestLapMs ?? undefined,
       laps: r.laps ?? r.lap_number ?? 0,
     };
   });
@@ -586,8 +628,9 @@ export function adaptPracticeResults(res: PracticeResultsResponse): PracticeResu
 // ---------------------------------------------------------------------------
 
 export function adaptSprintResults(res: SprintResultsResponse): RaceResult[] {
-  return (res?.data ?? []).map((r) => {
-    const driver = findDriver(r.driver_name) ?? stubDriver(r.driver_name, r.team);
+  const data = Array.isArray(res) ? res : (res?.data ?? []);
+  return data.map((r) => {
+    const driver = findDriver(r.driver_name, r.team) ?? stubDriver(r.driver_name, r.team);
     return {
       position: r.position === 0 || r.position === null ? "DNF" : r.position,
       driver,
@@ -603,8 +646,9 @@ export function adaptSprintResults(res: SprintResultsResponse): RaceResult[] {
 }
 
 export function adaptSprintShootoutResults(res: SprintShootoutResultsResponse): QualifyingResult[] {
-  return (res?.data ?? []).map((r) => {
-    const driver = findDriver(r.driver_name) ?? stubDriver(r.driver_name, r.team);
+  const data = Array.isArray(res) ? res : (res?.data ?? []);
+  return data.map((r) => {
+    const driver = findDriver(r.driver_name, r.team) ?? stubDriver(r.driver_name, r.team);
     return {
       position: r.position ?? 0,
       driver,
@@ -622,7 +666,9 @@ export function adaptSprintShootoutResults(res: SprintShootoutResultsResponse): 
 export function adaptDriverStandings(res: DriverStandingsResponse): DriverStanding[] {
   const list = res?.drivers ?? res?.standings ?? [];
   return list.map((s) => {
-    const driver = findDriver(s.driver_name) ?? stubDriver(s.driver_name, s.constructor ?? "");
+    const constructor = s.constructor ?? "";
+    const driver = findDriver(s.driver_name, constructor) ?? stubDriver(s.driver_name, constructor);
+
     return { position: s.position, driver, points: s.points, wins: s.wins, podiums: 0 };
   });
 }
@@ -641,35 +687,37 @@ export function adaptConstructorStandings(
 /**
  * Adapt a DriverCareerResponse (raw endpoint) into a UI `DriverCareer`.
  */
-export function adaptDriverCareer(res: DriverCareerResponse): DriverCareer {
+export function adaptDriverCareer(raw: any): DriverCareer {
+  const data = raw?.data || raw?.results || raw || {};
   return {
-    driverCode: res.driver_code,
-    driverName: res.driver_name ?? "",
-    nationality: res.nationality ?? "",
-    seasons: (res.career ?? []).map((s) => ({
+    driverCode: data.driver_code || data.canonical_code || data.driver_id || "",
+    driverName: data.driver_name ?? "",
+    nationality: data.nationality ?? "",
+    seasons: (data.career ?? []).map((s: any) => ({
       year: s.year,
       races: s.races ?? 0,
       wins: s.wins ?? 0,
       podiums: s.podiums ?? 0,
       champion: !!s.champion,
     })),
-    totalWins: res.career_totals?.total_wins ?? 0,
-    totalPodiums: res.career_totals?.total_podiums ?? 0,
-    championships: res.career_totals?.championships ?? 0,
+    totalWins: data.career_totals?.total_wins ?? 0,
+    totalPodiums: data.career_totals?.total_podiums ?? 0,
+    championships: data.career_totals?.championships ?? 0,
   };
 }
 
 /**
  * Adapt a DriverSeasonBreakdownResponse into the UI `DriverSeason` shape.
  */
-export function adaptDriverSeason(res: DriverSeasonBreakdownResponse): DriverSeason {
+export function adaptDriverSeason(raw: any): DriverSeason {
+  const data = raw?.data || raw?.results || raw || {};
   return {
-    driverCode: res.driver_code,
-    driverName: res.driver_name ?? "",
-    year: res.year,
-    totalRaces: res.total_races ?? 0,
-    sprintWeekends: res.sprint_weekends ?? 0,
-    races: (res.races ?? []).map((r) => ({
+    driverCode: data.driver_code || data.canonical_code || data.driver_id || "",
+    driverName: data.driver_name ?? "",
+    year: data.year ?? 0,
+    totalRaces: data.total_races ?? 0,
+    sprintWeekends: data.sprint_weekends ?? 0,
+    races: (data.races ?? []).map((r: any) => ({
       year: r.year,
       round: r.round,
       raceName: r.race_name,
@@ -683,6 +731,12 @@ export function adaptDriverSeason(res: DriverSeasonBreakdownResponse): DriverSea
       lapsCompleted: r.laps_completed ?? null,
       qualifyingPosition: r.qualifying_position ?? null,
       qualifyingTime: r.qualifying_time ?? null,
+      sprintPosition: r.sprint_position ?? null,
+      sprintPoints: r.sprint_points ?? null,
+      sprintStatus: r.sprint_status ?? null,
+      sprintGrid: r.sprint_grid ?? null,
+      sprintLaps: r.sprint_laps ?? null,
+      sprintFastestLap: r.sprint_fastest_lap ?? null,
     })),
   };
 }
@@ -728,15 +782,26 @@ export function adaptIncidents(res: UnifiedIncidentsResponse): Incident[] {
 
 export function adaptLapTimes(res: LapsAnalysisResponse): LapTime[] {
   return res.data
-    .filter((r) => r.lap_time != null)
-    .map((r) => ({
-      lap: r.lap_number,
-      driverId: r.driver_code,
-      timeMs: parseFloat(r.lap_time!) * 1000,
-      position: 0,
-      compound: ((r.compound ?? "medium").toLowerCase()) as Compound,
-      pit: false,
-    }));
+    .map((r) => {
+      const ms = parseTimeMs((r as any).lap_time ?? null);
+      if (ms === null) return null;
+      const driverId = (r as any).driver_code ?? (r as any).driver ?? "";
+      const lapNum = (r as any).lap_number ?? (r as any).lap ?? 0;
+      return {
+        lap: lapNum,
+        driverId: String(driverId ?? ""),
+        timeMs: ms,
+        sector1Ms: parseTimeMs((r as any).sector1 ?? (r as any).sector_1_time ?? (r as any).sector1_time ?? (r as any).Sector1Time ?? null) ?? undefined,
+        sector2Ms: parseTimeMs((r as any).sector2 ?? (r as any).sector_2_time ?? (r as any).sector2_time ?? (r as any).Sector2Time ?? null) ?? undefined,
+        sector3Ms: parseTimeMs((r as any).sector3 ?? (r as any).sector_3_time ?? (r as any).sector3_time ?? (r as any).Sector3Time ?? null) ?? undefined,
+        position: (r as any).position ?? 0,
+        compound: ((r as any).compound ?? "medium").toLowerCase() as Compound,
+        pit: !!(r as any).pit,
+      } as LapTime;
+    })
+    .filter((x): x is LapTime => x !== null)
+    // stable sort by lap asc then driverId
+    .sort((a, b) => a.lap - b.lap || a.driverId.localeCompare(b.driverId));
 }
 
 export function adaptStints(res: StintsAnalysisResponse): Stint[] {
@@ -756,7 +821,9 @@ export function adaptStints(res: StintsAnalysisResponse): Stint[] {
         startLap: row.lap_start,
         endLap: row.lap_end,
         compound: (row.compound?.toLowerCase() ?? "medium") as Compound,
-        avgPaceMs: 0,
+        avgPaceMs: parseTimeMs((row as any).avg_pace) ?? 0,
+        bestLapMs: parseTimeMs((row as any).best_lap) ?? null,
+        degradationMs: parseTimeMs((row as any).pace_degradation) ?? null,
       };
     });
 }
@@ -779,23 +846,77 @@ export function adaptTyreStrategy(res: TyreStrategyResponse): Stint[] {
 // Handles:  "0 days 00:01:37.123000"  →  97123
 //           "97.123"                   →  97123
 // ---------------------------------------------------------------------------
-function parseTimeMs(raw: string | null | undefined): number | null {
+export function parseTimeMs(raw: string | null | undefined): number | null {
   if (!raw) return null;
-  const dayMatch = raw.match(/(\d+) days? (\d{2}):(\d{2}):(\d{2})\.(\d+)/);
+  let parsedMs: number | null = null;
+  const dayMatch = raw.match(/(\d+) days? (\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?/);
   if (dayMatch) {
     const [, d, h, m, s, frac] = dayMatch;
-    const fracMs = parseFloat("0." + frac) * 1000;
-    return (
+    const fracMs = frac ? parseFloat("0." + frac) * 1000 : 0;
+    parsedMs = (
       (parseInt(d, 10) * 86400 +
         parseInt(h, 10) * 3600 +
         parseInt(m, 10) * 60 +
         parseInt(s, 10)) *
-        1000 +
+      1000 +
       fracMs
     );
+  } else {
+    // Handle HH:MM:SS.mmm and MM:SS.mmm formats
+    const hmsMatch = raw.match(/^(\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))?$/);
+    if (hmsMatch) {
+      const [, h, m, s, frac] = hmsMatch;
+      const fracMs = frac ? parseFloat("0." + frac) * 1000 : 0;
+      parsedMs = (parseInt(h, 10) * 3600 + parseInt(m, 10) * 60 + parseInt(s, 10)) * 1000 + fracMs;
+    } else {
+      const msMatch = raw.match(/^(\d{1,2}):(\d{2})(?:\.(\d+))?$/);
+      if (msMatch) {
+        const [, m, s, frac] = msMatch;
+        const fracMs = frac ? parseFloat("0." + frac) * 1000 : 0;
+        parsedMs = (parseInt(m, 10) * 60 + parseInt(s, 10)) * 1000 + fracMs;
+      } else {
+        const sec = parseFloat(raw);
+        parsedMs = isNaN(sec) ? null : sec * 1000;
+      }
+    }
   }
-  const sec = parseFloat(raw);
-  return isNaN(sec) ? null : sec * 1000;
+
+  // Filter out impossibly fast or 0 times (e.g. 0 days 00:00:00)
+  if (parsedMs !== null && parsedMs < 10000) {
+    return null;
+  }
+  return parsedMs;
+}
+
+// ---------------------------------------------------------------------------
+// Unified Consistency Score Calculation Helper
+// ---------------------------------------------------------------------------
+export function calculateConsistencyMetrics(lapTimesMs: number[]): { score: number; avgLapMs: number; bestLapMs: number } | null {
+  // Filter out impossible laps (e.g., 0ms or anything under 50 seconds)
+  const validLaps = lapTimesMs.filter((t) => t > 50000);
+  if (validLaps.length < 3) return null;
+
+  // Find median for robust outlier detection
+  const sorted = [...validLaps].sort((a, b) => a - b);
+  const median = sorted[Math.floor(sorted.length / 2)];
+  
+  // Filter laps > 1.07x median (approx +6s on a 1:25 lap)
+  const cleanLaps = validLaps.filter((t) => t <= median * 1.07);
+  if (cleanLaps.length < 2) return null;
+
+  const sum = cleanLaps.reduce((a, b) => a + b, 0);
+  const avg = sum / cleanLaps.length;
+  const variance = cleanLaps.reduce((acc, t) => acc + (t - avg) ** 2, 0) / cleanLaps.length;
+  const std = Math.sqrt(variance);
+
+  // Score mapping: CV * 25
+  const cv = avg > 0 ? std / avg : 1;
+  const score = Math.max(0, Math.round(100 * (1 - cv * 25)));
+  
+  // Always use overall best valid lap
+  const best = Math.min(...validLaps);
+
+  return { score, avgLapMs: avg, bestLapMs: best };
 }
 
 // ---------------------------------------------------------------------------
@@ -823,12 +944,8 @@ export function adaptConsistencyScores(res: LapsAnalysisResponse): ConsistencySc
     if (!driver || laps.length < 3) continue;
 
     const times = laps.map((l) => l.timeMs);
-    const best = Math.min(...times);
-    const avg = times.reduce((a, b) => a + b, 0) / times.length;
-    const variance = times.reduce((a, b) => a + (b - avg) ** 2, 0) / times.length;
-    const std = Math.sqrt(variance);
-    // Consistency score: 100% = zero variance relative to average lap time.
-    const score = Math.max(0, Math.min(100, 100 * (1 - std / avg)));
+    const metrics = calculateConsistencyMetrics(times);
+    if (!metrics) continue;
 
     const compoundCounts = new Map<string, number>();
     for (const l of laps) {
@@ -837,7 +954,7 @@ export function adaptConsistencyScores(res: LapsAnalysisResponse): ConsistencySc
     const topCompound =
       [...compoundCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "medium";
 
-    scores.push({ driver, score, bestLapMs: best, avgLapMs: avg, topCompound: topCompound as Compound });
+    scores.push({ driver, score: metrics.score, bestLapMs: metrics.bestLapMs, avgLapMs: metrics.avgLapMs, topCompound: topCompound as Compound });
   }
 
   // Sort by average pace (fastest → slowest)
@@ -895,17 +1012,18 @@ export function adaptRaceLapFrames(res: LapsAnalysisResponse): RaceLapFrame[] {
   const byLap = new Map<number, Record<string, RaceLapDriverEntry>>();
 
   for (const row of res.data) {
-    const lap = row.lap_number;
+    const lap = (row as any).lap_number ?? (row as any).lap ?? 0;
     if (!byLap.has(lap)) byLap.set(lap, {});
     const drivers = byLap.get(lap)!;
-    drivers[row.driver_code] = {
-      lapTimeMs: parseTimeMs(row.lap_time ?? null),
-      compound: normalizeCompoundNullable(row.compound),
-      stint: row.stint ?? null,
-      sector1Ms: parseTimeMs(row.sector1 ?? null),
-      sector2Ms: parseTimeMs(row.sector2 ?? null),
-      sector3Ms: parseTimeMs(row.sector3 ?? null),
-      isPersonalBest: row.is_personal_best ?? null,
+    const code = (row as any).driver_code ?? (row as any).driver ?? "";
+    drivers[String(code ?? "")] = {
+      lapTimeMs: parseTimeMs((row as any).lap_time ?? null),
+      compound: normalizeCompoundNullable((row as any).compound),
+      stint: (row as any).stint ?? null,
+      sector1Ms: parseTimeMs((row as any).sector1 ?? null),
+      sector2Ms: parseTimeMs((row as any).sector2 ?? null),
+      sector3Ms: parseTimeMs((row as any).sector3 ?? null),
+      isPersonalBest: (row as any).is_personal_best ?? null,
     };
   }
 
@@ -927,13 +1045,9 @@ function consistencyFromLapTimes(
   driver: Driver,
   topCompound: import("@/types/ui").Compound,
 ): ConsistencyScore | null {
-  if (lapTimesMs.length < MIN_LAPS) return null;
-  const avg = lapTimesMs.reduce((a, b) => a + b, 0) / lapTimesMs.length;
-  const variance = lapTimesMs.reduce((acc, t) => acc + (t - avg) ** 2, 0) / lapTimesMs.length;
-  const sigma = Math.sqrt(variance);
-  const score = Math.max(0, Math.min(100, 100 * (1 - sigma / avg)));
-  const best = Math.min(...lapTimesMs);
-  return { driver, score, bestLapMs: best, avgLapMs: avg, topCompound };
+  const metrics = calculateConsistencyMetrics(lapTimesMs);
+  if (!metrics) return null;
+  return { driver, score: metrics.score, bestLapMs: metrics.bestLapMs, avgLapMs: metrics.avgLapMs, topCompound };
 }
 
 export function adaptConsistencyByStint(
@@ -1083,7 +1197,7 @@ export function adaptReplayFrames(
   incidents?: UnifiedIncidentsResponse | undefined,
   laps?: LapsAnalysisResponse | undefined,
 ): ReplayFrame[] {
-  if (!positions?.data.length) return [];
+  if (!positions?.data?.length) return [];
 
   const normalizeCompound = (value?: string | null): Compound => {
     if (!value) return "medium";
@@ -1119,7 +1233,7 @@ export function adaptReplayFrames(
   // ── Track all drivers ────────────────────────────────────────────────────
   const allDrivers = new Set<string>();
   const lastLapPerDriver = new Map<string, number>();
-  for (const row of positions.data) {
+  for (const row of positions?.data ?? []) {
     const code = row.driver_code;
     if (!code) continue;
     const lap = row.lap_number ?? row.lap ?? 0;

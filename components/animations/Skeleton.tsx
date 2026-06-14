@@ -20,7 +20,7 @@ export default function Skeleton({
   if (width !== undefined) computedStyle.width = typeof width === "number" ? `${width}px` : width;
   if (height !== undefined) computedStyle.height = typeof height === "number" ? `${height}px` : height;
   if (variant === "circle") computedStyle.borderRadius = "50%";
-  if (variant === "text") computedStyle.borderRadius = "4px";
+  if (variant === "text") computedStyle.borderRadius = "0";
 
   return <div className={`skeleton ${className}`.trim()} style={computedStyle} aria-hidden {...rest} />;
 }

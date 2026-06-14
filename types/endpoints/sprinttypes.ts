@@ -13,7 +13,7 @@ export type SprintResultRow = {
   points: number;
 };
 
-export type SprintResultsResponse = {
+export type SprintResultsResponse = SprintResultRow[] | {
   meta: {
     year: number;
     round: number;
@@ -36,7 +36,7 @@ export type SprintShootoutResultRow = {
   q3_time: string | null;
 };
 
-export type SprintShootoutResultsResponse = {
+export type SprintShootoutResultsResponse = SprintShootoutResultRow[] | {
   meta: {
     year: number;
     round: number;

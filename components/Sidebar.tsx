@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useParams } from "next/navigation";
-import { Home, CalendarDays, Flag, Activity } from "lucide-react";
+import { Home, CalendarDays, Flag, Activity, FileText } from "lucide-react";
 import { cn } from "@/Lib/utils";
 
 export const Sidebar = () => {
@@ -19,11 +19,10 @@ export const Sidebar = () => {
   return (
     <aside className="hidden md:flex md:fixed md:inset-y-0 md:left-0 md:w-[15%] flex-col border-r border-border-subtle bg-panel z-30">
       <div className="px-4 py-5 border-b border-border-subtle">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-red animate-pulse" />
-          <h1 className="font-display text-sm font-bold tracking-tighter">F1 CONTROL ROOM</h1>
+        <div className="flex flex-col">
+          <img src="/Logo_icon.png" alt="F1 Control Room" className="  ml-[-7px]" />
+          <p className="font-mono text-[10px] text-text-dim mt-3 tracking-wider">All data is from the server</p>
         </div>
-        <p className="label-mono mt-1">v1 · INSTRUMENT</p>
       </div>
 
       <nav className="scrollbar-none flex-1 overflow-x-auto overflow-y-auto py-3">
@@ -74,14 +73,13 @@ export const Sidebar = () => {
             </Link>
           ))}
         </div>
+
+        <div className="px-4 mt-6 mb-2 label-mono">External</div>
+        <a href={process.env.NEXT_PUBLIC_API_DOCS_URL} target="_blank" rel="noopener noreferrer" className={cn(linkBase, linkInactive)}>
+          <FileText size={14} /> API DOCS
+        </a>
       </nav>
 
-      <div className="px-4 py-3 border-t border-border-subtle">
-        <div className="flex items-center gap-2">
-          <Activity size={12} className="text-green" />
-          <span className="label-mono">MOCK DATA · LIVE</span>
-        </div>
-      </div>
     </aside>
   );
 };

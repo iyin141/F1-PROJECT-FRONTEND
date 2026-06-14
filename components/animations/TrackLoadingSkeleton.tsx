@@ -68,7 +68,7 @@ export function TrackLoadingSkeleton({ year, className = "", minHeight = 350 }: 
 
   return (
     <div 
-      className={`flex flex-col items-center justify-center py-10 px-4 w-full rounded-sm border border-border-subtle bg-panel-elev relative overflow-hidden ${className}`}
+      className={`flex flex-col items-center justify-center py-10 px-4 w-full border border-border-subtle bg-panel-elev relative overflow-hidden ${className}`}
       style={{ minHeight }}
     >
       <AnimatePresence mode="wait">
@@ -107,7 +107,7 @@ export function TrackLoadingSkeleton({ year, className = "", minHeight = 350 }: 
                 />
               </motion.div>
             ) : (
-              <div className="h-28 w-28 rounded-full border border-dashed border-border animate-pulse" />
+              <div className="h-28 w-28 border border-dashed border-border animate-pulse" />
             )}
           </div>
 
@@ -135,11 +135,11 @@ export function TrackLoadingSkeleton({ year, className = "", minHeight = 350 }: 
 
       {/* Indeterminate Centered Rolling Bar */}
       <div 
-        className="w-48 h-[2px] overflow-hidden rounded-full relative mt-4"
+        className="w-48 h-[2px] overflow-hidden relative mt-4"
         style={{ backgroundColor: "hsl(var(--border-subtle))" }}
       >
         <motion.div
-          className="absolute top-0 left-0 h-full w-1/3 bg-red rounded-full"
+          className="absolute top-0 left-0 h-full w-1/3 bg-red"
           animate={{
             x: ["-100%", "300%"],
           }}

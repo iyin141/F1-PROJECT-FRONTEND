@@ -6,8 +6,6 @@ import { RaceOverviewAnalysisTab } from "./RaceOverviewAnalysisTab";
 import { PositionChartTab } from "./PositionChartTab";
 import { LapAnalysisTab } from "./LapAnalysisTab";
 import { TelemetryAnalysisTab } from "./TelemetryAnalysisTab";
-import { StintAnalysisTab } from "./StintAnalysisTab";
-import { StrategyAnalysisTab } from "./StrategyAnalysisTab";
 import type { AnalysisDriverOption } from "./DriverSelect";
 
 type AnalysisTabsProps = {
@@ -26,8 +24,6 @@ export const AnalysisTabs = ({ year, round, session, drivers }: AnalysisTabsProp
     ["position", "Position Chart"],
     ["lap", "Lap Analysis"],
     ["telemetry", "Driver Telemetry"],
-    ["stint", "Stint Analysis"],
-    ["strategy", "Strategy"],
   ];
 
   return (
@@ -61,12 +57,6 @@ export const AnalysisTabs = ({ year, round, session, drivers }: AnalysisTabsProp
         </Tabs.Content>
         <Tabs.Content value="telemetry">
           <TelemetryAnalysisTab year={year} round={round} session={session} drivers={drivers} />
-        </Tabs.Content>
-        <Tabs.Content value="stint">
-          <StintAnalysisTab year={year} round={round} session={session} drivers={drivers} />
-        </Tabs.Content>
-        <Tabs.Content value="strategy">
-          <StrategyAnalysisTab year={year} round={round} session={session} />
         </Tabs.Content>
       </div>
     </Tabs.Root>

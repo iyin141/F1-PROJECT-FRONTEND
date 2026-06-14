@@ -1,9 +1,6 @@
 'use client';
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
-import { fetchDriverCareer, fetchDriverSeason } from "@/Lib/queryFunctions";
+import { DriverLink } from "@/components/ui/DriverLink";
 import { useMemo } from "react";
 import { cn } from "@/Lib/utils";
 import { Panel } from "@/components/Panel";
@@ -25,7 +22,6 @@ const bestSegment = (r: QualifyingResult): "Q1" | "Q2" | "Q3" =>
 
 const buildColumns = (
   year: number,
-  prefetchDriverRoute: (driverCode: string) => void,
 ): ColumnDef<QualifyingResult>[] => [
   {
     key: "pos",
@@ -71,13 +67,11 @@ const buildColumns = (
             className="font-mono text-sm font-semibold tracking-wider"
             style={{ color: "hsl(var(--text))" }}
           >
-            <Link
-              href={`/drivers/${r.driver.code}/${year}`}
-              onMouseEnter={() => prefetchDriverRoute(r.driver.code)}
+            <DriverLink
+              driver={r.driver}
+              year={year}
               className="transition-colors hover:text-blue"
-            >
-              {r.driver.code}
-            </Link>
+            />
           </div>
           <div
             className="truncate font-mono text-[10px] uppercase tracking-[0.15em]"
@@ -172,18 +166,10 @@ const buildColumns = (
 ];
 
 export const QualifyingTab = ({ year, round, upcoming }: RaceTabProps) => {
-  const router = useRouter();
 
-  const queryClient = useQueryClient();
-
-  const prefetchDriverRoute = (driverCode: string) => {
-    router.prefetch(`/drivers/${driverCode}/${year}`);
-    void fetchDriverCareer(driverCode, queryClient);
-    if (year !== undefined) void fetchDriverSeason(driverCode, year, queryClient);
-  };
 
   const columns = useMemo(
-    () => buildColumns(year, prefetchDriverRoute),
+    () => buildColumns(year),
     [year],
   );
 

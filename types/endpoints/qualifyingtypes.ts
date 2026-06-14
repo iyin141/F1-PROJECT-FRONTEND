@@ -13,10 +13,13 @@ export type QualifyingOnlyResultRow = {
   q3_time: string | null;
 };
 
-export type QualifyingResultsResponse = {
-  year: number;
-  round: number;
+export type QualifyingResultsResponse = QualifyingOnlyResultRow[] | {
+  meta?: Record<string, unknown>;
+  data?: QualifyingOnlyResultRow[];
+  // Legacy
+  year?: number;
+  round?: number;
   qualifying?: QualifyingOnlyResultRow[];
   results?: QualifyingOnlyResultRow[];
-  readiness: ReadinessChecklist;
+  readiness?: ReadinessChecklist;
 };

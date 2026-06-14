@@ -4,6 +4,7 @@ import { useMemo, useRef, useEffect } from "react";
 import { useNavStore } from "@/_Stores/navStore";
 import { gsap } from "gsap";
 import { ScrollingCar } from "@/_Components/ScrollingCar";
+import { Skeleton } from "@/components/Skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { SectionLabel } from "@/_Components/ui/SectionLabel";
 import { DRIVERS } from "@/Lib/data/drivers";
@@ -68,7 +69,13 @@ export function DriverRecordShell({ driverCode, year }: DriverRecordShellProps) 
 
       {!career.isLoading && careerHasIncompleteStats(seasons) && <DataCaveatNote />}
 
-      {seasons.length === 0 ? (
+      {career.isLoading ? (
+        <div className="flex flex-col gap-6">
+          <Skeleton className="h-48 w-full border border-border-subtle bg-panel" />
+          <Skeleton className="h-16 w-full border border-border-subtle bg-panel" />
+          <Skeleton className="h-64 w-full border border-border-subtle bg-panel" />
+        </div>
+      ) : seasons.length === 0 ? (
         <EmptyState message="No career data" description={`No career history found for ${code}.`} />
       ) : (
         <CareerTimeline

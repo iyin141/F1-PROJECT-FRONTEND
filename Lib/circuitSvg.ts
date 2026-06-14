@@ -38,19 +38,18 @@ type CircuitEntry = {
   layouts: Array<{ layoutId: string; seasons: string }>;
 };
 
-function getLayoutId(jsonCircuitId: string, year: number): {id : string , entry : any } | null {
+function getLayoutId(jsonCircuitId: string, year: number): { id: string, entry: any } | null {
   const entry = (CIRCUITS_DATA as CircuitEntry[]).find((c) => c.id === jsonCircuitId);
   if (!entry) return null;
-  
+
 
   const match = entry.layouts.find((l) => seasonIncludes(l.seasons, year));
-  
-  if (match)
-  {
-    
+
+  if (match) {
+
     return { id: match.layoutId, entry };
   }
-  
+
   return { id: entry.layouts[entry.layouts.length - 1]?.layoutId ?? null, entry };
 }
 
@@ -62,7 +61,7 @@ export function getCircuitSvgPathandciruitname(
   circuitId: string,
   year: number,
   theme: CircuitTheme,
-): {url : string , entry : any } | null {
+): { url: string, entry: any } | null {
   const layoutId = getLayoutId(circuitId, year);
   if (!layoutId) return null;
 

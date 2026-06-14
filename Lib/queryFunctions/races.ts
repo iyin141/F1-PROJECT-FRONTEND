@@ -12,6 +12,7 @@ import {
   getPracticeResults,
   getSprintResults,
   getSprintShootoutResults,
+  getRaceWeekend,
 } from "@/Lib/api_services/races";
 
 import type { SeasonScheduleResponse, RaceDetailResponse } from "@/types/endpoints/racestypes";
@@ -21,6 +22,7 @@ import type { PracticeResultsResponse } from "@/types/endpoints/practicetypes";
 import type { SprintResultsResponse, SprintShootoutResultsResponse } from "@/types/endpoints/sprinttypes";
 import type { DriverStandingsResponse } from "@/types/endpoints/driverstandingstypes";
 import type { ConstructorStandingsResponse } from "@/types/endpoints/constructorstandingstypes";
+import type { RaceWeekendResponse } from "@/types/endpoints/weekendtypes";
 
 export async function fetchSeasonSchedule(
   year: number,
@@ -84,6 +86,19 @@ export async function fetchRaceResults(
   return data;
 }
 
+export async function fetchRaceWeekend(
+  year: number,
+  round: number,
+  queryClient: QueryClient,
+): Promise<RaceWeekendResponse> {
+  const key = queryKeys.raceResults.weekend(year, round);
+  const cached = queryClient.getQueryData<RaceWeekendResponse>(key);
+  if (cached) return cached;
+  const data = await getRaceWeekend(year, round);
+  queryClient.setQueryData(key, data, { updatedAt: Date.now() });
+  return data;
+}
+
 export async function fetchQualifyingResults(
   year: number,
   round: number,
@@ -129,7 +144,7 @@ export async function fetchSprintShootoutResults(
   round: number,
   queryClient: QueryClient,
 ): Promise<SprintShootoutResultsResponse> {
-  const key = queryKeys.raceResults.session(year, round, "SS");
+  const key = queryKeys.raceResults.session(year, round, "SQ");
   const cached = queryClient.getQueryData<SprintShootoutResultsResponse>(key);
   if (cached) return cached;
   const data = await getSprintShootoutResults(year, round);

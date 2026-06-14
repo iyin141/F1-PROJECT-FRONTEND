@@ -41,7 +41,7 @@ export function ClearCacheButton({ className }: { className?: string }) {
         disabled={isClearing}
         className={
           className ??
-          "rounded-sm border border-border-subtle px-3 py-1 text-xs font-mono text-muted transition-colors hover:border-border hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+          "border border-border-subtle px-3 py-1 text-xs font-mono text-muted transition-colors hover:border-border hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
         }
       >
         {isClearing ? "Clearing..." : "Clear Cache"}

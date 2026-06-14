@@ -116,7 +116,7 @@ export function useSprintShootoutResults(year: number, round: number, enabled = 
   const isRestoring = useIsRestoring();
   const qc = useQueryClient();
   return useQuery({
-    queryKey: queryKeys.raceResults.session(year, round, "SS"),
+    queryKey: queryKeys.raceResults.session(year, round, "SQ"),
     queryFn: () => fetchSprintShootoutResults(year, round, qc),
     select: (raw: SprintShootoutResultsResponse | undefined) => (raw ? adaptSprintShootoutResults(raw) : undefined),
     enabled: enabled && !isRestoring,
@@ -200,7 +200,7 @@ export function useReplayData(year: number, round: number, enabled: boolean) {
   const queries = [
     {
       queryKey: queryKeys.replayPositions(year, round),
-      queryFn: () => fetchUnifiedPositions(year, round, "R", 1, qc),
+      queryFn: () => fetchUnifiedPositions(year, round, "R", 1, 2000, qc),
       staleTime: 86400000,
       gcTime: 86400000,
       enabled: enabled || alreadyCached(queryKeys.replayPositions(year, round)),
@@ -221,7 +221,7 @@ export function useReplayData(year: number, round: number, enabled: boolean) {
     },
     {
       queryKey: queryKeys.lapAnalysis.byType(year, round, "laps", undefined),
-      queryFn: () => fetchLapsAnalysis(year, round, { session: "R" }, qc),
+      queryFn: () => fetchLapsAnalysis(year, round, { session: "R", limit: 2000 }),
       staleTime: 86400000,
       gcTime: 86400000,
       enabled: enabled || alreadyCached(queryKeys.lapAnalysis.byType(year, round, "laps", undefined)),
@@ -257,7 +257,7 @@ export function useReplayFrames(year: number, round: number, enabled: boolean) {
     const ps = pitStops.data ?? undefined;
     const i = incidents.data ?? undefined;
     const l = laps.data ?? undefined;
-    if (!p && !ps && !i && !l) return [];
+    if (!p?.data?.length) return [];
     return adaptReplayFrames(p, ps, i, l);
   }, [positions.data, pitStops.data, incidents.data, laps.data]);
 

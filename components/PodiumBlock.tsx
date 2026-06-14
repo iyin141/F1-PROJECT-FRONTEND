@@ -71,7 +71,7 @@ function PodiumStep<T extends PodiumEntry>({
           minHeight: "56px",
         }}
       >
-        <span className="h-[2px] w-8 rounded-full" style={{ background: accent }} />
+        <span className="h-[2px] w-8" style={{ background: accent }} />
         {renderStats?.(result, isWinner, accent)}
       </div>
     </div>
@@ -109,7 +109,7 @@ export function PodiumBlock<T extends PodiumEntry>({
   );
 
   return (
-    <div ref={ref} className="w-full overflow-hidden rounded-sm border border-border-subtle">
+    <div ref={ref} className="w-full overflow-hidden border border-border-subtle">
       <div
         className="px-4 py-2 font-mono text-[10px] uppercase tracking-[0.22em]"
         style={{

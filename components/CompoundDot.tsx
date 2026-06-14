@@ -9,8 +9,10 @@ const map: Record<Compound, { color: string; letter: string; label: string }> = 
   wet:    { color: "hsl(var(--tyre-wet))",    letter: "W", label: "Wet" },
 };
 
-export const CompoundDot = ({ compound, className }: { compound: Compound; className?: string }) => {
-  const c = map[compound];
+const UNKNOWN = { color: "hsl(var(--muted))", letter: "?", label: "unknown" };
+
+export const CompoundDot = ({ compound, className }: { compound: Compound | string; className?: string }) => {
+  const c = map[(compound as Compound)] ?? UNKNOWN;
   return (
     <span
       title={c.label}
@@ -22,4 +24,4 @@ export const CompoundDot = ({ compound, className }: { compound: Compound; class
   );
 };
 
-export const compoundColor = (c: Compound) => map[c].color;
+export const compoundColor = (c: Compound | string) => (map[(c as Compound)] ?? UNKNOWN).color;

@@ -135,33 +135,45 @@ export function LapAnalysisTab({
       </div>
 
       <PanelEntry delay={0.05}>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-          <Panel
-            label="PANEL 1 · LAP ANALYSIS"
-            title={
-              lapViewMode === "ALL DRIVERS"
-                ? "All Drivers · Scatter"
-                : `${driverA?.code ?? "—"} vs ${driverB?.code ?? "—"}${driverC ? ` vs ${driverC.code}` : ""}`
-            }
-          >
-            <PaceComparison
-              year={year}
-              round={round}
-              session={session}
-              mode={lapViewMode === "ALL DRIVERS" ? "all" : "compare"}
-              driverAId={driverA?.id}
-              driverBId={driverB?.id}
-              driverCId={driverC?.id ?? undefined}
-            />
-          </Panel>
-          <Panel label="LAP TIME DISTRIBUTION" title="Box Plot — Top 10">
-            <PaceDistribution year={year} round={round} session={session} />
-          </Panel>
-        </div>
+        <Panel
+          label="PANEL 1 · LAP ANALYSIS"
+          title={
+            lapViewMode === "ALL DRIVERS"
+              ? "All Drivers · Scatter"
+              : `${driverA?.code ?? "—"} vs ${driverB?.code ?? "—"}${driverC ? ` vs ${driverC.code}` : ""}`
+          }
+        >
+          <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: "hsl(var(--muted))" }}>
+            {lapViewMode === "ALL DRIVERS"
+              ? "All lap times by lap number · hover for driver and compound detail"
+              : "Lap time trace for selected drivers · pit laps excluded"}
+          </p>
+          <PaceComparison
+            year={year}
+            round={round}
+            session={session}
+            mode={lapViewMode === "ALL DRIVERS" ? "all" : "compare"}
+            driverAId={driverA?.id}
+            driverBId={driverB?.id}
+            driverCId={driverC?.id ?? undefined}
+          />
+        </Panel>
+      </PanelEntry>
+
+      <PanelEntry delay={0.07}>
+        <Panel label="LAP TIME DISTRIBUTION" title="Box Plot — Top 10">
+          <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: "hsl(var(--muted))" }}>
+            IQR box, whiskers = min/max · top 10 drivers by race finish order
+          </p>
+          <PaceDistribution year={year} round={round} session={session} />
+        </Panel>
       </PanelEntry>
 
       <PanelEntry delay={0.1}>
         <Panel label="PANEL 2 · SECTOR ANALYSIS" title="Heat Map">
+          <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: "hsl(var(--muted))" }}>
+            Best S1 / S2 / S3 per driver · purple = session fastest
+          </p>
           <SectorHeatmap year={year} round={round} session={session} />
         </Panel>
       </PanelEntry>

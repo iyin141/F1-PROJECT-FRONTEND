@@ -3,7 +3,13 @@
 import { useEffect } from "react";
 import { RaceHeader } from "@/features/race-detail/components/RaceHeader";
 import { RaceTabs } from "@/features/race-detail/components/RaceTabs";
-import { useRaceDetail } from "@/features/race-detail/hooks/useRaceDetail";
+import { 
+  useRaceDetail, 
+  useRaceWeather, 
+  useRaceIncidents, 
+  useRaceResults 
+} from "@/features/race-detail/hooks/useRaceDetail";
+import { useDriverStandings } from "@/features/season-hub/hooks/useSeasonHub";
 import { useNavStore } from "@/_Stores/navStore";
 import type { RaceDetailResponse } from "@/types/endpoints/racestypes";
 import { TableSkeleton } from "@/components/animations/TableSkeleton";
@@ -29,6 +35,13 @@ export const RaceDetailShell = ({ year, round }: RaceDetailShellProps) => {
   const effectiveRound = storeRaceRound ?? round;
 
   const { data: raceData, isLoading } = useRaceDetail(effectiveYear, effectiveRound);
+  
+  // Prefetch data for the OverviewTab in parallel to flatten the waterfall
+  useRaceWeather(effectiveYear, effectiveRound);
+  useRaceIncidents(effectiveYear, effectiveRound);
+  useRaceResults(effectiveYear, effectiveRound);
+  useDriverStandings(effectiveYear);
+
   const race = { data: raceData ? raceData : undefined, loading: isLoading };
   const upcoming = race.data?.status === "upcoming";
 

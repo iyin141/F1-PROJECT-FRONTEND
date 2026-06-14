@@ -44,6 +44,41 @@ export const cacheConfig = {
 
 } as const;
 
+// ---------------------------------------------------------------------------
+// Named cache config aliases — used by the new hook pattern.
+// These map to the same underlying values as cacheConfig presets above.
+// ---------------------------------------------------------------------------
+
+/** Completed race data — never refetch. Alias of cacheConfig.historical. */
+export const HISTORICAL_CONFIG = {
+  staleTime: Infinity,
+  gcTime: 1000 * 60 * 60,     // 1 hour
+  refetchOnMount: false,
+  refetchOnWindowFocus: false,
+} as const;
+
+/** Current season standings — changes after each race. */
+export const STANDINGS_CONFIG = {
+  staleTime: 1000 * 60 * 5,   // 5 minutes
+  gcTime: 1000 * 60 * 30,     // 30 minutes
+} as const;
+
+/** Analysis endpoints — expensive to generate, stable once cached. */
+export const ANALYSIS_CONFIG = {
+  staleTime: 1000 * 60 * 60,  // 1 hour
+  gcTime: 1000 * 60 * 60 * 2, // 2 hours
+  refetchOnMount: false,
+  refetchOnWindowFocus: false,
+} as const;
+
+/** Telemetry — most expensive, very stable once cached. */
+export const TELEMETRY_CONFIG = {
+  staleTime: Infinity,
+  gcTime: 1000 * 60 * 30,     // 30 minutes
+  refetchOnMount: false,
+  refetchOnWindowFocus: false,
+} as const;
+
 export function resolveCacheConfig(year: number, raceStatus?: string) {
   const currentYear = new Date().getFullYear();
   if (year < currentYear) return cacheConfig.historical;
@@ -94,6 +129,10 @@ export const queryKeys = {
     session: (year: number, round: number, session: string) =>
       ["raceResults", year, round, session] as const,
 
+    /** Weekend summary (combined weekend payload). */
+    weekend: (year: number, round: number) =>
+      ["raceResults", year, round, "weekend"] as const,
+
     /** Qualifying — QualifyingResultData table (pk: year, round). */
     qualifying: (year: number, round: number) =>
       ["raceResults", year, round, "Q"] as const,
@@ -113,6 +152,12 @@ export const queryKeys = {
 
     season: (code: string, year: number) =>
       ["driverStandings", year, code] as const,
+  },
+
+  // ── Driver search keys ─────────────────────────────────────────────────
+  driverSearch: {
+    season: (year: number) => ["driverSearch", "season", year] as const,
+    byName: (q: string, year?: number) => ["driverSearch", "byName", q, year] as const,
   },
 
   // ── ConstructorStandings (pk: year) ────────────────────────────────────
@@ -185,4 +230,41 @@ export const queryKeys = {
   theme: {
     root: () => ["theme"] as const,
   },
+
+  // ── Alias namespaces — same underlying arrays as above. ────────────────
+  // These allow new call sites to use semantic names while sharing the same
+  // cache entries as the original keys.
+
+  analysis: {
+    laps: (year: number, round: number, session: string, driver?: string) =>
+      ["lapAnalysis", year, round, "laps", driver, session] as const,
+    pace: (year: number, round: number, session: string, driver?: string) =>
+      ["lapAnalysis", year, round, "pace", driver, session] as const,
+    stints: (year: number, round: number, session: string, driver?: string) =>
+      ["lapAnalysis", year, round, "stints", driver, session] as const,
+    tyreStrategy: (year: number, round: number, session: string) =>
+      ["lapAnalysis", year, round, "tyre", undefined, session] as const,
+    sectorAnalysis: (year: number, round: number, session: string, driver?: string) =>
+      ["lapAnalysis", year, round, "sectors", driver, session] as const,
+  },
+
+  unified: {
+    positions: (year: number, round: number, session: string) =>
+      ["sessionData", year, round, "positions", session] as const,
+    pitStops: (year: number, round: number, session: string = "R") =>
+      ["sessionData", year, round, "pit-stops", session] as const,
+    incidents: (year: number, round: number, session: string = "R") =>
+      ["sessionData", year, round, "incidents", session] as const,
+    weather: (year: number, round: number, session: string = "R") =>
+      ["sessionData", year, round, "weather", session] as const,
+    trackStatus: (year: number, round: number, session: string = "R") =>
+      ["sessionData", year, round, "track-status", session] as const,
+  },
+
+  driver: {
+    career: (code: string) => ["driverStandings", "career", code] as const,
+    season: (code: string, year: number) => ["driverStandings", year, code] as const,
+    search: (year: number) => ["driverSearch", "season", year] as const,
+  },
+
 } as const;

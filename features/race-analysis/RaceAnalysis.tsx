@@ -1,10 +1,12 @@
-'use client';
+"use client";
 
 import { useState, useMemo } from "react";
 import { AnalysisHeader } from "@/features/race-analysis/components/AnalysisHeader";
 import { AnalysisTabs } from "@/features/race-analysis/components/AnalysisTabs";
 import { useRaceDetail, useRaceResults } from "@/features/race-detail/hooks/useRaceDetail";
+import { useSeasonSchedule } from "@/features/season-hub/hooks/useSeasonHub";
 import Skeleton from "@/components/animations/Skeleton";
+import { normalizeSessionForApi, formatSessionLabel } from "@/Lib/sessionCodes";
 
 type RaceAnalysisShellProps = { year: number; round: number };
 
@@ -13,26 +15,34 @@ export const RaceAnalysisShell = ({ year, round }: RaceAnalysisShellProps) => {
   const { data: results, isLoading: resultsLoading } = useRaceResults(year, round);
   const [session, setSession] = useState("R");
 
+  const { data: season } = useSeasonSchedule(year);
+
   const availableSessions = useMemo(() => {
-    if (!race) return [];
-    
-    const list: Array<{ code: string; label: string }> = [
-      { code: "R", label: "RACE" },
-    ];
+    const orderForCode: Record<string, number> = {
+      FP1: 1,
+      FP2: 2,
+      FP3: 3,
+      SQ: 4,
+      S: 5,
+      Q: 6,
+      R: 7,
+    };
 
-    if (race.sprint) {
-      list.push({ code: "S", label: "SPRINT" });
-      list.push({ code: "SS", label: "SPRINT SHOOTOUT" });
-    }
+    const source = season?.find((r) => r.round === round)?.sessions ?? race?.sessions ?? [];
 
-    list.push({ code: "Q", label: "QUALIFYING" });
+    return source
+      .map((s) => {
+        const raw = String((s as any).id ?? (s as any).id).toLowerCase();
+       console.log(raw)
+        const code = normalizeSessionForApi(raw) ?? raw.toUpperCase();
 
-    if (race.fp1) list.push({ code: "FP1", label: "FP1" });
-    if (race.fp2) list.push({ code: "FP2", label: "FP2" });
-    if (race.fp3) list.push({ code: "FP3", label: "FP3" });
-
-    return list;
-  }, [race]);
+        const label = formatSessionLabel(code) || String(raw).toUpperCase();
+        const order = orderForCode[code as string] ?? 99;
+        return { code, label, order };
+      })
+      .sort((a, b) => a.order - b.order)
+      .map((item) => ({ code: item.code, label: item.label }));
+  }, [race, season, round]);
 
   const drivers = useMemo(() => {
     return (results ?? [])

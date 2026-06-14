@@ -43,7 +43,7 @@ export default function RootLayout({
       className={`${bebasNeue.variable} ${dmSans.variable} ${dmMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full bg-bg text-text">
+      <body className="min-h-full bg-bg text-text" suppressHydrationWarning>
         <NavigationProgress />
         <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
           <QueryProvider>

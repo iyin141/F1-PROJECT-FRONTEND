@@ -26,11 +26,11 @@ export function CareerTotalsStrip({ seasons, totals }: CareerTotalsStripProps) {
   ];
 
   return (
-    <div className="grid grid-cols-2 divide-x divide-y divide-border-subtle rounded-[10px] border border-border-subtle bg-surface md:grid-cols-3 xl:grid-cols-6 xl:divide-y-0">
+    <div className="grid grid-cols-2 gap-px border-y border-border-subtle bg-border-subtle md:grid-cols-3 xl:grid-cols-6 mb-8 mt-[-24px]">
       {items.map((item) => (
-        <div key={item.label} className="px-3 py-3 text-center">
-          <div className="font-display text-xl md:text-2xl text-text">{item.value}</div>
-          <div className="font-mono text-[10px] tracking-[0.15em] text-text-dim">{item.label}</div>
+        <div key={item.label} className="bg-panel px-6 py-4 flex flex-col justify-center">
+          <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">{item.label}</div>
+          <div className="font-mono text-xl text-white">{item.value}</div>
         </div>
       ))}
     </div>

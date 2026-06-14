@@ -9,7 +9,7 @@ import { useAllLaps } from "../hooks/useRaceAnalysis";
 import Skeleton from "@/components/animations/Skeleton";
 import { motion } from "framer-motion";
 
-type TelemetryTab = "OVERLAY" | "SINGLE";
+type TelemetryTab = "BASIC" | "ADVANCED";
 
 function PanelEntry({ children, delay }: { children: React.ReactNode; delay: number }) {
   return (
@@ -35,7 +35,7 @@ export function TelemetryAnalysisTab({
   session: string;
   drivers: AnalysisDriverOption[];
 }) {
-  const [telemetryTab, setTelemetryTab] = useState<TelemetryTab>("OVERLAY");
+  const [telemetryTab, setTelemetryTab] = useState<TelemetryTab>("ADVANCED");
   const { data: lapsData, isLoading } = useAllLaps(year, round, session);
   const sessionCovered = lapsData?.meta?.can_proceed ?? (!!lapsData && lapsData.data.length > 0);
 
@@ -82,7 +82,7 @@ export function TelemetryAnalysisTab({
         className="flex flex-wrap items-center gap-2 border border-border-subtle px-4 py-3"
         style={{ backgroundColor: "var(--surface2)" }}
       >
-        {(["OVERLAY", "SINGLE"] as const).map((tab) => {
+        {(["ADVANCED", "BASIC"] as const).map((tab) => {
           const active = telemetryTab === tab;
           return (
             <button
@@ -94,7 +94,7 @@ export function TelemetryAnalysisTab({
                 color: active ? "hsl(var(--text))" : "hsl(var(--muted))",
               }}
             >
-              {tab}
+              {tab === "ADVANCED" ? "MICRO ANALYSIS" : "BASIC OVERLAY"}
             </button>
           );
         })}
@@ -103,17 +103,13 @@ export function TelemetryAnalysisTab({
       <PanelEntry delay={0.05}>
         <Panel
           label={
-            telemetryTab === "OVERLAY"
-              ? "PANEL 1 · DRIVER OVERLAY"
-              : "PANEL 1 · SINGLE DRIVER"
+            telemetryTab === "BASIC"
+              ? "PANEL 1 · BASIC OVERLAY"
+              : "PANEL 1 · MICRO ANALYSIS"
           }
-          title={
-            telemetryTab === "OVERLAY"
-              ? `${driverA?.code ?? "—"} vs ${driverB?.code ?? "—"}`
-              : `${driverA?.code ?? "—"} · Telemetry`
-          }
+          title={`${driverA?.code ?? "—"} vs ${driverB?.code ?? "—"}`}
         >
-          {telemetryTab === "OVERLAY" ? (
+          {telemetryTab === "BASIC" ? (
             <TelemetryOverlay
               year={year}
               round={round}
@@ -130,8 +126,10 @@ export function TelemetryAnalysisTab({
               round={round}
               session={session}
               drivers={drivers}
-              driverId={driverA?.id ?? null}
-              onDriverChange={setDriverAId}
+              driverAId={driverA?.id ?? null}
+              driverBId={driverB?.id ?? null}
+              onDriverAChange={setDriverAId}
+              onDriverBChange={setDriverBId}
             />
           )}
         </Panel>
