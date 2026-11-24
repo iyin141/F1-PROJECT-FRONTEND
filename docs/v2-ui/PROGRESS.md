@@ -169,3 +169,24 @@ Status: done, awaiting review. Mock mode only; the real A3 stream was not exerci
 ## Notes
 - The mock cannot show real-time keepalives or true network drops; the drop is simulated by the server closing the stream.
 - A dev-server hiccup returned 404 for all `/api` routes until `.next/dev` was cleared; unrelated to the code.
+
+---
+
+# U1g progress: tests, Docker, CI, budgets
+
+Status: written; build and static checks run here, nothing that needs a browser download or Docker was run here.
+
+## Branch note
+The 3D work (U1f) is parked on `v2/ui-3d` with `docs/v2-ui/U1F_VM_FINISH.md`; `v2/ui` was reset to the commit before U1f (cf7096b), so the "3D replay" hub link is not here. The "U1f progress" section that was in this file lives on `v2/ui-3d`.
+
+## Added
+- `e2e/flows.spec.ts` (Playwright, mock mode): (1) race hub, click mini-sector 7, URL and the lab's request carry `start_m`, `end_m`, `format=columnar` and channels; (2) lab scrub moves the map marker and the readout; (3) stewards stream shows text and a citation chip, the side panel opens and closes with Escape; (4) a dropped stream reconnects and finishes; (5) chaos model page renders the calibration chart canvas; (6) legacy leakage: computed styles (body, sidebar, nav link, h1, button) of `/season/2024` after client navigation from the race hub equal those of a fresh load.
+- `e2e/perf.spec.ts`: telemetry lab `?bench=1` timing, p95 cursor move under 16 ms (plan budget is 100 ms).
+- `playwright.config.ts` (builds nothing itself: expects a mock-mode build, runs `next start` on 3010), `e2e/tsconfig.json`. **`@playwright/test` is not in `package.json`**: the registry downloads were corrupted here again, so the CI workflow installs it with `--no-save` at 1.56.1 and runs `npx tsc -p e2e/tsconfig.json`. On the VM or CI: `npm install --save-dev --save-exact @playwright/test` then `npx playwright install chromium`, commit the lockfile, and remove the `--no-save` step. e2e files are excluded from the root `tsc` and eslint until then. The specs themselves have never been run.
+- `next.config.ts`: `output: "standalone"`.
+- `Dockerfile` (deps, build, run on `node:22-alpine`, non-root `app` user, `node server.js`, build args for `NEXT_PUBLIC_*`, runtime `BACKEND_URL` and `INTERNAL_API_KEY` stay out of the image), `.dockerignore`. Not built here (no Docker run); the CI job builds `linux/arm64` with QEMU.
+- `.github/workflows/frontend.yml`: `npm ci`, lint, `tsc`, mock-mode build, Playwright, then `scripts/perf.sh` (non-blocking until baselines exist), plus an arm64 Docker build job.
+- `lighthouse/lighthouserc.json` and `scripts/perf.sh`: race hub and chaos page, 4G-like throttling (RTT 150 ms, 1.6 Mbit/s), assertion LCP under 2.5 s (error), CLS and TBT (warn); the lab interaction budget runs through `e2e/perf.spec.ts`. Lighthouse navigation mode cannot measure interactions, hence the Playwright check.
+
+## Known risks in the specs (never run)
+Selectors rely on `[data-sector]`, `.u-over`, `circle[r="34"]`, `.f1-chip` and the sidebar `aside nav a[href^="/season"]`. The leakage test compares a handful of properties; widen the list if it passes too easily.
