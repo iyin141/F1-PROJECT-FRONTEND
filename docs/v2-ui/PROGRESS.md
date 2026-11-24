@@ -142,3 +142,30 @@ Status: done, awaiting review. Mock mode.
 ## Open
 - Mock circuits have synthetic numbers; the 24-circuit real list depends on A2's endpoint.
 - The preview does not list per-driver risks (`races/<y>/<r>/drivers/`); the client method exists if wanted.
+
+---
+
+# U1e progress: Ask the stewards
+
+Status: done, awaiting review. Mock mode only; the real A3 stream was not exercised.
+
+## Built (`/stewards`, sidebar link added)
+- `Lib/api/v2/sse.ts`: `ask()` POSTs, parses frames with their `id:`, and if the stream ends or breaks before `done` or `error` reconnects with `GET /api/assistant/ask/{task_key}/events` and `Last-Event-ID` (up to 3 times, 400 ms backoff steps); the task key comes from the first `status` event. Abort stops everything. The route handler forwards `Last-Event-ID` and forces `text/event-stream` and no-buffering headers.
+- `features/stewards/useAsk.ts`: one turn per question, tokens batched per animation frame, `cancel` aborts the fetch, `retry` re-asks in place.
+- Status phases to orb: queued and searching = searching, solving = solving, composing = composing (`OrbStatus` queued mapping changed from working to searching). The orb pauses under reduced motion.
+- `[E1]` and `[E1, E2]` markers (A3's `_CITE` pattern) become numbered chips once the `citations` event arrives, plain muted text before. A Sources list repeats them. Chips are real buttons (keyboard reachable). Clicking opens a Radix Dialog side sheet (focus trapped, Escape, focus returns): title, doc type, article, page, section, year or race, the extract highlighted, a note that up to 300 characters are quoted, and the FIA link (new tab, noopener).
+- `done.not_found` shows "Evidence not found" and what was searched (`tools_used` mapped to readable names), no invented answer.
+- Done metadata in small text: grounded, rounds, evidence items, cost. `long_quotes` and `invalid_citations` notices.
+- Errors: `auth_expired` (no retry, explains the operator must renew), `rate_limited`, `llm_failed`, `timeout`, `internal`, network; each with a plain message, the code, and Retry where it can help. Cancel button while a turn runs; a cancelled turn offers "Ask again".
+- Composer: Enter sends, Shift+Enter newline; optional year and round selects; three starters (Article 33.4, penalty for causing a collision, and a race-specific one that uses the pickers, defaulting to 2024 round 8). A polite live region announces phase changes and "Answer ready" (tokens are not announced).
+- Mock scenarios chosen by question text: "banana" or "notfound", "drop" (stream closes after 12 events), "ratelimit", "authexpired", "llmfailed", "timeout", "longquote".
+
+## Verified (CDP, headless Edge, mock)
+- Normal: 3 inline chips plus 2 in Sources, meta line "Grounded in the sources · 2 rounds · 2 evidence items · cost $0.019", dialog opens with focus inside it and the extract shown.
+- Drop: the first connection delivers events 0 to 11, the reconnect resumes at 12; the answer completes with chips and meta.
+- Not found, rate-limit error with Retry, and Cancel ("Cancelled." plus Ask again) all behave as described. At 375 px `scrollWidth` is 375 with the sheet open.
+- Screenshots: `docs/v2-ui/screens/stewards-desktop.png` (sheet open), `stewards-375.png`, `stewards-notfound-375.png`, `stewards-error-375.png`, `stewards-drop.png`.
+
+## Notes
+- The mock cannot show real-time keepalives or true network drops; the drop is simulated by the server closing the stream.
+- A dev-server hiccup returned 404 for all `/api` routes until `.next/dev` was cleared; unrelated to the code.
