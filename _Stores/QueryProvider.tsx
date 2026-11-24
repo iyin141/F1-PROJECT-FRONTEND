@@ -3,6 +3,7 @@
 import { useEffect, useState, createContext, useContext } from "react";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { defaultShouldDehydrateQuery } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { get, set, del } from "idb-keyval";
@@ -91,7 +92,14 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
   return (
     <PersistQueryClientProvider
       client={queryClient}
-      persistOptions={{ persister, buster: QUERY_PERSIST_BUSTER }}
+      persistOptions={{
+        persister,
+        buster: QUERY_PERSIST_BUSTER,
+        // v2 queries tagged meta.persist === false (telemetry, deltas) stay out of IndexedDB.
+        dehydrateOptions: {
+          shouldDehydrateQuery: (q) => defaultShouldDehydrateQuery(q) && q.meta?.persist !== false,
+        },
+      }}
     >
       <IsRestoringContext.Provider value={isRestoring}>
         {children}
