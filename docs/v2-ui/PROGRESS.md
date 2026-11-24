@@ -74,3 +74,37 @@ Status: done, awaiting review. Mock mode only (existing endpoints are not mocked
 ## Open
 - Corner detection in the synthetic circuit finds 5 corners (mock only).
 - `package-lock.json` needs `npm install` refresh for the two d3 deps if CI uses `npm ci`.
+
+---
+
+# U1c progress: telemetry lab
+
+Status: done, awaiting review. Mock mode.
+
+## What was built
+- `/race/[y]/[r]/telemetry` (page.tsx parses and validates `drivers` (2-4 codes), `lap` (fastest or number), `start_m`, `end_m`; all lab state lives in the URL via `router.replace`).
+- `features/telemetry-lab/TelemetryLab.tsx`: driver picker (2-4 toggle chips from the top 10 finishers, else a default list), lap picker (Fastest, or a lap number on Enter/blur), range chip with Reset range.
+- `components/TelemetryStack.tsx`: delta trace on top (`telemetry/delta`, first driver is the reference, each other driver is a trace), then speed, throttle, brake, gear, RPM, DRS in uPlot. x = distance, one synced cursor (`uPlot.sync`), corner labels and faint corner lines from the track-map corners (labels on the top and bottom plots), 8% gridlines. Brake, gear and DRS draw as stepped lines. Drag on any chart sets the range.
+- `components/MiniMap.tsx`: mini circuit with clickable mini-sectors (click, Enter or Space), the active range highlighted, and a cursor marker.
+- Data path: each driver's `telemetry/?format=columnar&channels=speed,throttle,brake,gear,rpm,drs&start_m&end_m` is fetched and decoded in `workers/telemetry.worker.ts` (Float64Array columns, transferred, not copied), cached by TanStack Query with `meta.persist: false`. Brush or sector click changes the URL, which changes the query key and refetches only the sliced range.
+- `Lib/v2/decimate.ts`: min/max per-pixel decimation (2 points per CSS pixel; a one-sample spike survives) and a linear resampler for drivers whose distance grids differ. `node Lib/v2/decimate.check.ts` is the runnable check.
+- Colours: team colour per driver, second driver of a shared colour dashed (`TEAM_BY_CODE` fallback in `Lib/v2/palette.ts` so teammates match without API data; NOR and PIA show orange solid and dashed). F1 red is not used.
+- 202 from `delta` shows an orb ("solving"); loading shows an orb ("searching"). uPlot and the marker have no animation, so reduced motion needs nothing extra.
+- No React render on cursor move: uPlot's `setCursor` hook, then one rAF, then direct attribute writes on the mini-map marker and the readout `<output>`.
+- `useChartColours` moved to `components/v2/` (race hub re-exports it).
+
+## Performance (rough, headless Edge on this PC, no GPU, mock data 1,500 points x 3 drivers x 7 plots, via CDP, `?bench=1`)
+- 300 scripted cursor moves driving all 7 synced plots: avg 0.02-0.06 ms, p95 0.1-0.3 ms of JS per move (timer resolution is 0.1 ms). Far under a 16.7 ms frame.
+- Full redraw of 7 plots: 0.2-0.3 ms of JS (canvas rasterisation happens after this and is not captured, so treat it as a lower bound).
+- Decimation, node only: 100,000 samples x 6 series to 2,800 points in 5-7 ms warm (20 ms cold).
+- Not measured: real frame rate (no GPU or compositor timing here), and decimation inside the browser (mock laps never exceed 2 points per pixel, so it does not engage; it is covered by the node check). Real telemetry will be about the same size (one lap is 400-1,500 samples), so wide-range decimation matters mostly for whole-session pulls.
+- Verified in the browser through CDP: hover on a chart moves the mini-map marker and sets the readout (2166 m at 40% of 5,412 m); clicking mini-sector 7 changed the URL to `start_m=1299&end_m=1515` and re-rendered 7 plots.
+
+## Screenshots
+`docs/v2-ui/screens/telemetry-lab-desktop.png`, `telemetry-lab-zoomed.png` (start_m 1000, end_m 2000), `telemetry-lab-375.png` (a true 375 px capture via CDP device emulation; `scrollWidth` 375, no horizontal overflow). Earlier headless-Edge limit on narrow widths is bypassed by CDP, so the race hub 375 px capture can be redone the same way.
+
+## Open
+- Cursor readout shows distance only; per-driver values at the cursor are not shown (needs a per-plot imperative text; skipped to stay lean).
+- The delta compares drivers[0] with each other driver; no picker for the reference.
+- Selecting a lap number sends the same lap to every driver, as the API does.
+- Mock circuit has 5 corners only, so corner labels are sparse in mock mode.
