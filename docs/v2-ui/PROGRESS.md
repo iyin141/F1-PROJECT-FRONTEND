@@ -169,3 +169,22 @@ Status: done, awaiting review. Mock mode only; the real A3 stream was not exerci
 ## Notes
 - The mock cannot show real-time keepalives or true network drops; the drop is simulated by the server closing the stream.
 - A dev-server hiccup returned 404 for all `/api` routes until `.next/dev` was cleared; unrelated to the code.
+
+---
+
+# U1f progress: 3D replay (code written, NOT built or tested)
+
+Status: BLOCKED on installing three, @react-three/fiber and @react-three/drei. The code is committed but has not been type-checked, linted, built or run.
+
+## Blocker
+`npm install` of `three@0.187.0`, `@react-three/fiber@9.8.2`, `@react-three/drei@10.7.9`, `@types/three@0.187.0` fails on this PC: the registry response bodies arrive corrupted (`ERR_SSL_CIPHER_OPERATION_FAILED` in OpenSSL GCM; `curl` on the same URLs returns truncated JSON of varying size, for example the `hls.js` packument, a drei dependency). About 15 attempts with retries, `--maxsockets`, `--legacy-peer-deps` all failed. Without `--legacy-peer-deps` there is also an ERESOLVE from r3f's optional `expo-gl` peer (`react-dom@undefined`), so installs will need `--legacy-peer-deps` or an `overrides` entry. A third-party npm mirror was refused by the permission classifier and not used. `package.json` and the lockfile are unchanged by this phase.
+Needs: a working network for `npm install`, or a decision (install on the VM, or I try again later), and a decision on `--legacy-peer-deps`.
+
+## What is written
+- `Lib/v2/replay.ts` (tested by `node Lib/v2/replay.check.ts`): a distance-against-time profile per driver from the real `mini-sectors` response (boundaries and cumulative sector times, fastest lap repeated for 3 laps, 0.9 s grid stagger), position on the track-map polyline, and world conversion (1 unit = 100 m, x and y from 1/10 m, y flipped, z elevation exaggerated 3 times). No new endpoint or mock: the mock `mini-sectors` already supplies the times.
+- `features/replay3d/Scene.tsx` (imports three, r3f, drei): ribbon extruded along the polyline with elevation, edges (kerbs) coloured by the fastest driver in each mini-sector, cars as coloured spheres moved per frame without React state, play/pause, 1/2/4/8/16x, scrub slider, orbit camera (drei OrbitControls) and a follow-driver camera behind the car; reduced motion starts paused, snaps the follow camera and disables damping.
+- `features/replay3d/Replay3D.tsx`: the only file other code imports; it loads `Scene` with `next/dynamic` (`ssr: false`), so three never enters other pages. A poster (SVG of the circuit) replaces the scene when the screen is under 768 px, `hardwareConcurrency <= 4`, or WebGL is missing, with a "Load the 3D view anyway" button. Capability is read with `useSyncExternalStore` (no hydration mismatch).
+- Route `/race/[y]/[r]/3d`; the race hub header has a "3D replay" link.
+
+## Still to do once the packages install
+tsc, lint, build and confirmation that the 3D chunk is separate (check the chunk list), then a headless-Edge WebGL screenshot attempt, then the report. If drei stays uninstallable, swap `OrbitControls` for `three/examples/jsm/controls/OrbitControls`.
