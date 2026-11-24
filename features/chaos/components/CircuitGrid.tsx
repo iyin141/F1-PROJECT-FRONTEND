@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@astryxdesign/core/Badge";
 import { Card } from "@astryxdesign/core/Card";
 import { Heading } from "@astryxdesign/core/Heading";
@@ -11,11 +11,11 @@ import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import { OrbStatus } from "@/components/v2/OrbStatus";
 import { api } from "@/Lib/api/v2/client";
-import type { CircuitHistory } from "@/Lib/api/v2/payloads";
+import type { CircuitRates } from "@/Lib/api/v2/payloads";
 
 type SortKey = "name" | "sc" | "red" | "dnf";
 const pct = (v: number | null) => (v === null ? "no data" : `${Math.round(v * 100)}%`);
-const dnf = (h: CircuitHistory) => (h.summary.mean_mechanical_dnfs ?? 0) + (h.summary.mean_incident_dnfs ?? 0);
+const dnf = (h: CircuitRates) => (h.mean_mechanical_dnfs ?? 0) + (h.mean_incident_dnfs ?? 0);
 
 /** One row of a small multiple: the same scale on every card, so bars compare across circuits. */
 function Rate({ label, value, max, text }: { label: string; value: number | null; max: number; text: string }) {
@@ -38,16 +38,12 @@ function Rate({ label, value, max, text }: { label: string; value: number | null
 /** Small multiples of every circuit's safety-car, red-flag and retirement history, sortable. */
 export function CircuitGrid() {
   const [sort, setSort] = useState<SortKey>("sc");
-  const list = useQuery({ queryKey: ["v2", "chaos-circuits"], queryFn: () => api.circuits(), staleTime: Infinity });
-  const hist = useQueries({
-    queries: (list.data ?? []).map((c) => ({ queryKey: ["v2", "chaos-circuit", c.slug], queryFn: () => api.circuitHistory(c.slug), staleTime: Infinity })),
-  });
+  const q = useQuery({ queryKey: ["v2", "chaos-circuits-summary"], queryFn: () => api.circuitsSummary(), staleTime: Infinity });
   const rows = useMemo(() => {
-    const out = (list.data ?? []).map((c, i) => ({ c, h: hist[i]?.data as CircuitHistory | undefined, failed: hist[i]?.isError }));
-    const val = (r: (typeof out)[number]) => (sort === "sc" ? r.h?.summary.safety_car_rate ?? -1 : sort === "red" ? r.h?.summary.red_flag_rate ?? -1 : r.h ? dnf(r.h) : -1);
-    return out.sort((a, b) => (sort === "name" ? a.c.name.localeCompare(b.c.name) : val(b) - val(a)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [list.data, hist.map((q) => q.dataUpdatedAt).join(","), sort]);
+    const out = [...(q.data?.circuits ?? [])];
+    const val = (r: (typeof out)[number]) => (r.summary.races === 0 ? -1 : sort === "sc" ? r.summary.safety_car_rate ?? -1 : sort === "red" ? r.summary.red_flag_rate ?? -1 : dnf(r.summary));
+    return out.sort((a, b) => (sort === "name" ? a.name.localeCompare(b.name) : val(b) - val(a)));
+  }, [q.data, sort]);
 
   return (
     <Card padding={4}>
@@ -62,35 +58,38 @@ export function CircuitGrid() {
           </SegmentedControl>
         </HStack>
         <Text color="secondary">Share of past races with a safety car or a red flag, and retirements per race. Every card uses the same scale.</Text>
-        {list.isError ? (
-          <Text color="secondary">The circuit list is not available.</Text>
-        ) : !list.data ? (
+        {q.isError ? (
+          <Text color="secondary">The circuit summary is not available.</Text>
+        ) : !q.data ? (
           <OrbStatus phase="searching" message="Loading circuits" />
         ) : (
-          <div className="f1-grid">
-            {rows.map(({ c, h, failed }) => (
-              <Card key={c.slug} padding={3} variant="muted">
-                <VStack gap={2}>
-                  <HStack justify="between" align="center">
-                    <Text weight="semibold">{c.name}</Text>
-                    <Badge label={c.circuit_type} variant="neutral" />
-                  </HStack>
-                  {h ? (
-                    <>
-                      <Rate label="Safety car" value={h.summary.safety_car_rate} max={1} text={pct(h.summary.safety_car_rate)} />
-                      <Rate label="Red flag" value={h.summary.red_flag_rate} max={1} text={pct(h.summary.red_flag_rate)} />
-                      <Rate label="DNFs / race" value={dnf(h)} max={4} text={dnf(h).toFixed(1)} />
-                      <Text color="secondary" className="f1-num">
-                        {h.summary.races} races
-                      </Text>
-                    </>
-                  ) : (
-                    <Text color="secondary">{failed ? "No stored history." : "Loading"}</Text>
-                  )}
-                </VStack>
-              </Card>
-            ))}
-          </div>
+          <>
+            <div className="f1-grid">
+              {rows.map((c) => (
+                <Card key={c.slug} padding={3} variant="muted">
+                  <VStack gap={2}>
+                    <HStack justify="between" align="center">
+                      <Text weight="semibold">{c.name}</Text>
+                      {c.type ? <Badge label={c.type} variant="neutral" /> : null}
+                    </HStack>
+                    {c.summary.races > 0 ? (
+                      <>
+                        <Rate label="Safety car" value={c.summary.safety_car_rate} max={1} text={pct(c.summary.safety_car_rate)} />
+                        <Rate label="Red flag" value={c.summary.red_flag_rate} max={1} text={pct(c.summary.red_flag_rate)} />
+                        <Rate label="DNFs / race" value={dnf(c.summary)} max={4} text={dnf(c.summary).toFixed(1)} />
+                        <Text color="secondary" className="f1-num">{c.summary.races} races</Text>
+                      </>
+                    ) : (
+                      <Text color="secondary">No stored races yet.</Text>
+                    )}
+                  </VStack>
+                </Card>
+              ))}
+            </div>
+            {q.data.unmatched_circuits.length ? (
+              <Text color="secondary">Races not matched to a known circuit: {q.data.unmatched_circuits.join(", ")}.</Text>
+            ) : null}
+          </>
         )}
       </VStack>
     </Card>

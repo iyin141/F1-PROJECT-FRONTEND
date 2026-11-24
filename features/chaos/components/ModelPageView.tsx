@@ -50,6 +50,40 @@ function Calibration({ results, cell }: { results: NonNullable<ModelPage["backte
   return <Echart option={option} height={340} label="Reliability diagram: predicted probability against observed rate, one line per model" />;
 }
 
+type PerSeason = NonNullable<NonNullable<ModelPage["backtest"]>["per_season"]>;
+
+/** Brier or log-loss by held-out season, one line per model: shows whether a model's edge holds every year or just pooled. */
+function PerSeasonChart({ perSeason, cell }: { perSeason: PerSeason; cell: string }) {
+  const c = useChartColours();
+  const [metric, setMetric] = useState<"brier" | "log_loss">("brier");
+  const palette = [c.ink, "#E69F00", "#56B4E9"];
+  const models = Object.keys(perSeason).filter((m) => perSeason[m][cell]);
+  const seasons = [...new Set(models.flatMap((m) => Object.keys(perSeason[m][cell])))].sort();
+  const option = useMemo(() => ({
+    grid: { left: 52, right: 16, top: 56, bottom: 32 },
+    legend: { top: 0, textStyle: { color: c.muted } },
+    tooltip: { trigger: "axis" },
+    xAxis: { type: "category", data: seasons, axisLabel: { color: c.muted } },
+    yAxis: { type: "value", scale: true, name: metric === "brier" ? "Brier (lower is better)" : "Log-loss (lower is better)", nameTextStyle: { color: c.muted, align: "left" }, axisLabel: { color: c.muted }, splitLine: { lineStyle: { color: c.grid } } },
+    series: models.map((m, i) => ({
+      type: "line", name: MODEL_LABEL[m] ?? m, symbolSize: 6, lineStyle: { color: palette[i % 3], width: 2 }, itemStyle: { color: palette[i % 3] },
+      data: seasons.map((y) => perSeason[m][cell][y]?.[metric] ?? null),
+    })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [perSeason, cell, metric, c.ink, c.muted, c.grid]);
+  if (!models.length) return null;
+  return (
+    <VStack gap={2}>
+      <Text weight="semibold">By held-out season</Text>
+      <SegmentedControl label="Metric" value={metric} onChange={(v) => setMetric(v as "brier" | "log_loss")} size="sm">
+        <SegmentedControlItem value="brier" label="Brier" />
+        <SegmentedControlItem value="log_loss" label="Log-loss" />
+      </SegmentedControl>
+      <Echart option={option} height={280} label={`${metric === "brier" ? "Brier score" : "Log-loss"} by held-out season, one line per model`} />
+    </VStack>
+  );
+}
+
 function Metrics({ results, cell }: { results: NonNullable<ModelPage["backtest"]>["results"]; cell: string }) {
   const rows = Object.keys(results).filter((m) => results[m][cell]);
   const base: ModelCell | undefined = results[BASELINE]?.[cell];
@@ -127,7 +161,7 @@ export function ModelPageView() {
                   <Text color="secondary" className="f1-num">
                     Leave-one-season-out over {bt.seasons[0]} to {bt.seasons.at(-1)}, {bt.races} races. {bt.note}
                   </Text>
-                  <Text color="secondary">Pooled over all seasons: the API does not return per-season splits yet.</Text>
+                  {bt.per_season ? null : <Text color="secondary">This response has no per-season split, so metrics are pooled over all seasons.</Text>}
                   <SegmentedControl label="Prediction" value={cell ?? ""} onChange={setPick} size="sm">
                     {cells.map((c) => <SegmentedControlItem key={c} value={c} label={cellLabel(c)} />)}
                   </SegmentedControl>
@@ -136,6 +170,7 @@ export function ModelPageView() {
                       <Calibration results={bt.results} cell={cell} />
                       <Text color="secondary">Points on the dashed line mean a predicted 30% happens about 30% of the time. Below the line the model is overconfident.</Text>
                       <Metrics results={bt.results} cell={cell} />
+                      {bt.per_season ? <PerSeasonChart perSeason={bt.per_season} cell={cell} /> : null}
                       {bt.skipped_models?.length ? <Text color="secondary">Skipped models: {bt.skipped_models.join(", ")}.</Text> : null}
                     </>
                   ) : <Text color="secondary">The backtest has no cells to show.</Text>}
