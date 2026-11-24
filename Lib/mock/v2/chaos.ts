@@ -4,7 +4,14 @@ import type {
   ModelPage, Prob, RaceChaos, ReliabilityBin,
 } from "@/Lib/api/v2/payloads";
 
-const block = (model: ChaosModelBlock["model"] = "kumo_tabular_calibrated"): ChaosModelBlock => ({
+/** MOCK_CHAOS_STATE=honest mimics real data today: baseline fallback, identity calibration, no backtest. */
+const honest = () => process.env.MOCK_CHAOS_STATE === "honest";
+
+const block = (model: ChaosModelBlock["model"] = honest() ? "beta_binomial" : "kumo_tabular_calibrated"): ChaosModelBlock => honest() ? ({
+  model, size: "mock", run_id: 3, race_key: "mock", context_rows: 1900, calibration: "none (Beta-Binomial posterior)", calibrated: false,
+  is_fallback: true, fallback_reason: "no calibrated Kumo run exists for this race (Kumo disabled or not run yet); baseline served",
+  selected_by: "default order: calibrated Kumo, then baseline", interval: "beta_posterior_p10_p90", updated: "2026-11-01T00:00:00Z",
+}) : ({
   model, size: "mock", run_id: 1, race_key: "mock", context_rows: 4200, calibration: "isotonic", calibrated: true,
   is_fallback: false, fallback_reason: null, selected_by: "default order: calibrated Kumo, then baseline",
   interval: "mock fixture", updated: "2026-11-01T00:00:00Z",
@@ -86,8 +93,8 @@ const share = <T,>(rows: T[], f: (r: T) => boolean) => +(rows.filter(f).length /
 export function circuitHistory(slug: string): CircuitHistory {
   const k = seed(slug);
   const races = Array.from({ length: 9 }, (_, i) => ({
-    year: 2016 + i, round: 6, safety_cars: (i + k) % 3 === 0 ? 1 : 0, vscs: (i + k) % 4 === 1 ? 1 : 0, red_flags: (i * k) % 9 === 4 ? 1 : 0,
-    neutralisation_laps: (i + k) % 3 === 0 ? [12 + i] : [], dnf_mechanical: (i + k) % 3, dnf_incident: (i * k + 1) % 4, slow_stops: i % 2, unlucky_stops: 0,
+    year: 2016 + i, round: 6, safety_cars: (i + k) % (2 + (k % 4)) === 0 ? 1 : 0, vscs: (i + k) % 4 === 1 ? 1 : 0, red_flags: (i * k) % 9 === 4 ? 1 : 0,
+    neutralisation_laps: (i + k) % (2 + (k % 4)) === 0 ? [12 + i] : [], dnf_mechanical: (i + k) % 3, dnf_incident: (i * k + 1) % 4, slow_stops: i % 2, unlucky_stops: 0,
   }));
   return {
     circuit: { slug, name: slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()), type: "street", length_m: 5412, corners: 14, wall_proximity: 0.8, overtaking_index: 0.3, elevation_range_m: 12 },
@@ -120,6 +127,15 @@ function cell(brier: number, ll: number, auc: number, gap: number): ModelCell {
 }
 
 export function modelPage(): ModelPage {
+  if (honest()) {
+    return {
+      current_runs: [
+        { id: 2, model: "kumo_tabular", size: "mock", race_key: "mock", context_rows: 1900, git_sha: "mock", updated: "2026-11-01T00:00:00Z", calibrated: false, interval: "mock", calibration: "identity (too little backtest history: raw Kumo probabilities)" },
+        { id: 3, model: "beta_binomial", size: "mock", race_key: "mock", context_rows: 1900, git_sha: "mock", updated: "2026-11-01T00:00:00Z", calibrated: null, interval: "beta_posterior_p10_p90", calibration: null },
+      ],
+      backtest: null,
+    };
+  }
   const cells = ["race|sc_vsc_red", "driver|dnf_mechanical", "driver|dnf_incident"];
   const mk = (b: number, l: number, a: number, g: number) => Object.fromEntries(cells.map((c, i) => [c, cell(b + i * 0.01, l + i * 0.02, a - i * 0.02, g)]));
   return {

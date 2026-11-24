@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Badge } from "@astryxdesign/core/Badge";
 import { Card } from "@astryxdesign/core/Card";
 import { Heading } from "@astryxdesign/core/Heading";
 import { HStack } from "@astryxdesign/core/HStack";
@@ -71,7 +70,7 @@ export function ChaosPreview({ year, round, name }: { year: number; round: numbe
                     {d.factors.map((f) => (
                       <li key={f.target}>
                         <HStack gap={2} align="start">
-                          <Badge label={f.direction === "higher" ? "Higher" : "Lower"} variant="neutral" />
+                          <Text weight="semibold" style={{ minWidth: 52 }}>{f.direction === "higher" ? "Higher" : "Lower"}</Text>
                           <Text>{f.text}</Text>
                         </HStack>
                       </li>
