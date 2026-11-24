@@ -6,15 +6,21 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "gen:api": "openapi-typescript docs/v2-ui/openapi-v2.yaml -o Lib/api/v2/schema.d.ts",
+    "build:theme": "astryx theme build styles/theme/f1Theme.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@astryxdesign/core": "0.7.17",
+    "@astryxdesign/theme-neutral": "0.7.17",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slider": "^1.3.6",
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@stylexjs/stylex": "0.19.2",
     "@supabase/supabase-js": "^2.103.3",
     "@tanstack/query-async-storage-persister": "^5.100.8",
     "@tanstack/react-query": "^5.100.6",
@@ -22,6 +28,9 @@
     "@tanstack/react-query-persist-client": "^5.100.8",
     "clsx": "^2.1.1",
     "d3": "^7.9.0",
+    "d3-shape": "3.2.1",
+    "d3-zoom": "3.0.1",
+    "echarts": "6.1.0",
     "framer-motion": "^12.38.0",
     "gsap": "^3.15.0",
     "idb-keyval": "^6.2.2",
@@ -32,9 +41,13 @@
     "react-dom": "19.2.4",
     "recharts": "^2.7.2",
     "tailwind-merge": "^3.5.0",
+    "thinking-orbs": "0.3.2",
+    "uplot": "1.6.32",
     "zustand": "^5.0.13"
   },
   "devDependencies": {
+    "@astryxdesign/cli": "0.7.17",
+    "@stylexjs/postcss-plugin": "0.19.2",
     "@tailwindcss/postcss": "^4",
     "@types/d3": "^7.4.3",
     "@types/lodash": "^4.17.24",
@@ -43,6 +56,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
+    "openapi-typescript": "7.13.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
