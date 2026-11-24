@@ -37,6 +37,8 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
+    "e2e",
+    "playwright.config.ts",
     "Lib/v2/decimate.check.ts",
     "node_modules",
     "test-ui-5",

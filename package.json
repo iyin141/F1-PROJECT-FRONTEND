@@ -9,7 +9,9 @@
     "lint": "eslint",
     "gen:api": "openapi-typescript docs/v2-ui/openapi-v2.yaml -o Lib/api/v2/schema.d.ts",
     "build:theme": "astryx theme build styles/theme/f1Theme.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "e2e": "playwright test",
+    "perf": "bash scripts/perf.sh"
   },
   "dependencies": {
     "@astryxdesign/core": "0.7.17",

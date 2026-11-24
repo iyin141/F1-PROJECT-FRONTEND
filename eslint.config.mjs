@@ -32,6 +32,10 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "styles/theme/**",
+    "e2e/**",
+    "playwright.config.ts",
+    "playwright-report/**",
+    "lighthouse/results/**",
     "Lib/api/v2/schema.d.ts",
   ]),
 ]);

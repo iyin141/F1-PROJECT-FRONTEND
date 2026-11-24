@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.github
+docs
+e2e
+playwright-report
+test-results
+lighthouse/results
+*.md
+.env*
+*.log
+*_test.json
+yh.json

@@ -1,0 +1,19 @@
+{
+  "ci": {
+    "collect": {
+      "numberOfRuns": 3,
+      "startServerCommand": "npx next start -p 3010",
+      "startServerReadyPattern": "Ready",
+      "url": ["http://localhost:3010/race/2024/8", "http://localhost:3010/chaos"],
+      "settings": { "preset": "desktop", "throttlingMethod": "simulate", "throttling": { "rttMs": 150, "throughputKbps": 1638.4, "cpuSlowdownMultiplier": 1 } }
+    },
+    "assert": {
+      "assertions": {
+        "largest-contentful-paint": ["error", { "maxNumericValue": 2500, "aggregationMethod": "median" }],
+        "cumulative-layout-shift": ["warn", { "maxNumericValue": 0.1 }],
+        "total-blocking-time": ["warn", { "maxNumericValue": 300 }]
+      }
+    },
+    "upload": { "target": "filesystem", "outputDir": "lighthouse/results" }
+  }
+}
