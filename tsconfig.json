@@ -37,6 +37,7 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
+    "Lib/v2/decimate.check.ts",
     "node_modules",
     "test-ui-5",
     ".next"

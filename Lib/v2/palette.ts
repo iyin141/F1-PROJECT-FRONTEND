@@ -39,3 +39,10 @@ export function seriesFor(drivers: { code: string; team?: string; colour?: strin
     return { driver: d.code, team: d.team, colour, dash: n === 0 ? null : [6, 4] };
   });
 }
+
+/** Team by driver code (2024-25 grid) for when no API team is available, so teammates still share a colour and dash. */
+export const TEAM_BY_CODE: Record<string, string> = {
+  VER: "Red Bull", PER: "Red Bull", LAW: "Red Bull", TSU: "RB", RIC: "RB", NOR: "McLaren", PIA: "McLaren",
+  LEC: "Ferrari", HAM: "Ferrari", SAI: "Williams", ALB: "Williams", COL: "Williams", RUS: "Mercedes", ANT: "Mercedes",
+  ALO: "Aston Martin", STR: "Aston Martin", GAS: "Alpine", OCO: "Haas", HUL: "Sauber", BOT: "Sauber", ZHO: "Sauber", MAG: "Haas", BEA: "Haas",
+};

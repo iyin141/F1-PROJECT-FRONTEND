@@ -32,3 +32,13 @@
 /* Re-points the accent inside a subtree (tabs, selection) so red stays for primary actions and live states. */
 .v2 .f1-neutral-accent { --color-accent: var(--color-text-primary); }
 .v2 .f1-hub > * { min-width: 0; }
+
+/* Telemetry lab: charts left, sticky mini map right; map first when stacked. */
+.v2 .f1-lab { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; align-items: start; }
+.v2 .f1-lab > * { min-width: 0; }
+.v2 .f1-lab-side { position: sticky; top: 12px; }
+@media (max-width: 900px) { .v2 .f1-lab { grid-template-columns: minmax(0, 1fr); } .v2 .f1-lab-side { position: static; order: -1; } }
+.v2 .f1-input { width: 84px; padding: 4px 8px; border-radius: var(--radius-element); border: 1px solid var(--color-border-emphasized);
+  background: var(--color-background-surface); color: var(--color-text-primary); font: inherit; }
+.v2 .f1-input:focus-visible, .v2 [role="button"]:focus-visible { outline: 2px solid var(--color-text-primary); outline-offset: 2px; }
+.v2 .f1-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
