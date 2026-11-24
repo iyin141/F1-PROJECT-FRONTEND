@@ -22,3 +22,10 @@
 @keyframes f1-live-pulse { 50% { opacity: 0.35; } }
 .v2 .f1-live-dot { width: 8px; height: 8px; border-radius: 9999px; background: var(--f1-live); animation: f1-live-pulse 1.6s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .v2 .f1-live-dot { animation: none; } }
+
+/* Race hub: map 60% / chaos meter 40%, stacked under 900px. */
+.v2 .f1-hub { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .v2 .f1-hub { grid-template-columns: minmax(0, 1fr); } }
+.v2 .f1-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.v2 .f1-table th { text-align: left; font-weight: 600; color: var(--color-text-secondary); }
+.v2 .f1-table th, .v2 .f1-table td { padding: 6px 10px; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
