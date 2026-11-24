@@ -1,3 +1,6 @@
+/* Layer order shared with Astryx (v2 pages). Must stay above every @import. */
+@layer reset, theme, base, astryx-base, astryx-theme, components, utilities;
+
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap");
 
 @import "tailwindcss";

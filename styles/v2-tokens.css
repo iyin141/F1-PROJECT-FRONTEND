@@ -1,0 +1,24 @@
+/*
+ * v2 design tokens that Astryx does not carry. Scoped to `.v2` so legacy pages are untouched.
+ * Colours: see the Astryx theme (styles/theme/f1Theme.ts) for surfaces, text, border and the red accent.
+ * Rule: F1 red appears only through --color-accent (primary actions) and --f1-live (live states).
+ */
+.v2 {
+  --f1-font-display: var(--font-f1-display), "Arial Narrow", "Roboto Condensed", sans-serif;
+  --f1-live: #e10600;
+  --f1-grid-opacity: 0.08;            /* chart gridlines */
+  --f1-sector-fastest: #a855f7;
+  --f1-sector-good: #22c55e;
+  --f1-sector-slower: #eab308;
+  --f1-focus-ring: 2px solid var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.v2 h1, .v2 h2, .v2 .f1-display {
+  font-family: var(--f1-font-display);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.v2 .f1-num { font-family: var(--f1-font-display); font-variant-numeric: tabular-nums lining-nums; font-feature-settings: "tnum" 1; }
+@keyframes f1-live-pulse { 50% { opacity: 0.35; } }
+.v2 .f1-live-dot { width: 8px; height: 8px; border-radius: 9999px; background: var(--f1-live); animation: f1-live-pulse 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .v2 .f1-live-dot { animation: none; } }
