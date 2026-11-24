@@ -44,7 +44,7 @@ export function TelemetryStack({ drivers, delta, corners, onCursor, onBrush, onR
   const host = useRef<HTMLDivElement>(null);
   const colours = useChartColours();
   const cb = useRef({ onCursor, onBrush });
-  cb.current = { onCursor, onBrush };
+  useEffect(() => { cb.current = { onCursor, onBrush }; });
 
   useEffect(() => {
     const el = host.current;
