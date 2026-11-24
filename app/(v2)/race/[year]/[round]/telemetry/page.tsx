@@ -15,8 +15,11 @@ export default async function TelemetryLabPage({ params, searchParams }: Props) 
   const drivers = [...new Set((q.drivers ?? "VER,NOR").split(",").map((d) => d.trim().toUpperCase()).filter((d) => /^[A-Z]{3}$/.test(d)))].slice(0, 4);
   const lapN = num(q.lap);
   const start = num(q.start_m), end = num(q.end_m);
+  const list = drivers.length >= 2 ? drivers : ["VER", "NOR"];
+  const ref = (q.ref ?? "").toUpperCase();
   const params_: LabParams = {
-    drivers: drivers.length >= 2 ? drivers : ["VER", "NOR"],
+    drivers: list,
+    ref: list.includes(ref) ? ref : list[0],
     lap: lapN !== null && lapN >= 1 ? Math.floor(lapN) : null,
     startM: start !== null && start >= 0 ? start : null,
     endM: end !== null && end > (start ?? 0) ? end : null,

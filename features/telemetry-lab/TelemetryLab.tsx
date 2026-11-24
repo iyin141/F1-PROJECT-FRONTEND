@@ -18,21 +18,22 @@ import { v2Queries } from "@/Lib/api/v2/queries";
 import { loadTelemetry } from "@/Lib/api/v2/telemetryWorkerClient";
 import { TEAM_BY_CODE, seriesFor } from "@/Lib/v2/palette";
 import { MiniMap, type MiniMapHandle } from "./components/MiniMap";
-import { LAB_CHANNELS, TelemetryStack, type DeltaSeries, type DriverSeries, type StackHandle } from "./components/TelemetryStack";
+import { LAB_CHANNELS, TelemetryStack, type CursorRow, type DeltaSeries, type DriverSeries, type StackHandle } from "./components/TelemetryStack";
 
-export type LabParams = { drivers: string[]; lap: number | null; startM: number | null; endM: number | null };
+export type LabParams = { drivers: string[]; ref: string; lap: number | null; startM: number | null; endM: number | null };
 
 const FALLBACK_PICKS = ["VER", "NOR", "LEC", "PIA", "HAM", "RUS", "SAI", "ALO"];
 const MIN = 2, MAX = 4;
 
 export function TelemetryLab({ year, round, params }: { year: number; round: number; params: LabParams }) {
   const router = useRouter();
-  const { drivers, lap, startM, endM } = params;
+  const { drivers, ref, lap, startM, endM } = params;
+  const others = drivers.filter((d) => d !== ref);
   const hasRange = startM !== null || endM !== null;
 
   const go = useCallback((next: Partial<LabParams>) => {
     const p = { ...params, ...next };
-    const q = new URLSearchParams({ drivers: p.drivers.join(","), lap: p.lap === null ? "fastest" : String(p.lap) });
+    const q = new URLSearchParams({ drivers: p.drivers.join(","), ref: p.drivers.includes(p.ref) ? p.ref : p.drivers[0], lap: p.lap === null ? "fastest" : String(p.lap) });
     if (p.startM !== null) q.set("start_m", String(p.startM));
     if (p.endM !== null) q.set("end_m", String(p.endM));
     router.replace(`/race/${year}/${round}/telemetry?${q}`, { scroll: false });
@@ -60,7 +61,7 @@ export function TelemetryLab({ year, round, params }: { year: number; round: num
     })),
   });
   const deltaQ = useQueries({
-    queries: drivers.slice(1).map((cmp) => ({ ...v2Queries.delta(year, round, drivers[0], cmp, lap ?? "fastest") })),
+    queries: others.map((cmp) => ({ ...v2Queries.delta(year, round, ref, cmp, lap ?? "fastest") })),
   });
 
   const driverData: DriverSeries[] | null = useMemo(() => {
@@ -78,24 +79,39 @@ export function TelemetryLab({ year, round, params }: { year: number; round: num
       const lo = startM ?? -Infinity, hi = endM ?? Infinity;
       const idx: number[] = [];
       d.distance.forEach((m, k) => { if (m >= lo && m <= hi) idx.push(k); });
-      out.push({ cmp: drivers[i + 1], colour: series[i + 1].colour, dash: series[i + 1].dash, x: Float64Array.from(idx, (k) => d.distance[k]), y: Float64Array.from(idx, (k) => d.delta[k]) });
+      const si = drivers.indexOf(others[i]);
+      out.push({ cmp: others[i], colour: series[si].colour, dash: series[si].dash, x: Float64Array.from(idx, (k) => d.distance[k]), y: Float64Array.from(idx, (k) => d.delta[k]) });
     });
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deltaQ.map((q) => q.dataUpdatedAt).join(","), series, startM, endM]);
+  }, [deltaQ.map((q) => q.dataUpdatedAt).join(","), series, startM, endM, ref]);
 
   // ---- imperative cursor path: no React state ----
   const mini = useRef<MiniMapHandle>(null);
-  const readout = useRef<HTMLOutputElement>(null);
+  const readout = useRef<HTMLDivElement>(null);
   const stack = useRef<StackHandle | null>(null);
   const bench = useRef<HTMLOutputElement>(null);
   const onReady = useCallback((h: StackHandle | null) => { stack.current = h; }, []);
   const raf = useRef(0);
-  const onCursor = useCallback((d: number | null) => {
+  const onCursor = useCallback((d: number | null, rows: CursorRow[]) => {
     cancelAnimationFrame(raf.current);
     raf.current = requestAnimationFrame(() => {
       mini.current?.setDistance(d);
-      if (readout.current) readout.current.textContent = d == null ? "Move over a chart to read values" : `${Math.round(d)} m`;
+      const el = readout.current;
+      if (!el) return;
+      // Imperative DOM writes: scrubbing never renders React.
+      if (d == null) { el.replaceChildren(document.createTextNode("Move over a chart to read values")); return; }
+      const head = document.createElement("div");
+      head.textContent = `${Math.round(d)} m`;
+      head.style.fontWeight = "600";
+      const lines = rows.map((r) => {
+        const row = document.createElement("div");
+        const sw = document.createElement("span");
+        sw.style.cssText = `display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;background:${r.colour}`;
+        row.append(sw, `${r.driver} ${Math.round(r.speed)} km/h, gear ${r.gear}, throttle ${Math.round(r.throttle)}%${r.brake ? ", braking" : ""}`);
+        return row;
+      });
+      el.replaceChildren(head, ...lines);
     });
   }, []);
 
@@ -115,7 +131,7 @@ export function TelemetryLab({ year, round, params }: { year: number; round: num
 
   const toggle = (code: string) => {
     const next = drivers.includes(code) ? drivers.filter((c) => c !== code) : [...drivers, code].slice(-MAX);
-    if (next.length >= MIN) go({ drivers: next });
+    if (next.length >= MIN) go({ drivers: next, ref: next.includes(ref) ? ref : next[0] });
   };
 
   const loading = tel.some((q) => q.isLoading);
@@ -159,6 +175,12 @@ export function TelemetryLab({ year, round, params }: { year: number; round: num
               />
             </label>
           </HStack>
+          <HStack gap={2} wrap="wrap" align="center" role="group" aria-label="Reference driver for the delta">
+            <Text weight="semibold">vs</Text>
+            {drivers.map((d) => (
+              <Button key={d} label={d} size="sm" variant={d === ref ? "secondary" : "ghost"} aria-pressed={d === ref} onClick={() => go({ ref: d })} />
+            ))}
+          </HStack>
           {hasRange ? (
             <HStack gap={2} align="center">
               <Text className="f1-num">Range {startM ?? 0} to {endM ?? "end"} m</Text>
@@ -175,7 +197,7 @@ export function TelemetryLab({ year, round, params }: { year: number; round: num
               <HStack gap={4} wrap="wrap">
                 {series.map((s) => <DriverChip key={s.driver} code={s.driver} colour={s.colour} dashed={s.dash !== null} />)}
               </HStack>
-              <Text color="secondary">Delta: positive means {drivers[1] ?? "the other driver"} is slower than {drivers[0]}.</Text>
+              <Text color="secondary">Delta vs {ref}: above zero means that driver is slower than {ref}.</Text>
             </HStack>
             {failed ? (
               <Text color="secondary">Telemetry is not available for these drivers or this lap. {failed.error instanceof Error ? failed.error.message : ""}</Text>
@@ -200,7 +222,7 @@ export function TelemetryLab({ year, round, params }: { year: number; round: num
           <Card padding={3}>
             <VStack gap={2}>
               <Text weight="semibold">Cursor</Text>
-              <output ref={readout} className="f1-num" aria-live="off">Move over a chart to read values</output>
+              <div ref={readout} className="f1-num" aria-live="off" style={{ minHeight: 88 }}>Move over a chart to read values</div>
               {geometry.data ? (
                 <MiniMap handle={mini} geometry={geometry.data} range={{ start_m: startM ?? undefined, end_m: endM ?? undefined }} onPick={(a, b) => go({ startM: a, endM: b })} />
               ) : (

@@ -10,9 +10,16 @@ import type { TrackCorner } from "@/Lib/api/v2/payloads";
 export type DriverSeries = { driver: string; colour: string; dash: number[] | null; x: Float64Array; cols: Record<string, Float64Array> };
 export type DeltaSeries = { cmp: string; colour: string; dash: number[] | null; x: Float64Array; y: Float64Array };
 export type BenchResult = { cursorMoves: number; cursorAvgMs: number; cursorP95Ms: number; redrawAllMs: number; plots: number; points: number };
+export type CursorRow = { driver: string; colour: string; speed: number; gear: number; throttle: number; brake: boolean };
 export type StackHandle = { bench: () => BenchResult | null };
 
 type Spec = { key: string; label: string; height: number; stepped?: boolean; yRange?: [number, number] };
+function lowerBound(a: ArrayLike<number>, d: number) {
+  let lo = 0, hi = a.length - 1;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (a[m] < d) lo = m + 1; else hi = m; }
+  return lo;
+}
+
 const SPECS: Spec[] = [
   { key: "speed_kph", label: "Speed km/h", height: 170 },
   { key: "throttle_pct", label: "Throttle %", height: 90, yRange: [0, 100] },
@@ -28,7 +35,7 @@ type Props = {
   delta: DeltaSeries[];
   corners: TrackCorner[];
   /** Imperative: called on every cursor move with the distance in metres (or null on leave). Never sets React state. */
-  onCursor: (distance: number | null) => void;
+  onCursor: (distance: number | null, rows: CursorRow[]) => void;
   /** Distance range from a drag on any plot. */
   onBrush: (startM: number, endM: number) => void;
   /** Receives the bench handle once plots exist (null on teardown). */
@@ -145,7 +152,19 @@ export function TelemetryStack({ drivers, delta, corners, onCursor, onBrush, onR
               },
             ],
             ...(row.spec.key === "speed_kph"
-              ? { setCursor: [(u: uPlot) => { const i = u.cursor.idx; cb.current.onCursor(i == null ? null : (u.data[0][i] as number)); }] }
+              ? {
+                  setCursor: [
+                    (u: uPlot) => {
+                      const i = u.cursor.idx;
+                      if (i == null) return cb.current.onCursor(null, []);
+                      const d = u.data[0][i] as number;
+                      cb.current.onCursor(d, drivers.map((s) => {
+                        const k = lowerBound(s.x, d); // values come from the raw (undecimated) columns
+                        return { driver: s.driver, colour: s.colour, speed: s.cols.speed_kph[k], gear: s.cols.gear[k], throttle: s.cols.throttle_pct[k], brake: s.cols.brake[k] > 0 };
+                      }));
+                    },
+                  ],
+                }
               : {}),
           },
         };
@@ -161,7 +180,7 @@ export function TelemetryStack({ drivers, delta, corners, onCursor, onBrush, onR
       raf = requestAnimationFrame(build);
     });
     ro.observe(el);
-    const leave = () => cb.current.onCursor(null);
+    const leave = () => cb.current.onCursor(null, []);
     el.addEventListener("mouseleave", leave);
 
     onReady({
