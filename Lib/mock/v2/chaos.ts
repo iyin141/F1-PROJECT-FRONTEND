@@ -1,6 +1,6 @@
 /** Mock chaos payloads: plausible numbers, same shapes as docs/v2/progress/A2-chaos.md. Deterministic. */
 import type {
-  ChaosFactor, ChaosModelBlock, ChaosTarget, CircuitHistory, CircuitSummary, DriverProfile, DriversChaos, LapsChaos, ModelCell,
+  ChaosFactor, ChaosModelBlock, ChaosTarget, CircuitHistory, CircuitSummary, CircuitsSummary, DriverProfile, DriversChaos, LapsChaos, ModelCell,
   ModelPage, Prob, RaceChaos, ReliabilityBin,
 } from "@/Lib/api/v2/payloads";
 
@@ -90,6 +90,11 @@ const seed = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) %
 
 const share = <T,>(rows: T[], f: (r: T) => boolean) => +(rows.filter(f).length / rows.length).toFixed(3);
 
+export function circuitsSummary(): CircuitsSummary {
+  const circuits = CIRCUITS.map(([slug, name, type]) => ({ slug, name, type, summary: circuitHistory(slug).summary }));
+  return { count: circuits.length, note: "MOCK DATA", unmatched_circuits: [], circuits };
+}
+
 export function circuitHistory(slug: string): CircuitHistory {
   const k = seed(slug);
   const races = Array.from({ length: 9 }, (_, i) => ({
@@ -144,6 +149,11 @@ export function modelPage(): ModelPage {
       run_id: 2, seasons: [2019, 2020, 2021, 2022, 2023, 2024], models: ["beta_binomial", "lightgbm", "kumo"], skipped_models: null,
       prior_strength: 8, canada_check: null, races: 138,
       results: { beta_binomial: mk(0.225, 0.65, 0.64, 0.03), lightgbm: mk(0.212, 0.61, 0.69, 0.05), kumo: mk(0.2, 0.58, 0.71, 0.02) },
+      per_season: Object.fromEntries(
+        [["beta_binomial", 0.225, 0.65], ["lightgbm", 0.212, 0.61], ["kumo", 0.2, 0.58]].map(([m, b, l]) => [m, Object.fromEntries(cells.map((c, ci) => [c, Object.fromEntries([2019, 2020, 2021, 2022, 2023, 2024].map((y, i) => [String(y), {
+          n: 230, base_rate: 0.41, brier: +((b as number) + ci * 0.01 + 0.012 * Math.sin(i + ci)).toFixed(4), log_loss: +((l as number) + ci * 0.02 + 0.03 * Math.sin(i + ci)).toFixed(4), auc: 0.66,
+        }]))]))]),
+      ),
       note: "overall = pooled leave-one-season-out predictions; bins are the 10-bin reliability table. MOCK DATA.",
     },
   };

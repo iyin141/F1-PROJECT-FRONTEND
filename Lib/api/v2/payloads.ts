@@ -231,7 +231,24 @@ export type CircuitHistory = {
   }[];
 };
 
-/** GET /api/chaos/circuits/ (A2 adding): one entry per known circuit. */
+/** GET /api/chaos/circuits/summary/ (A2 phase 2g): every circuit with its rates in one call. */
+export type CircuitRates = {
+  races: number;
+  safety_car_rate: number | null;
+  vsc_rate: number | null;
+  red_flag_rate: number | null;
+  any_neutralisation_rate: number | null;
+  mean_mechanical_dnfs: number | null;
+  mean_incident_dnfs: number | null;
+};
+export type CircuitsSummary = {
+  count: number;
+  note: string;
+  unmatched_circuits: string[];
+  circuits: { slug: string; name: string; type: string | null; summary: CircuitRates }[];
+};
+
+/** GET /api/chaos/circuits/ (older list form): one entry per known circuit. */
 export type CircuitSummary = { slug: string; name: string; circuit_type: string };
 
 export type DriverProfile = {
@@ -281,6 +298,8 @@ export type ModelPage = {
     races: number;
     /** backtest model (beta_binomial, lightgbm, kumo) -> "scope|target" (e.g. "race|sc_vsc_red") -> pooled leave-one-season-out metrics. */
     results: Record<string, Record<string, ModelCell>>;
+    /** model -> "scope|target" -> season (string) -> metrics. No ece or bins per season. Absent only when `backtest` is null. */
+    per_season?: Record<string, Record<string, Record<string, Omit<ModelCell, "bins" | "ece">>>>;
     note: string;
   } | null;
 };

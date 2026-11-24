@@ -1,5 +1,5 @@
 import type {
-  AskBody, ChaosPending, CircuitHistory, CircuitSummary, ColumnarTelemetryResponse, DeltaResponse, DriverProfile, DriversChaos, LapsChaos,
+  AskBody, ChaosPending, CircuitHistory, CircuitSummary, CircuitsSummary, ColumnarTelemetryResponse, DeltaResponse, DriverProfile, DriversChaos, LapsChaos,
   MiniSectorScheme, MiniSectorsResponse, ModelPage, Pending, RaceChaos, TelemetryParams, TrackMapResponse, ChaosTarget,
 } from "./payloads";
 
@@ -55,6 +55,7 @@ export const api = {
   raceLaps: (y: number, r: number, target?: ChaosTarget, model?: string) =>
     getJson<LapsChaos | ChaosPending>(`/api/chaos/races/${y}/${r}/laps/`, { target, model }),
   circuits: () => getJson<CircuitSummary[]>(`/api/chaos/circuits/`),
+  circuitsSummary: () => getJson<CircuitsSummary>(`/api/chaos/circuits/summary/`),
   circuitHistory: (slug: string) => getJson<CircuitHistory>(`/api/chaos/circuits/${encodeURIComponent(slug)}/history/`),
   driverProfile: (code: string) => getJson<DriverProfile>(`/api/chaos/drivers/${encodeURIComponent(code)}/profile/`),
   chaosModel: () => getJson<ModelPage>(`/api/chaos/model/`),

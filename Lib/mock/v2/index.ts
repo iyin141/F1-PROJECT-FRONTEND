@@ -40,6 +40,7 @@ export function mockAnalysis(year: number, round: number, slug: string[], sp: UR
 export function mockChaos(slug: string[], sp: URLSearchParams): Response {
   const [a, b, c, d] = slug;
   if (a === "model") return json(chaos.modelPage());
+  if (a === "circuits" && b === "summary") return json(chaos.circuitsSummary());
   if (a === "circuits" && !b) return json(chaos.circuitList());
   if (a === "circuits" && c === "history") return json(chaos.circuitHistory(b));
   if (a === "drivers" && c === "profile") return json(chaos.driverProfile(b.toUpperCase()));
