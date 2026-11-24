@@ -1,6 +1,6 @@
 /** Mock chaos payloads: plausible numbers, same shapes as docs/v2/progress/A2-chaos.md. Deterministic. */
 import type {
-  ChaosFactor, ChaosModelBlock, ChaosTarget, CircuitHistory, DriverProfile, DriversChaos, LapsChaos, ModelCell,
+  ChaosFactor, ChaosModelBlock, ChaosTarget, CircuitHistory, CircuitSummary, DriverProfile, DriversChaos, LapsChaos, ModelCell,
   ModelPage, Prob, RaceChaos, ReliabilityBin,
 } from "@/Lib/api/v2/payloads";
 
@@ -72,14 +72,32 @@ export function lapsChaos(year: number, round: number, target: ChaosTarget): Lap
   };
 }
 
+const CIRCUITS: [string, string, string][] = [
+  ["monaco", "Monaco", "street"], ["baku", "Baku", "street"], ["singapore", "Singapore", "street"], ["jeddah", "Jeddah", "street"],
+  ["monza", "Monza", "high-speed"], ["spa", "Spa-Francorchamps", "high-speed"], ["silverstone", "Silverstone", "high-speed"],
+  ["suzuka", "Suzuka", "technical"], ["hungaroring", "Hungaroring", "technical"], ["barcelona", "Barcelona", "technical"],
+  ["bahrain", "Bahrain", "balanced"], ["interlagos", "Interlagos", "balanced"],
+];
+export const circuitList = (): CircuitSummary[] => CIRCUITS.map(([slug, name, circuit_type]) => ({ slug, name, circuit_type }));
+const seed = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 997, 7);
+
+const share = <T,>(rows: T[], f: (r: T) => boolean) => +(rows.filter(f).length / rows.length).toFixed(3);
+
 export function circuitHistory(slug: string): CircuitHistory {
+  const k = seed(slug);
   const races = Array.from({ length: 9 }, (_, i) => ({
-    year: 2016 + i, round: 6, safety_cars: i % 3 === 0 ? 1 : 0, vscs: i % 4 === 1 ? 1 : 0, red_flags: i === 4 ? 1 : 0,
-    neutralisation_laps: i % 3 === 0 ? [12 + i] : [], dnf_mechanical: i % 3, dnf_incident: (i + 1) % 3, slow_stops: i % 2, unlucky_stops: 0,
+    year: 2016 + i, round: 6, safety_cars: (i + k) % 3 === 0 ? 1 : 0, vscs: (i + k) % 4 === 1 ? 1 : 0, red_flags: (i * k) % 9 === 4 ? 1 : 0,
+    neutralisation_laps: (i + k) % 3 === 0 ? [12 + i] : [], dnf_mechanical: (i + k) % 3, dnf_incident: (i * k + 1) % 4, slow_stops: i % 2, unlucky_stops: 0,
   }));
   return {
     circuit: { slug, name: slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()), type: "street", length_m: 5412, corners: 14, wall_proximity: 0.8, overtaking_index: 0.3, elevation_range_m: 12 },
-    summary: { races: 9, safety_car_rate: 0.33, vsc_rate: 0.22, red_flag_rate: 0.11, any_neutralisation_rate: 0.56, mean_mechanical_dnfs: 1, mean_incident_dnfs: 1 },
+    summary: {
+      races: races.length,
+      safety_car_rate: share(races, (r) => r.safety_cars > 0), vsc_rate: share(races, (r) => r.vscs > 0), red_flag_rate: share(races, (r) => r.red_flags > 0),
+      any_neutralisation_rate: share(races, (r) => r.safety_cars + r.vscs + r.red_flags > 0),
+      mean_mechanical_dnfs: +(races.reduce((a, r) => a + r.dnf_mechanical, 0) / races.length).toFixed(2),
+      mean_incident_dnfs: +(races.reduce((a, r) => a + r.dnf_incident, 0) / races.length).toFixed(2),
+    },
     races,
   };
 }
@@ -102,14 +120,14 @@ function cell(brier: number, ll: number, auc: number, gap: number): ModelCell {
 }
 
 export function modelPage(): ModelPage {
-  const targets: ChaosTarget[] = ["sc_vsc_red", "dnf_mechanical", "dnf_incident"];
-  const mk = (b: number, l: number, a: number, g: number) => Object.fromEntries(targets.map((t, i) => [t, cell(b + i * 0.01, l + i * 0.02, a - i * 0.02, g)])) as Record<ChaosTarget, ModelCell>;
+  const cells = ["race|sc_vsc_red", "driver|dnf_mechanical", "driver|dnf_incident"];
+  const mk = (b: number, l: number, a: number, g: number) => Object.fromEntries(cells.map((c, i) => [c, cell(b + i * 0.01, l + i * 0.02, a - i * 0.02, g)]));
   return {
     current_runs: [{ id: 1, model: "kumo_tabular_calibrated", size: "mock", race_key: "mock", context_rows: 4200, git_sha: "mock", updated: "2026-11-01T00:00:00Z", calibrated: true, interval: "mock", calibration: "isotonic" }],
     backtest: {
-      run_id: 2, seasons: [2019, 2020, 2021, 2022, 2023, 2024], models: ["kumo_tabular_calibrated", "kumo_tabular", "beta_binomial"], skipped_models: null,
+      run_id: 2, seasons: [2019, 2020, 2021, 2022, 2023, 2024], models: ["beta_binomial", "lightgbm", "kumo"], skipped_models: null,
       prior_strength: 8, canada_check: null, races: 138,
-      results: { kumo_tabular_calibrated: mk(0.2, 0.58, 0.71, 0.02), kumo_tabular: mk(0.215, 0.62, 0.7, 0.06), beta_binomial: mk(0.225, 0.65, 0.64, 0.03) } as NonNullable<ModelPage["backtest"]>["results"],
+      results: { beta_binomial: mk(0.225, 0.65, 0.64, 0.03), lightgbm: mk(0.212, 0.61, 0.69, 0.05), kumo: mk(0.2, 0.58, 0.71, 0.02) },
       note: "overall = pooled leave-one-season-out predictions; bins are the 10-bin reliability table. MOCK DATA.",
     },
   };

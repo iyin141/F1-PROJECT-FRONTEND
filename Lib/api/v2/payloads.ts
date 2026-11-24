@@ -231,6 +231,9 @@ export type CircuitHistory = {
   }[];
 };
 
+/** GET /api/chaos/circuits/ (A2 adding): one entry per known circuit. */
+export type CircuitSummary = { slug: string; name: string; circuit_type: string };
+
 export type DriverProfile = {
   driver: string;
   last_team: string;
@@ -276,8 +279,8 @@ export type ModelPage = {
     prior_strength: number | null;
     canada_check: unknown;
     races: number;
-    /** model -> target -> pooled leave-one-season-out metrics. */
-    results: Record<string, Partial<Record<ChaosTarget, ModelCell>>>;
+    /** backtest model (beta_binomial, lightgbm, kumo) -> "scope|target" (e.g. "race|sc_vsc_red") -> pooled leave-one-season-out metrics. */
+    results: Record<string, Record<string, ModelCell>>;
     note: string;
   } | null;
 };

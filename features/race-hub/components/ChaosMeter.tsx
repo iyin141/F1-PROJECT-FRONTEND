@@ -22,7 +22,7 @@ const BAR_TARGETS: [ChaosTarget, string][] = [
 ];
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
-function Bars({ targets }: { targets: Partial<Record<ChaosTarget, { probability: number; p10: number; p90: number }>> }) {
+export function Bars({ targets }: { targets: Partial<Record<ChaosTarget, { probability: number; p10: number; p90: number }>> }) {
   return (
     <VStack gap={2} role="list" aria-label="Probability per event with p10 to p90 range">
       {BAR_TARGETS.filter(([k]) => targets[k]).map(([k, label]) => {

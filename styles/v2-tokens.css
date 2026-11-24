@@ -42,3 +42,9 @@
   background: var(--color-background-surface); color: var(--color-text-primary); font: inherit; }
 .v2 .f1-input:focus-visible, .v2 [role="button"]:focus-visible { outline: 2px solid var(--color-text-primary); outline-offset: 2px; }
 .v2 .f1-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* Chaos pages */
+.v2 .f1-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+.v2 .f1-two > * { min-width: 0; }
+.v2 .f1-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .v2 .f1-two { grid-template-columns: minmax(0, 1fr); } }
