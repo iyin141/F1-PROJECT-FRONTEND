@@ -221,7 +221,7 @@ export function telemetryColumnar(
     lap_number: idx.map(() => lap.lapNumber),
     distance_m: pick((i) => G.distance[i]),
   };
-  const acc = (i: number) => lap.speed[Math.min(N - 1, i + 1)] - lap.speed[Math.max(0, i - 1)];
+  const acc = (i: number) => (lap.speed[Math.min(N - 1, i + 8)] - lap.speed[Math.max(0, i - 8)]) / 8; // smoothed so pedals do not flicker
   if (want("speed")) out.speed_kph = pick((i) => +lap.speed[i].toFixed(1));
   if (want("throttle")) out.throttle_pct = pick((i) => (acc(i) > -0.6 ? (acc(i) > 0.8 ? 100 : Math.round(55 + 40 * Math.min(1, (acc(i) + 0.6) / 1.4))) : 0));
   if (want("brake")) out.brake = pick((i) => acc(i) < -2.4);
