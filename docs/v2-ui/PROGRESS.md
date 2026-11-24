@@ -108,3 +108,37 @@ Status: done, awaiting review. Mock mode.
 - The delta compares drivers[0] with each other driver; no picker for the reference.
 - Selecting a lap number sends the same lap to every driver, as the API does.
 - Mock circuit has 5 corners only, so corner labels are sparse in mock mode.
+
+---
+
+# U1d progress: chaos pages (plus two lab fixes)
+
+Status: done, awaiting review. Mock mode.
+
+## Lab fixes (first commit of the phase)
+- Delta reference is explicit and selectable: a "vs" chip row sets `ref` (URL param, default the first driver); one delta line per non-reference driver, in that driver's colour; the caption reads "Delta vs REF: above zero means that driver is slower than REF". Changing the driver set keeps the reference if still selected, else falls back to the first driver.
+- Cursor readout lists every driver at the cursor (speed, gear, throttle, braking), built with direct DOM writes inside the existing rAF; values come from the raw columns, not the decimated ones. No React render on scrub. Not re-benchmarked (same path, 3 more lookups per move).
+
+## Pages
+- `/chaos` (`?year=&round=` optional; default is the first non-completed round of the current year from the existing schedule hook, else the last, else 1): preview card, circuit history grid, driver tendencies.
+  - Preview: model note, Chaos Index with p10 to p90 band and the API's band note, per-target bars with whiskers, top factors (the API's `text`, with Higher or Lower), 5-lap risk strip with a selector for all five targets.
+  - Circuit history: `GET /api/chaos/circuits/` lists circuits, then one history call each; small multiples with safety-car share, red-flag share and retirements per race, same scale on every card, sortable by safety cars, red flags, retirements or name.
+  - Driver tendencies: quick picks plus a 3-letter code box; p10 to p90 range bar with the tendency marked, races with the event out of races, headline "tendency, not skill" and the API's own label verbatim.
+- `/chaos/model`: current runs table, calibration (ECharts reliability diagram per backtest model, dashed perfect line) and a metrics table (Brier, log-loss, AUC, ECE, samples, delta vs the Beta-Binomial baseline) for a chosen prediction cell, then the model card (data, features, models, limitations, changelog; written from the A2 notes, no claims beyond them). The sidebar gets a "Chaos" link.
+- Every chaos surface shows the model that produced the numbers (`ModelNote`): model name, run id, training rows, updated date, calibration string, selected-by and interval, a "Fallback: baseline served" badge plus the API's `fallback_reason` banner when `is_fallback`, and an "uncalibrated" notice for a Kumo run without calibration. The race hub's chaos meter already showed the badge.
+- Honest states, checked in a browser via `MOCK_CHAOS_STATE=honest` (baseline fallback, identity calibration, `backtest: null`): the preview shows the fallback badge and banner; the model page shows "Calibration is not fitted yet" and "No backtest has run yet" instead of charts.
+
+## Contract notes (for the orchestrator)
+- Backtest cells are keyed `"scope|target"` (e.g. `race|sc_vsc_red`) and models are `beta_binomial`, `lightgbm`, `kumo`, per `chaos/backtest.py`; `payloads.ts` was corrected to that (my U1a guess used bare target keys).
+- The `model/` response carries only the pooled `overall` metrics. "By season" Brier and log-loss, as the brief asked, cannot be shown until A2 serves `per_season` (it exists in the backtest report). The page says so. Needs from A2: include `per_season` per cell.
+- `circuits/` list shape used: `[{slug, name, circuit_type}]` as agreed.
+- The circuit history page issues one request per circuit (about 24). A2 could add a summary list; fine for now.
+
+## Checks and screenshots
+- tsc clean, lint 0 errors, build: see the final report.
+- CDP emulation, 375 px: no horizontal overflow on `/chaos` and `/chaos/model` (`scrollWidth` 375); tables scroll inside their card. Desktop 1440.
+- `docs/v2-ui/screens/`: `chaos-desktop.png`, `chaos-375.png`, `chaos-model-desktop.png`, `chaos-model-375.png` (calibrated mock), `chaos-honest-375.png`, `chaos-model-honest-375.png` (honest state).
+
+## Open
+- Mock circuits have synthetic numbers; the 24-circuit real list depends on A2's endpoint.
+- The preview does not list per-driver risks (`races/<y>/<r>/drivers/`); the client method exists if wanted.

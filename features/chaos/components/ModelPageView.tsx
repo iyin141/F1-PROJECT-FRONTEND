@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Badge } from "@astryxdesign/core/Badge";
 import { Banner } from "@astryxdesign/core/Banner";
 import { Card } from "@astryxdesign/core/Card";
 import { Heading } from "@astryxdesign/core/Heading";
@@ -33,7 +32,7 @@ function Calibration({ results, cell }: { results: NonNullable<ModelPage["backte
   const option = useMemo(() => {
     const models = Object.keys(results).filter((m) => results[m][cell]?.bins?.length);
     return {
-      grid: { left: 48, right: 16, top: 24, bottom: 40 },
+      grid: { left: 48, right: 16, top: 72, bottom: 40 },
       legend: { top: 0, textStyle: { color: c.muted } },
       tooltip: { trigger: "item", formatter: (p: { seriesName: string; data: number[] }) => `${p.seriesName}: predicted ${(p.data[0] * 100).toFixed(0)}%, observed ${(p.data[1] * 100).toFixed(0)}%` },
       xAxis: { type: "value", min: 0, max: 1, name: "Predicted probability", nameLocation: "middle", nameGap: 26, axisLabel: { color: c.muted, formatter: (v: number) => `${Math.round(v * 100)}%` }, splitLine: { lineStyle: { color: c.grid } } },
@@ -128,7 +127,7 @@ export function ModelPageView() {
                   <Text color="secondary" className="f1-num">
                     Leave-one-season-out over {bt.seasons[0]} to {bt.seasons.at(-1)}, {bt.races} races. {bt.note}
                   </Text>
-                  <Badge label="Pooled over all seasons: the API does not return per-season splits yet" variant="neutral" />
+                  <Text color="secondary">Pooled over all seasons: the API does not return per-season splits yet.</Text>
                   <SegmentedControl label="Prediction" value={cell ?? ""} onChange={setPick} size="sm">
                     {cells.map((c) => <SegmentedControlItem key={c} value={c} label={cellLabel(c)} />)}
                   </SegmentedControl>
