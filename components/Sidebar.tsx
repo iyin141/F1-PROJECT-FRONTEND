@@ -78,6 +78,10 @@ export const Sidebar = () => {
           <Activity size={14} /> CHAOS
         </Link>
 
+        <Link href="/stewards" className={cn(linkBase, pathname.startsWith("/stewards") ? linkActive : linkInactive)}>
+          <FileText size={14} /> STEWARDS
+        </Link>
+
         <div className="px-4 mt-6 mb-2 label-mono">External</div>
         <a
           href={(() => {
