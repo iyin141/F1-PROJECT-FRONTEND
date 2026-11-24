@@ -150,7 +150,7 @@ export function lapFor(driver: string, lapNumber = 0): Lap {
   const key = `${driver}:${lapNumber}`;
   const hit = cache.get(key);
   if (hit) return hit;
-  const speed = speedProfile(driver).map((s, i) => s * (1 + 0.004 * Math.sin(i / 55 + lapNumber)));
+  const speed = speedProfile(driver).map((s, i) => s * (1 + 0.004 * Math.sin(i / 55 + lapNumber) + 0.014 * Math.sin(i / 90 + [...driver].reduce((a, c) => a + c.charCodeAt(0), 0))));
   const step = LENGTH_M / (N - 1);
   const time = [0];
   for (let i = 1; i < N; i++) time.push(time[i - 1] + (step / ((speed[i] + speed[i - 1]) / 2 / 3.6)));

@@ -129,9 +129,9 @@ export function HubTabs({ year, round }: { year: number; round: number }) {
   return (
     <Card padding={4}>
       <VStack gap={4}>
-        <TabList value={tab} onChange={(v) => setTab(v as TabId)}>
+        <div className="f1-neutral-accent"><TabList value={tab} onChange={(v) => setTab(v as TabId)}>
           {TABS.map(([id, label]) => <Tab key={id} value={id} label={label} panelId={`hub-panel-${id}`} />)}
-        </TabList>
+        </TabList></div>
         <div id={`hub-panel-${tab}`} role="tabpanel" style={{ minHeight: 200 }}>
           {tab === "results" && <Results year={year} round={round} />}
           {tab === "strategy" && <Strategy year={year} round={round} />}

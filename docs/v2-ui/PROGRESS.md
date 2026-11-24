@@ -44,3 +44,33 @@ Mock layer = Next route handlers (not MSW), reasons in AUDIT.md section 4. v2 te
 ## Needs from orchestrator
 - Decision on the lint baseline (163 legacy errors): fix in a separate cleanup, or relax `no-explicit-any` for legacy folders.
 - Confirm `output: "standalone"` timing (planned U1g).
+
+---
+
+# U1b progress: race hub and TrackMap
+
+Status: done, awaiting review. Mock mode only (existing endpoints are not mocked).
+
+## Commits
+- lint override (legacy-only relaxations; new code on full rules, `npm run lint` now 0 errors)
+- race hub, TrackMap, chaos meter, tabs, telemetry placeholder, classic view move
+- follow-ups: neutral tab accent, mock variety, screenshots, this section
+
+## What changed
+- Routing: `app/race/[year]/[round]/page.tsx` moved to `/race/[year]/[round]/classic` (legacy Tailwind view, unchanged). The new hub lives at `app/(v2)/race/[year]/[round]/page.tsx` so it gets the Astryx theme; `/race/.../analysis` is untouched. Placeholder `app/(v2)/race/[year]/[round]/telemetry/page.tsx` echoes `drivers`, `lap`, `start_m`, `end_m`.
+- `features/race-hub/components/TrackMap.tsx`: one `<path>` per mini-sector coloured by the fastest selected driver; neutral until times load. Corner numbers, dashed DRS zones, d3-zoom (Ctrl/Cmd+wheel, drag, pinch, Reset zoom; reset is instant under reduced motion). Hover or focus fills a polite live readout with each driver's segment time and gap. Roving tabindex: arrow keys move between sectors with a drawn focus ring, Enter/Space/click opens the lab at `/race/Y/R/telemetry?drivers=..&lap=fastest&start_m=..&end_m=..`.
+- `ChaosMeter.tsx`: index, p10-p90 band, bars with p10-p90 whiskers, 5-lap heat strip (sand intensity, not red), "Baseline fallback" badge and reason, link to `/chaos/model` (page arrives in U1d). 202 states show an orb (`searching`/`solving`), not a spinner.
+- `HubTabs.tsx`: Results, Strategy (ECharts stacked stints by compound), Positions (ECharts lines, dashed repeats), Weather, Incidents; reuse `useRaceResults`, `useTyreStrategy`, `useRacePositions`, `useRaceWeather`, `useRaceIncidents`. Only the active tab mounts. In mock mode these existing endpoints still go to the (absent) backend, so tabs show "not available" there; they were not verified against real data.
+- Driver compare chips: top 6 finishers from results, else VER/NOR; 2 to 4 selected.
+- Selected-tab underline re-pointed from accent to text colour (`.f1-neutral-accent`), keeping red for the primary button and live states.
+- Added exact deps `d3-selection@3.0.0`, `d3-transition@3.0.1` (already present transitively).
+
+## Checks
+- tsc clean; lint 0 errors (59 warnings, pre-existing style); build: see final report.
+- HTTP 200: `/race/2024/8`, `/classic`, `/analysis`, `/season/2024`, telemetry placeholder with params.
+- Playwright is not installed; screenshots via headless Edge: `docs/v2-ui/screens/race-hub-desktop.png` (1440 wide) and `race-hub-narrow-500.png`. Headless Edge cannot go below 500 px wide, so 375 px was NOT captured; at 500 nothing overflows, the layout is a single fluid column below 900 px and the tab list scrolls. Treat 375 as unverified.
+- Legacy leakage after v2 -> legacy client navigation: not observed in a browser (no scripted browser). Argument: the layer-order line in `globals.css` puts the Astryx reset below Tailwind's layers, and Astryx component styles use hashed class names, so nothing global applies to legacy markup. Needs a real click-through in U1g.
+
+## Open
+- Corner detection in the synthetic circuit finds 5 corners (mock only).
+- `package-lock.json` needs `npm install` refresh for the two d3 deps if CI uses `npm ci`.

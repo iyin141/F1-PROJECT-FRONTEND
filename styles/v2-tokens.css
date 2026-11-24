@@ -29,3 +29,6 @@
 .v2 .f1-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 .v2 .f1-table th { text-align: left; font-weight: 600; color: var(--color-text-secondary); }
 .v2 .f1-table th, .v2 .f1-table td { padding: 6px 10px; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
+/* Re-points the accent inside a subtree (tabs, selection) so red stays for primary actions and live states. */
+.v2 .f1-neutral-accent { --color-accent: var(--color-text-primary); }
+.v2 .f1-hub > * { min-width: 0; }
