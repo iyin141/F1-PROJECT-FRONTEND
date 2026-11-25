@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
@@ -70,6 +70,13 @@ function Circuit({ tr, bounds, sectorColour }: { tr: Track3D; bounds: number[]; 
   );
 }
 
+/** Advances the playback clock by one frame; kept outside the component so the frame loop only calls it. */
+function stepClock(p: Playback, delta: number) {
+  if (!p.playing) return;
+  p.t += delta * p.speed;
+  if (p.t > p.max) p.t = 0;
+}
+
 /** Cars and the follow camera. Everything per frame is imperative: no React state changes while playing. */
 function Cars({ tr, bounds, profiles, series, pb }: { tr: Track3D; bounds: number[]; profiles: Profile[]; series: Series[]; pb: React.MutableRefObject<Playback> }) {
   const refs = useRef<(THREE.Mesh | null)[]>([]);
@@ -80,7 +87,7 @@ function Cars({ tr, bounds, profiles, series, pb }: { tr: Track3D; bounds: numbe
 
   useFrame((state, delta) => {
     const p = pb.current;
-    if (p.playing) { p.t += delta * p.speed; if (p.t > p.max) p.t = 0; }
+    stepClock(p, delta);
     const laps: Record<string, number> = {};
     profiles.forEach((pr, i) => {
       const { d, lap } = distanceAt(pr, bounds, p.t);
@@ -140,10 +147,12 @@ export default function Scene({ geometry, sectors, series, reducedMotion }: Prop
     if (lapsEl.current) lapsEl.current.textContent = Object.entries(laps).map(([d, l]) => `${d} lap ${l}`).join(", ");
   }, []);
   const pb = useRef<Playback>({ t: 0, playing, speed, max, follow: null, reduced: reducedMotion, onTick });
-  pb.current.playing = playing;
-  pb.current.speed = speed;
-  pb.current.max = max;
-  pb.current.follow = camera === "follow" ? followDriver : null;
+  useEffect(() => {
+    pb.current.playing = playing;
+    pb.current.speed = speed;
+    pb.current.max = max;
+    pb.current.follow = camera === "follow" ? followDriver : null;
+  }, [playing, speed, max, camera, followDriver]);
 
   const fastest = sectors.fastest_per_sector;
   const sectorColour = useCallback((s: number) => {
