@@ -55,6 +55,7 @@
   },
   "devDependencies": {
     "@astryxdesign/cli": "0.7.17",
+    "@playwright/test": "1.56.1",
     "@stylexjs/postcss-plugin": "0.19.2",
     "@tailwindcss/postcss": "^4",
     "@types/d3": "^7.4.3",
