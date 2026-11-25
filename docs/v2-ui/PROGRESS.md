@@ -176,9 +176,6 @@ Status: done, awaiting review. Mock mode only; the real A3 stream was not exerci
 
 Status: written; build and static checks run here, nothing that needs a browser download or Docker was run here.
 
-## Branch note
-The 3D work (U1f) is parked on `v2/ui-3d` with `docs/v2-ui/U1F_VM_FINISH.md`; `v2/ui` was reset to the commit before U1f (cf7096b), so the "3D replay" hub link is not here. The "U1f progress" section that was in this file lives on `v2/ui-3d`.
-
 ## Added
 - `e2e/flows.spec.ts` (Playwright, mock mode): (1) race hub, click mini-sector 7, URL and the lab's request carry `start_m`, `end_m`, `format=columnar` and channels; (2) lab scrub moves the map marker and the readout; (3) stewards stream shows text and a citation chip, the side panel opens and closes with Escape; (4) a dropped stream reconnects and finishes; (5) chaos model page renders the calibration chart canvas; (6) legacy leakage: computed styles (body, sidebar, nav link, h1, button) of `/season/2024` after client navigation from the race hub equal those of a fresh load.
 - `e2e/perf.spec.ts`: telemetry lab `?bench=1` timing, p95 cursor move under 16 ms (plan budget is 100 ms).
@@ -190,3 +187,21 @@ The 3D work (U1f) is parked on `v2/ui-3d` with `docs/v2-ui/U1F_VM_FINISH.md`; `v
 
 ## Known risks in the specs (never run)
 Selectors rely on `[data-sector]`, `.u-over`, `circle[r="34"]`, `.f1-chip` and the sidebar `aside nav a[href^="/season"]`. The leakage test compares a handful of properties; widen the list if it passes too easily.
+/^>>>>>>> v2/ui-3d$/d
+# U1f progress: 3D replay (code written, NOT built or tested)
+
+Status: BLOCKED on installing three, @react-three/fiber and @react-three/drei. The code is committed but has not been type-checked, linted, built or run.
+
+## Blocker
+`npm install` of `three@0.187.0`, `@react-three/fiber@9.8.2`, `@react-three/drei@10.7.9`, `@types/three@0.187.0` fails on this PC: the registry response bodies arrive corrupted (`ERR_SSL_CIPHER_OPERATION_FAILED` in OpenSSL GCM; `curl` on the same URLs returns truncated JSON of varying size, for example the `hls.js` packument, a drei dependency). About 15 attempts with retries, `--maxsockets`, `--legacy-peer-deps` all failed. Without `--legacy-peer-deps` there is also an ERESOLVE from r3f's optional `expo-gl` peer (`react-dom@undefined`), so installs will need `--legacy-peer-deps` or an `overrides` entry. A third-party npm mirror was refused by the permission classifier and not used. `package.json` and the lockfile are unchanged by this phase.
+Needs: a working network for `npm install`, or a decision (install on the VM, or I try again later), and a decision on `--legacy-peer-deps`.
+
+## What is written
+- `Lib/v2/replay.ts` (tested by `node Lib/v2/replay.check.ts`): a distance-against-time profile per driver from the real `mini-sectors` response (boundaries and cumulative sector times, fastest lap repeated for 3 laps, 0.9 s grid stagger), position on the track-map polyline, and world conversion (1 unit = 100 m, x and y from 1/10 m, y flipped, z elevation exaggerated 3 times). No new endpoint or mock: the mock `mini-sectors` already supplies the times.
+- `features/replay3d/Scene.tsx` (imports three, r3f, drei): ribbon extruded along the polyline with elevation, edges (kerbs) coloured by the fastest driver in each mini-sector, cars as coloured spheres moved per frame without React state, play/pause, 1/2/4/8/16x, scrub slider, orbit camera (drei OrbitControls) and a follow-driver camera behind the car; reduced motion starts paused, snaps the follow camera and disables damping.
+- `features/replay3d/Replay3D.tsx`: the only file other code imports; it loads `Scene` with `next/dynamic` (`ssr: false`), so three never enters other pages. A poster (SVG of the circuit) replaces the scene when the screen is under 768 px, `hardwareConcurrency <= 4`, or WebGL is missing, with a "Load the 3D view anyway" button. Capability is read with `useSyncExternalStore` (no hydration mismatch).
+- Route `/race/[y]/[r]/3d`; the race hub header has a "3D replay" link.
+
+## Still to do once the packages install
+tsc, lint, build and confirmation that the 3D chunk is separate (check the chunk list), then a headless-Edge WebGL screenshot attempt, then the report. If drei stays uninstallable, swap `OrbitControls` for `three/examples/jsm/controls/OrbitControls`.
+>>>>>>> v2/ui-3d

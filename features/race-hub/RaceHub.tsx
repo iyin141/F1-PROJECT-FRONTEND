@@ -54,6 +54,7 @@ export function RaceHub({ year, round }: { year: number; round: number }) {
         </VStack>
         <HStack gap={3} wrap="wrap">
           <Button label="Telemetry lab" variant="primary" href={`/race/${year}/${round}/telemetry?drivers=${selected.join(",")}&lap=fastest`} />
+          <Link href={`/race/${year}/${round}/3d`}>3D replay</Link>
           <Link href={`/race/${year}/${round}/classic`}>Classic view</Link>
         </HStack>
       </HStack>
