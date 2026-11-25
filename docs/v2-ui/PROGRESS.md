@@ -187,7 +187,7 @@ Status: written; build and static checks run here, nothing that needs a browser 
 
 ## Known risks in the specs (never run)
 Selectors rely on `[data-sector]`, `.u-over`, `circle[r="34"]`, `.f1-chip` and the sidebar `aside nav a[href^="/season"]`. The leakage test compares a handful of properties; widen the list if it passes too easily.
-/^>>>>>>> v2/ui-3d$/d
+
 # U1f progress: 3D replay (code written, NOT built or tested)
 
 Status: BLOCKED on installing three, @react-three/fiber and @react-three/drei. The code is committed but has not been type-checked, linted, built or run.
@@ -204,4 +204,3 @@ Needs: a working network for `npm install`, or a decision (install on the VM, or
 
 ## Still to do once the packages install
 tsc, lint, build and confirmation that the 3D chunk is separate (check the chunk list), then a headless-Edge WebGL screenshot attempt, then the report. If drei stays uninstallable, swap `OrbitControls` for `three/examples/jsm/controls/OrbitControls`.
->>>>>>> v2/ui-3d
