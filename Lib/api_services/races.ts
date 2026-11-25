@@ -62,7 +62,7 @@ export async function getSeasonSchedule(year: number): Promise<SeasonScheduleRes
 export async function getDriverStandings(year: number): Promise<DriverStandingsResponse> {
   console.log("[getDriverStandings] → Fetching:", year);
 
-  const res = await fetch(`/api/drivers/${year}/`, {
+  const res = await fetch(`/api/drivers/year/${year}/`, {
     method: "GET",
     headers: { Accept: "application/json" },
     credentials: "include",
